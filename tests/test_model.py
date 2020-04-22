@@ -48,7 +48,7 @@ model_container.model.summary()
 
 fold_test = 'fold1'
 X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(fold_test)
-scaler = Scaler(normalizer='minmax')
+scaler = Scaler(normalizer=params_model['normalizer'])
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_val = scaler.transform(X_val)
@@ -66,3 +66,11 @@ model_container.save_model_json(exp_folder_fold)
 kwargs = params["train"]
 train_arguments = params_model['train_arguments']
 model_container.train(X_train, Y_train, X_val, Y_val, weights_path= exp_folder_fold,  log_path= exp_folder_fold, **train_arguments, **kwargs)
+
+model_container.load_model_weights(exp_folder_fold)
+
+X_test, Y_test = data_generator.get_data_for_testing(fold_test)
+X_test = scaler.transform(X_test)
+accuracy,_,_ = model_container.evaluate(X_test, Y_test)
+
+print('Accuracy in test fold: %f' % accuracy)

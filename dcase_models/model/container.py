@@ -192,6 +192,19 @@ class ModelContainer():
         weights_path = os.path.join(weights_folder, weights_file)  
         self.model.save_weights(weights_path)
 
+    def load_model_weights(self, weights_folder):
+        """
+        Save self.model weights in weights_folder/best_weights.hdf5.
+
+        Parameters
+        ----------
+        weights_folder : str
+            Path to save the weights file
+        """
+        weights_file = 'best_weights.hdf5'
+        weights_path = os.path.join(weights_folder, weights_file)  
+        self.model.load_weights(weights_path)        
+
     def get_numer_of_parameters(self):
         trainable_count = int(np.sum([K.count_params(p) for p in set(models.trainable_weights)]))
         return trainable_count
