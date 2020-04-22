@@ -41,14 +41,24 @@
             "audio_folder" : "/data/pzinemanas/UrbanSound8K/audio22050",
             "feature_folder" : "/data/pzinemanas/UrbanSound8K/features",
             "evaluation_mode" : "cross-validation",
-            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"]
+            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"],
+            "metadata" : ""
         },
-        "ESC-50" : {
+        "ESC50" : {
             "label_list" : [],
-            "audio_folder" : "/data/pzinemanas/ESC-50/audio22050",
-            "feature_folder" : "/data/pzinemanas/ESC-50/features",
+            "audio_folder" : "/data/pzinemanas/ESC50/audio22050",
+            "feature_folder" : "/data/pzinemanas/ESC50/features",
             "evaluation_mode" : "cross-validation",
-            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"]
-        } 
+            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
+            "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
+        },
+        "ESC10" : {
+            "label_list" : [],
+            "audio_folder" : "/data/pzinemanas/ESC50/audio22050",
+            "feature_folder" : "/data/pzinemanas/ESC50/features",
+            "evaluation_mode" : "cross-validation",
+            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
+            "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
+        }         
     }
 }

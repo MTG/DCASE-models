@@ -11,11 +11,12 @@ from ..utils.files import save_json
 from ..utils.metrics import accuracy
 from ..utils.callbacks import MetricsCallback
 
+
 class ModelContainer():
     """
-    A class to contain a keras model, the methods to train, evaluate,
+    A class that contain a keras model, the methods to train, evaluate,
     save and load the model. Child of this class can be created for
-    especific models (i.e see APNet class)
+    especific models (i.e see SB_CNN class)
 
     Attributes
     ----------

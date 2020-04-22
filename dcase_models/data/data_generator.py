@@ -17,10 +17,11 @@ from scipy.signal import hanning
 from ..utils.ui import progressbar
 from ..utils.data import get_fold_val
 import time     
+
     
 class DataGenerator():
     'Generates data for the experiments'
-    def __init__(self, audio_folder, features_folder, features, fold_list, label_list):
+    def __init__(self, audio_folder, features_folder, features, fold_list, label_list, meta_file=None):
 
         """ Initialize the DataGenerator 
         Parameters
@@ -41,7 +42,7 @@ class DataGenerator():
             features_folder = os.path.join(self.features_folder, fold, self.features)   
             self.file_lists[fold] = sorted(glob.glob(os.path.join(features_folder, '*.npy')))
 
-    def __get_annotations(self,file_name, features):
+    def get_annotations(self,file_name, features):
         y = np.zeros((len(self.label_list)))
         class_ix = int(os.path.basename(file_name).split('-')[1])
         y[class_ix] = 1
@@ -80,7 +81,7 @@ class DataGenerator():
             features = np.load(file_name)
             #(features.shape)
             features_list.append(features)               
-            y = self.__get_annotations(file_name, features)
+            y = self.get_annotations(file_name, features)
             annotations.append(y)
 
         return features_list, annotations
@@ -121,6 +122,95 @@ class DataGenerator():
         return X_test, Y_test
 
 # UrbanSound8k class (just a copy of DataGenerator)
+import csv
 class UrbanSound8k(DataGenerator):
-    def __init__(self, audio_folder, features_folder, features, fold_list, label_list):
+
+    def __init__(self, audio_folder, features_folder, features, fold_list, label_list,  meta_file=None):
+
+        super().__init__(audio_folder, features_folder, features, fold_list, label_list, meta_file)
+
+
+# ESC50 cllass
+class ESC50(DataGenerator):
+    def __init__(self, audio_folder, features_folder, features, fold_list, label_list, meta_file=None):
+        self.metadata = {}
+        n_classes = 50
+        label_list = ['']*n_classes
+        with open(meta_file) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count == 0:
+                    line_count += 1
+                    continue
+                filename = row[0]
+                fold = 'fold'+row[1]
+                class_ix = int(row[2])
+                class_name = row[3]
+                esc10 = row[4] == 'True' 
+                self.metadata[filename] = {'fold': fold, 'class_ix': class_ix, 'class_name': class_name, 'esc10': esc10}
+                if class_name not in label_list:
+                    label_list[class_ix] = class_name
+
         super().__init__(audio_folder, features_folder, features, fold_list, label_list)
+
+    def get_file_lists(self):
+        #print('using this functions')
+        self.file_lists = {}
+        for fold in self.fold_list:
+            self.file_lists[fold] = []
+            features_folder = os.path.join(self.features_folder, self.features)   
+            all_files = sorted(glob.glob(os.path.join(features_folder, '*.npy')))
+            for fil in all_files:
+                basename = self.get_basename_wav(fil)
+               # print(len(self.metadata))
+                if basename in self.metadata:
+                    if self.metadata[basename]['fold'] == fold:
+                        self.file_lists[fold].append(fil) 
+
+    def get_annotations(self,file_name, features):
+        y = np.zeros((len(self.label_list)))
+        basename = self.get_basename_wav(file_name)
+        class_ix = self.metadata[basename]['class_ix']
+        #print(class_ix,self.metadata[basename])
+        #print(class_ix)
+        y[class_ix] = 1
+        y = np.expand_dims(y, 0)
+        y = np.repeat(y, len(features), 0)
+        return y
+
+    def get_basename_wav(self, filename):
+        return os.path.basename(filename).split('.')[0] + '.wav'
+
+
+class ESC10(ESC50):
+    def __init__(self, audio_folder, features_folder, features, fold_list, label_list, meta_file=None):
+        super().__init__(audio_folder, features_folder, features, fold_list, label_list, meta_file)
+        #print(len(self.metadata))
+        new_metada = {}
+        new_label_list_ids = []
+        for j in self.metadata.keys():
+            if self.metadata[j]['esc10'] == True:
+                new_metada[j] = self.metadata[j].copy()
+                if new_metada[j]['class_ix'] not in new_label_list_ids:
+                    new_label_list_ids.append(new_metada[j]['class_ix'])
+
+        new_label_list_ids.sort()
+        new_label_list = []
+        new_label_list = [self.label_list[i] for i in new_label_list_ids]    
+        print(new_label_list)
+
+        self.metadata = new_metada.copy()
+        self.label_list = new_label_list.copy() 
+        #print(len(self.metada), len(new_metada))
+        for j in self.metadata.keys():
+            #print(self.metadata[j]['esc10'])
+            #print(new_metada[j]['esc10'])
+            if self.metadata[j]['esc10'] == True:  
+              #  print(self.metadata[j]['class_ix'])   
+                self.metadata[j]['class_ix'] = [i for i,x in enumerate(self.label_list) if x == self.metadata[j]['class_name']][0]
+              #  print('n',self.metadata[j]['class_ix'])
+        # delete not esc-10 instances
+
+        self.get_file_lists()
+        print(len(self.file_lists), len(self.file_lists['fold1']))

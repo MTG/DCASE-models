@@ -158,6 +158,7 @@ class FeatureExtractor():
                 features.append(feature.__name__)
             else:
                 features.append(feature)
+                
         params = {'sr': self.sr, 'mel_bands': self.mel_bands,
                 'sequence_time': self.sequence_time, 
                 'sequence_hop_time': self.sequence_hop_time,

@@ -22,7 +22,7 @@ params_dataset = params["datasets"][dataset]
 try:
     data_generator_class = globals()[dataset]
 except:
-    print('Warning: using default ModelContainer')
+    print('Warning: using default DataGenerator')
     data_generator_class = DataGenerator()
 
 print(data_generator_class)

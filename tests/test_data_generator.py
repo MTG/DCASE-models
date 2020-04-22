@@ -10,7 +10,7 @@ from dcase_models.utils.files import load_json
 from dcase_models.data.data_generator import *
 from dcase_models.data.scaler import Scaler
 
-dataset = 'UrbanSound8k'
+dataset = 'ESC10' #'ESC50'
 
 params = load_json('parameters.json')
 params_dataset = params["datasets"][dataset]
@@ -24,7 +24,7 @@ except:
 
 print(data_generator_class)
 data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], 'mel_spectrograms',
-                                      params_dataset['folds'], params_dataset['label_list'])
+                                      params_dataset['folds'], params_dataset['label_list'], params_dataset['metadata'])
 
 data_generator.load_data()
 fold_test = 'fold1'
