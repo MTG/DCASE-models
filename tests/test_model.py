@@ -6,7 +6,7 @@ from librosa.core import power_to_db
 import matplotlib.pyplot as plt
 
 sys.path.append('../')
-from dcase_models.utils.files import load_json
+from dcase_models.utils.files import load_json, mkdir_if_not_exists
 from dcase_models.data.data_generator import *
 from dcase_models.model.container import *
 from dcase_models.data.scaler import Scaler
@@ -53,6 +53,16 @@ scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_val = scaler.transform(X_val)
 
+mkdir_if_not_exists(model)
+exp_folder = os.path.join(model, dataset)
+mkdir_if_not_exists(exp_folder)
+exp_folder_fold = os.path.join(exp_folder, fold_test)
+mkdir_if_not_exists(exp_folder_fold)
+
+# save model as json
+print('saving model to %s' % exp_folder_fold)
+model_container.save_model_json(exp_folder_fold)
+
 kwargs = params["train"]
 train_arguments = params_model['train_arguments']
-model_container.train(X_train, Y_train, X_val, Y_val, weights_path= './',  log_path= './', **train_arguments, **kwargs)
+model_container.train(X_train, Y_train, X_val, Y_val, weights_path= exp_folder_fold,  log_path= exp_folder_fold, **train_arguments, **kwargs)
