@@ -1,0 +1,54 @@
+{
+    "features" : {
+        "sequence_time": 2.0, 
+        "sequence_hop_time":0.5,
+        "audio_hop":670,
+        "audio_win":1024,
+        "n_fft":1024, 
+        "sr": 22050, 
+        "mel_bands": 128,
+        "features": ["mel_spectrogram"]
+    },
+
+    "train" : {
+        "early_stopping" : 30,
+        "epochs" : 100,
+        "learning_rate" : 0.001,
+        "batch_size" : 256,
+        "verbose" : 1,
+        "optimizer" : "Adam"
+    },
+
+    "models" : {
+        "SB_CNN" : {
+            "normalizer" : "standard",     
+            "model_arguments" : {
+                "large_cnn" : 0,
+                "n_dense_cnn" : 64,
+                "n_chanels" : 0,
+                "filter_size_cnn" : [5, 5], 
+                "pool_size_cnn" : [2,2]
+            },
+            "train_arguments": {}
+        }
+    },
+
+    "datasets" : {
+        "UrbanSound8k" : {
+            "label_list" : ["air_conditioner", "car_horn", "children_playing",
+                "dog_bark", "drilling", "engine_idling", "gun_shot",
+                "jackhammer", "siren", "street_music"],
+            "audio_folder" : "/data/pzinemanas/UrbanSound8K/audio22050",
+            "feature_folder" : "/data/pzinemanas/UrbanSound8K/features",
+            "evaluation_mode" : "cross-validation",
+            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"]
+        },
+        "ESC-50" : {
+            "label_list" : [],
+            "audio_folder" : "/data/pzinemanas/ESC-50/audio22050",
+            "feature_folder" : "/data/pzinemanas/ESC-50/features",
+            "evaluation_mode" : "cross-validation",
+            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"]
+        } 
+    }
+}
