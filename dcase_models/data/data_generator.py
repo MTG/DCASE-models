@@ -21,7 +21,7 @@ import time
     
 class DataGenerator():
     'Generates data for the experiments'
-    def __init__(self, audio_folder, features_folder, features, fold_list, label_list, meta_file=None):
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None):
 
         """ Initialize the DataGenerator 
         Parameters
@@ -31,6 +31,7 @@ class DataGenerator():
         """
         self.audio_folder = audio_folder
         self.features_folder = features_folder
+        self.annotations_folder = annotations_folder
         self.features = features
         self.fold_list = fold_list
         self.label_list = label_list
@@ -50,7 +51,7 @@ class DataGenerator():
         y = np.repeat(y, len(features), 0)
         return y
 
-    def __data_generation(self, list_files_temp):
+    def data_generation(self, list_files_temp):
         """ This function generates data with the files in list_IDs_temp
         
         Parameters
@@ -90,7 +91,7 @@ class DataGenerator():
         self.data = {}
         for fold in progressbar(self.fold_list, prefix='fold: '):
             #print(self.file_lists[fold])
-            X,Y = self.__data_generation(self.file_lists[fold])
+            X,Y = self.data_generation(self.file_lists[fold])
             self.data[fold] = {'X': X, 'Y': Y}
 
     def get_data_for_training(self, fold_test):
@@ -124,15 +125,13 @@ class DataGenerator():
 # UrbanSound8k class (just a copy of DataGenerator)
 import csv
 class UrbanSound8k(DataGenerator):
-
-    def __init__(self, audio_folder, features_folder, features, fold_list, label_list,  meta_file=None):
-
-        super().__init__(audio_folder, features_folder, features, fold_list, label_list, meta_file)
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None):
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
 
 
 # ESC50 cllass
 class ESC50(DataGenerator):
-    def __init__(self, audio_folder, features_folder, features, fold_list, label_list, meta_file=None):
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None):
         self.metadata = {}
         n_classes = 50
         label_list = ['']*n_classes
@@ -152,10 +151,9 @@ class ESC50(DataGenerator):
                 if class_name not in label_list:
                     label_list[class_ix] = class_name
 
-        super().__init__(audio_folder, features_folder, features, fold_list, label_list)
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
 
     def get_file_lists(self):
-        #print('using this functions')
         self.file_lists = {}
         for fold in self.fold_list:
             self.file_lists[fold] = []
@@ -163,30 +161,30 @@ class ESC50(DataGenerator):
             all_files = sorted(glob.glob(os.path.join(features_folder, '*.npy')))
             for fil in all_files:
                 basename = self.get_basename_wav(fil)
-               # print(len(self.metadata))
                 if basename in self.metadata:
                     if self.metadata[basename]['fold'] == fold:
                         self.file_lists[fold].append(fil) 
 
-    def get_annotations(self,file_name, features):
+    def get_annotations(self, file_name, features):
         y = np.zeros((len(self.label_list)))
         basename = self.get_basename_wav(file_name)
         class_ix = self.metadata[basename]['class_ix']
-        #print(class_ix,self.metadata[basename])
-        #print(class_ix)
         y[class_ix] = 1
         y = np.expand_dims(y, 0)
         y = np.repeat(y, len(features), 0)
         return y
 
     def get_basename_wav(self, filename):
+        # convert ..../xxxx.npy in xxxx.wav
         return os.path.basename(filename).split('.')[0] + '.wav'
 
 
 class ESC10(ESC50):
-    def __init__(self, audio_folder, features_folder, features, fold_list, label_list, meta_file=None):
-        super().__init__(audio_folder, features_folder, features, fold_list, label_list, meta_file)
-        #print(len(self.metadata))
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None):
+        # first call init of ESC50 class
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
+        
+        # then change self.metadata and self.laberl_lsit to keep only ESC-10
         new_metada = {}
         new_label_list_ids = []
         for j in self.metadata.keys():
@@ -198,19 +196,47 @@ class ESC10(ESC50):
         new_label_list_ids.sort()
         new_label_list = []
         new_label_list = [self.label_list[i] for i in new_label_list_ids]    
-        print(new_label_list)
+        print('label_list', new_label_list)
 
         self.metadata = new_metada.copy()
         self.label_list = new_label_list.copy() 
-        #print(len(self.metada), len(new_metada))
         for j in self.metadata.keys():
-            #print(self.metadata[j]['esc10'])
-            #print(new_metada[j]['esc10'])
-            if self.metadata[j]['esc10'] == True:  
-              #  print(self.metadata[j]['class_ix'])   
-                self.metadata[j]['class_ix'] = [i for i,x in enumerate(self.label_list) if x == self.metadata[j]['class_name']][0]
-              #  print('n',self.metadata[j]['class_ix'])
-        # delete not esc-10 instances
+            assert self.metadata[j]['esc10'] == True   
+            self.metadata[j]['class_ix'] = [i for i,x in enumerate(self.label_list) if x == self.metadata[j]['class_name']][0]
 
+        # regenerate self.file_lists
         self.get_file_lists()
-        print(len(self.file_lists), len(self.file_lists['fold1']))
+
+
+# URBAN-SED class
+class URBAN_SED(DataGenerator):
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, sequence_hop_time, meta_file=None):
+        self.sequence_hop_time = sequence_hop_time
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
+
+    def get_file_lists(self):
+        super().__init__()
+        self.wav_to_labels = {}
+        for fold in self.fold_list:
+            for fil in self.file_lists[fold]:
+                label_file = os.path.basename(filename).split('.')[0] + '.txt'
+                self.wav_to_labels[fil] = os.path.join(self.annotations_folder, fold, label_file)
+
+    from pandas import read_csv
+    def get_annotations(self, file_name, features):
+        label_file = self.wav_to_labels[file_name]
+        labels = read_csv(label_file, delimiter='\t', header=None)
+        labels.columns = ['event_onset', 'event_offset','event_label']
+        event_roll = np.zeros((features.shape[0],len(self.label_list)))
+        for event in labels.to_dict('records'):
+            pos = self.label_list.index(event['event_label'])
+            
+            event_onset = event['event_onset']
+            event_offset = event['event_offset']
+            
+            onset = int(math.floor(event_onset * 1 / float(self.sequence_hop_time)))
+            offset = int(math.ceil(event_offset * 1 / float(self.sequence_hop_time)))
+            
+            event_roll[onset:offset, pos] = 1 
+        return event_roll
+ 

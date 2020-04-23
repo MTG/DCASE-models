@@ -40,6 +40,7 @@
                 "jackhammer", "siren", "street_music"],
             "audio_folder" : "/data/pzinemanas/UrbanSound8K/audio22050",
             "feature_folder" : "/data/pzinemanas/UrbanSound8K/features",
+            "annotations_folder" : "",
             "evaluation_mode" : "cross-validation",
             "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"],
             "metadata" : ""
@@ -59,6 +60,17 @@
             "evaluation_mode" : "cross-validation",
             "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
             "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
-        }         
+        },
+        "URBAN_SED" : {
+            "label_list" : ["air_conditioner", "car_horn", "children_playing",
+                "dog_bark", "drilling", "engine_idling", "gun_shot",
+                "jackhammer", "siren", "street_music"],
+            "audio_folder" : "/data/pzinemanas/URBAN-SED/audio22050",
+            "feature_folder" : "/data/pzinemanas/URBAN-SED/features",
+            "annotations_folder" : "/data/pzinemanas/URBAN-SED/features",
+            "evaluation_mode" : "train-validate-test",
+            "folds" : ["train", "validate", "test"],
+            "metadata" : ""
+        },               
     }
 }
