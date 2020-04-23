@@ -21,7 +21,7 @@
 
     "models" : {
         "SB_CNN" : {
-            "normalizer" : "standard",     
+            "normalizer" : "minmax",     
             "model_arguments" : {
                 "large_cnn" : 0,
                 "n_dense_cnn" : 64,
@@ -49,6 +49,7 @@
             "label_list" : [],
             "audio_folder" : "/data/pzinemanas/ESC50/audio22050",
             "feature_folder" : "/data/pzinemanas/ESC50/features",
+            "annotations_folder" : "",
             "evaluation_mode" : "cross-validation",
             "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
             "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
@@ -57,6 +58,7 @@
             "label_list" : [],
             "audio_folder" : "/data/pzinemanas/ESC50/audio22050",
             "feature_folder" : "/data/pzinemanas/ESC50/features",
+            "annotations_folder" : "",
             "evaluation_mode" : "cross-validation",
             "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
             "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
@@ -65,12 +67,12 @@
             "label_list" : ["air_conditioner", "car_horn", "children_playing",
                 "dog_bark", "drilling", "engine_idling", "gun_shot",
                 "jackhammer", "siren", "street_music"],
-            "audio_folder" : "/data/pzinemanas/URBAN-SED/audio22050",
-            "feature_folder" : "/data/pzinemanas/URBAN-SED/features",
-            "annotations_folder" : "/data/pzinemanas/URBAN-SED/features",
+            "audio_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0/audio",
+            "feature_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0/features",
+            "annotations_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0/annotations",
             "evaluation_mode" : "train-validate-test",
             "folds" : ["train", "validate", "test"],
             "metadata" : ""
-        },               
+        }               
     }
 }

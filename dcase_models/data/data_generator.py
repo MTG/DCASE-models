@@ -40,7 +40,7 @@ class DataGenerator():
     def get_file_lists(self):
         self.file_lists = {}
         for fold in self.fold_list:
-            features_folder = os.path.join(self.features_folder, fold, self.features)   
+            features_folder = os.path.join(self.features_folder, fold, self.features) 
             self.file_lists[fold] = sorted(glob.glob(os.path.join(features_folder, '*.npy')))
 
     def get_annotations(self,file_name, features):
@@ -91,6 +91,7 @@ class DataGenerator():
         self.data = {}
         for fold in progressbar(self.fold_list, prefix='fold: '):
             #print(self.file_lists[fold])
+            
             X,Y = self.data_generation(self.file_lists[fold])
             self.data[fold] = {'X': X, 'Y': Y}
 
@@ -207,22 +208,22 @@ class ESC10(ESC50):
         # regenerate self.file_lists
         self.get_file_lists()
 
-
+from pandas import read_csv
 # URBAN-SED class
 class URBAN_SED(DataGenerator):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, sequence_hop_time, meta_file=None):
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None, sequence_hop_time=1.0):
         self.sequence_hop_time = sequence_hop_time
         super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
 
     def get_file_lists(self):
-        super().__init__()
+        super().get_file_lists()
         self.wav_to_labels = {}
         for fold in self.fold_list:
             for fil in self.file_lists[fold]:
-                label_file = os.path.basename(filename).split('.')[0] + '.txt'
+                label_file = os.path.basename(fil).split('.')[0] + '.txt'
                 self.wav_to_labels[fil] = os.path.join(self.annotations_folder, fold, label_file)
 
-    from pandas import read_csv
+    
     def get_annotations(self, file_name, features):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
@@ -233,10 +234,25 @@ class URBAN_SED(DataGenerator):
             
             event_onset = event['event_onset']
             event_offset = event['event_offset']
-            
             onset = int(math.floor(event_onset * 1 / float(self.sequence_hop_time)))
             offset = int(math.ceil(event_offset * 1 / float(self.sequence_hop_time)))
             
             event_roll[onset:offset, pos] = 1 
         return event_roll
  
+    def get_data_for_training(self, fold_test='test'):
+        # train-val-test mode
+        X_val = self.data['validate']['X']
+        Y_val = self.data['validate']['Y']
+
+        X_train = np.concatenate(self.data['train']['X'],axis=0)
+        Y_train = np.concatenate(self.data['train']['Y'],axis=0)
+
+        return X_train, Y_train, X_val, Y_val
+
+    def get_data_for_testing(self, fold_test='test'):
+        # train-val-test mode
+        X_test = self.data[fold_test]['X']
+        Y_test = self.data[fold_test]['Y']
+
+        return X_test, Y_test

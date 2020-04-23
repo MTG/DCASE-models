@@ -123,6 +123,7 @@ class FeatureExtractor():
             return features_list
 
     def extract(self, folder_audio, folder_features):
+        mkdir_if_not_exists(folder_features)
         files_orig = sorted(glob.glob(os.path.join(folder_audio, '*.wav')))
 
         for file_audio in progressbar(files_orig, "Computing: ", 40):
