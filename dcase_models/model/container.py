@@ -12,7 +12,7 @@ from ..utils.metrics import accuracy
 from ..utils.callbacks import MetricsCallback
 
 
-class ModelContainer():
+class DCASEModelContainer():
     """
     A class that contain a keras model, the methods to train, evaluate,
     save and load the model. Child of this class can be created for
@@ -47,7 +47,7 @@ class ModelContainer():
     """
 
 
-    def __init__(self, model=None, folder=None, model_name="APNet"):    
+    def __init__(self, model=None, folder=None, model_name="APNet", **kwargs):    
         """
         Parameters
         ----------
@@ -60,13 +60,14 @@ class ModelContainer():
         if model is not None:
             self.model = model
         elif folder is not None:
-            self.load_model_from_json(folder)
+            self.load_model_from_json(folder, **kwargs)
         else:
             raise AttributeError("model or folder are both None")
         self.model_name = model_name
 
     def train(self, X_train, Y_train, X_val, Y_val, weights_path= './',  log_path= './',
-               optimizer = 'Adam',learning_rate = 0.001, early_stopping=100, **kwargs_keras_fit):
+               optimizer = 'Adam',learning_rate = 0.001, early_stopping=100, considered_improvement=0.01,
+               losses='categorical_crossentropy', loss_weights=[1], **kwargs_keras_fit):
         """
         Train the keras model using the data and paramaters of arguments.
         This function runs a function named "train_{model_name}" (i.e train_APNet).
@@ -108,11 +109,11 @@ class ModelContainer():
         optimizer_function = getattr(optimizers, optimizer)
         opt = optimizer_function(lr=learning_rate)
 
-        self.model.compile(loss='categorical_crossentropy', optimizer=opt)
+        self.model.compile(loss=losses, optimizer=opt, loss_weights=loss_weights)
 
         file_weights = os.path.join(weights_path, 'best_weights.hdf5') 
         file_log = os.path.join(weights_path, 'training.log') 
-        metrics_callback = MetricsCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping)
+        metrics_callback = MetricsCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping, considered_improvement=considered_improvement)
         log = CSVLogger(file_log)
         history = self.model.fit(x = X_train, y = Y_train, shuffle = True,
                                  callbacks = [metrics_callback,log], **kwargs_keras_fit)              
@@ -146,7 +147,7 @@ class ModelContainer():
             X_test = scaler.transform(X_test)
         return accuracy(self.model, X_test, Y_test)
 
-    def load_model_from_json(self, folder, custom_objects=None):
+    def load_model_from_json(self, folder, **kwargs):
         """
         Load model from model.json file in the path given by argument.
         The model is load in self.model attribute
@@ -161,9 +162,7 @@ class ModelContainer():
         
         with open(json_file) as json_f:
             data = json.load(json_f)
-        self.model = model_from_json(data,custom_objects=custom_objects)#{'Prototype_distances_separate': Prototype_distances_separate,
-                                                         # 'Prototype_distances': Prototype_distances, 'Mean': Mean, 
-                                                         # 'Window': Window, 'DecoderFilterIntegration': DecoderFilterIntegration, 'conv_kernel_reg':conv_kernel_reg}
+        self.model = model_from_json(data, **kwargs)
         self.model.load_weights(weights_file)    
 
     def save_model_json(self,folder):
@@ -210,8 +209,11 @@ class ModelContainer():
         trainable_count = int(np.sum([K.count_params(p) for p in set(models.trainable_weights)]))
         return trainable_count
 
-
-class SB_CNN(ModelContainer):
+from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Flatten
+from keras.layers.normalization import BatchNormalization
+from keras.models import Model
+from keras.regularizers import l2
+class SB_CNN(DCASEModelContainer):
     """
     Child class of ModelContainer with specific attributs and methods for
     SB_CNN model.
@@ -273,12 +275,16 @@ class SB_CNN(ModelContainer):
         https://github.com/justinsalamon/scaper_waspaa2017
         
         """ 
-        from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Flatten
-        from keras.layers.normalization import BatchNormalization
-        from keras.models import Model
-        from keras.regularizers import l2
-
         if folder is None:
+            model = self.create_model(n_classes=n_classes, n_frames_cnn=n_frames_cnn, 
+                     n_freq_cnn=n_freq_cnn, filter_size_cnn=filter_size_cnn, pool_size_cnn=pool_size_cnn,
+                     large_cnn=large_cnn, n_dense_cnn=n_dense_cnn, n_chanels=n_chanels)
+
+        super().__init__(model=model, folder=folder, model_name='SB_CNN')
+
+    def create_model(self, n_classes=10, n_frames_cnn=64, 
+                     n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2,2),
+                     large_cnn=False, n_dense_cnn=64, n_chanels=0):
             ### Here define the keras model
             # INPUT
             if n_chanels == 0:
@@ -311,9 +317,7 @@ class SB_CNN(ModelContainer):
 
             # creates keras Model
             model = Model(inputs=x, outputs=y)
-
-        super().__init__(model=model, folder=folder, model_name='SB_CNN')
-
+            return model
     def sub_model():
         # example code on how define a new model based on the original
         new_model = Model(inputs=self.model.input, outputs=self.model.get_layer('dense1').output)

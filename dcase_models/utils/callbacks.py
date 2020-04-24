@@ -12,7 +12,7 @@ class MetricsCallback(Callback):
     file with the weights if the evaluation improves
     """
     
-    def __init__(self, X_val, Y_val, file_weights=None, best_acc=0, early_stopping=0):
+    def __init__(self, X_val, Y_val, file_weights=None, best_acc=0, early_stopping=0, considered_improvement=0.01):
         """ Initialize the keras callback
         Parameters
         ----------
@@ -40,6 +40,7 @@ class MetricsCallback(Callback):
         self.early_stopping = early_stopping
         self.epochs_since_improvement = 0
         self.epoch_best = 0
+        self.considered_improvement = considered_improvement
 
     def on_epoch_end(self, epoch, logs={}):
         """ This function is run when each epoch ends.
@@ -58,7 +59,7 @@ class MetricsCallback(Callback):
 
         self.current_acc = acc
 
-        if self.current_acc > self.best_acc + 0.01:
+        if self.current_acc > self.best_acc + self.considered_improvement:
             self.best_acc = self.current_acc
             self.model.save_weights(self.file_weights)
             print('Acc = {:.4f} -  Best val Acc: {:.4f} (IMPROVEMENT, saving)\n'.format(self.current_acc, self.best_acc))

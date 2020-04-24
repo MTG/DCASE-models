@@ -2,8 +2,7 @@ import sys
 import os
 import glob
 import numpy as np
-from librosa.core import power_to_db
-import matplotlib.pyplot as plt
+import argparse
 
 sys.path.append('../')
 from dcase_models.utils.files import load_json, mkdir_if_not_exists
@@ -13,36 +12,34 @@ from dcase_models.data.scaler import Scaler
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-dataset = 'UrbanSound8k'
+def get_class_by_name(name, default_class):
+    try:
+        class_by_name = globals()[name]
+    except:
+        print('Warning: using default: ', default_class)
+        class_by_name = default_class()
+    return class_by_name
+
+parser = argparse.ArgumentParser(description='Test DataGenerator')
+parser.add_argument('-d', '--dataset', type=str, help='dataset to use for the test', default='UrbanSound8k')
+parser.add_argument('-m', '--model', type=str, help='model to use for the test', default='SB_CNN')
+parser.add_argument('-f', '--fold', type=str, help='fold of the dataset', default='fold1')
+args = parser.parse_args()
 
 params = load_json('parameters.json')
-params_dataset = params["datasets"][dataset]
 
-# get model class
-try:
-    data_generator_class = globals()[dataset]
-except:
-    print('Warning: using default DataGenerator')
-    data_generator_class = DataGenerator()
-
-print(data_generator_class)
-data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], 'mel_spectrograms',
-                                      params_dataset['folds'], params_dataset['label_list'])
-
+# get dataset class
+data_generator_class = get_class_by_name(args.dataset, DataGenerator)
+params_dataset = params["datasets"][args.dataset]
+data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], params_dataset['annotations_folder'], 
+                                      'mel_spectrograms', params_dataset['folds'], params_dataset['label_list'])
 data_generator.load_data()
 
-model = 'SB_CNN'
-params_model = params["models"][model]
 # get model class
-try:
-    model_class = globals()[model]
-except:
-    print('Warning: using default ModelContainer')
-    model_class = ModelContainer()
-
-print(model_class)
-model_container = model_class(model=None, folder=None, n_classes=10, n_frames_cnn=64, 
-            n_freq_cnn=128, **params_model['model_arguments'])
+model_container_class = get_class_by_name(args.model, DCASEModelContainer)
+params_model = params["models"][args.model]
+model_container = model_container_class(model=None, folder=None, n_classes=10, n_frames_cnn=64, 
+                                        n_freq_cnn=128, **params_model['model_arguments'])
 
 model_container.model.summary()
 
@@ -53,8 +50,8 @@ scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_val = scaler.transform(X_val)
 
-mkdir_if_not_exists(model)
-exp_folder = os.path.join(model, dataset)
+mkdir_if_not_exists(args.model)
+exp_folder = os.path.join(args.model, args.dataset)
 mkdir_if_not_exists(exp_folder)
 exp_folder_fold = os.path.join(exp_folder, fold_test)
 mkdir_if_not_exists(exp_folder_fold)
@@ -65,7 +62,7 @@ model_container.save_model_json(exp_folder_fold)
 
 kwargs = params["train"]
 train_arguments = params_model['train_arguments']
-model_container.train(X_train, Y_train, X_val, Y_val, weights_path= exp_folder_fold,  log_path= exp_folder_fold, **train_arguments, **kwargs)
+#model_container.train(X_train, Y_train, X_val, Y_val, weights_path= exp_folder_fold,  log_path= exp_folder_fold, **train_arguments, **kwargs)
 
 model_container.load_model_weights(exp_folder_fold)
 

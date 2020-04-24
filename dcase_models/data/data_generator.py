@@ -80,7 +80,6 @@ class DataGenerator():
 
         for file_name in list_files_temp: 
             features = np.load(file_name)
-            #(features.shape)
             features_list.append(features)               
             y = self.get_annotations(file_name, features)
             annotations.append(y)
@@ -90,12 +89,10 @@ class DataGenerator():
     def load_data(self):
         self.data = {}
         for fold in progressbar(self.fold_list, prefix='fold: '):
-            #print(self.file_lists[fold])
-            
             X,Y = self.data_generation(self.file_lists[fold])
             self.data[fold] = {'X': X, 'Y': Y}
 
-    def get_data_for_training(self, fold_test):
+    def get_data_for_training(self, fold_test, upsampling=False):
         # cross-validation mode
         fold_val = get_fold_val(fold_test, self.fold_list)
         folds_train = self.fold_list.copy() #list(range(1,N_folds+1))
@@ -114,7 +111,24 @@ class DataGenerator():
         X_train = np.concatenate(X_train,axis=0)
         Y_train = np.concatenate(Y_train,axis=0)
 
-        return X_train, Y_train, X_val, Y_val
+        X_train_up = X_train.copy()
+        Y_train_up = Y_train.copy()
+
+        ## upsampling
+        if upsampling:
+            n_classes = Y_train.shape[1]
+            Ns = np.zeros(n_classes)
+            for j in range(n_classes):
+                Ns[j] = np.sum(Y_train[:,j]==1)
+            Ns = np.floor(np.amax(Ns)/Ns)-1
+            for j in range(n_classes):
+                if Ns[j] > 1:
+                    X_j = X_train[Y_train[:,j]==1]
+                    Y_j = Y_train[Y_train[:,j]==1]
+                    X_train_up = np.concatenate([X_train_up]+[X_j]*int(Ns[j]),axis=0)
+                    Y_train_up = np.concatenate([Y_train_up]+[Y_j]*int(Ns[j]),axis=0)        
+
+        return X_train_up, Y_train_up, X_val, Y_val
 
     def get_data_for_testing(self, fold_test):
         # cross-validation mode
@@ -122,6 +136,42 @@ class DataGenerator():
         Y_test = self.data[fold_test]['Y']
 
         return X_test, Y_test
+
+    def get_one_example_per_file(self, fold_test):
+        # cross-validation mode
+        fold_val = get_fold_val(fold_test, self.fold_list)
+        folds_train = self.fold_list.copy() #list(range(1,N_folds+1))
+        folds_train.remove(fold_test)
+        folds_train.remove(fold_val)
+
+        X_val = self.data[fold_val]['X']
+        Y_val = self.data[fold_val]['Y']
+
+        X_train = []
+        Y_train = []
+        Files_names_train = []
+        for fold_train in folds_train:
+            for file in range(len(self.data[fold_train]['X'])):
+                X = self.data[fold_train]['X'][file]
+                if len(X) <= 1:
+                    continue
+                ix = int(len(X)/2)
+                X = np.expand_dims(self.data[fold_train]['X'][file][ix],axis=0)
+                #print(ix,X.shape)
+                X_train.append(X)
+                Y = np.expand_dims(self.data[fold_train]['Y'][file][ix],axis=0)
+                #print(Y.shape)
+                Y_train.append(Y)
+                if self.file_lists is not None:
+                    Files_names_train.append(self.file_lists[fold_train][file])
+        #print(Y_train[0],Y_train[1])
+        X_train = np.concatenate(X_train,axis=0)
+        Y_train = np.concatenate(Y_train,axis=0)     
+
+        return X_train, Y_train, Files_names_train
+
+    def return_file_list(self, fold_test):
+        return self.file_lists[fold_test]
 
 # UrbanSound8k class (just a copy of DataGenerator)
 import csv
