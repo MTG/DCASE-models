@@ -50,7 +50,9 @@ class FeatureExtractor():
 
             # complex stft
             stft = librosa.core.stft(audio, n_fft=self.n_fft, hop_length=self.audio_hop,
-                                                win_length=self.audio_win, center=False)
+                                                win_length=self.audio_win, center=True)
+
+            #print(stft.shape)
             
            # print(stft.shape)
             if self.augmentation is not None:
@@ -70,10 +72,10 @@ class FeatureExtractor():
                 #print(stft.shape)
 
             # window padding
-            expected_n_sequences = (stft.shape[1])/ float(self.sequence_hop)
+          #  expected_n_sequences = (stft.shape[1]-1)/ float(self.sequence_hop)
             hop_times = np.arange(0,stft.shape[1]-self.sequence_frames+1,self.sequence_hop)
-            if (expected_n_sequences > len(hop_times)) & (stft.shape[1] > self.sequence_frames):
-                hop_times = np.concatenate((hop_times, (stft.shape[1]-self.sequence_frames,)),axis=0)
+          #  if (expected_n_sequences > len(hop_times)) & (stft.shape[1] > self.sequence_frames):
+          #      hop_times = np.concatenate((hop_times, (stft.shape[1]-self.sequence_frames,)),axis=0)
 
             # power
             stft = np.abs(stft)**2
@@ -82,6 +84,7 @@ class FeatureExtractor():
             #spectrograms = []  
 
             for i in hop_times:
+                #print(i, i+self.sequence_frames, stft.shape[1])
                 spectrogram = stft[:,i:i+self.sequence_frames]
 
                 for feature in self.features:
@@ -118,13 +121,12 @@ class FeatureExtractor():
 
             for feature in self.features:
                 features_list[feature] = np.asarray(features_list[feature])
-
+                #print(features_list[feature].shape)
             return features_list
 
     def extract(self, folder_audio, folder_features):
         mkdir_if_not_exists(folder_features)
         files_orig = sorted(glob.glob(os.path.join(folder_audio, '*.wav')))
-
         for file_audio in progressbar(files_orig, "Computing: ", 40):
             
             features_list = self.calculate_features(file_audio)

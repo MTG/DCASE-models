@@ -8,8 +8,8 @@ from keras.models import model_from_json
 import keras.backend as K
 
 from ..utils.files import save_json
-from ..utils.metrics import accuracy
-from ..utils.callbacks import MetricsCallback
+from ..utils.metrics import evaluate_metrics
+from ..utils.callbacks import AccuracyCallback, F1ERCallback
 
 
 class DCASEModelContainer():
@@ -45,9 +45,7 @@ class DCASEModelContainer():
         Save model weights in the path given by argument
 
     """
-
-
-    def __init__(self, model=None, folder=None, model_name="APNet", **kwargs):    
+    def __init__(self, model=None, folder=None, model_name="APNet", metrics=['accuracy'] ,**kwargs):    
         """
         Parameters
         ----------
@@ -64,10 +62,11 @@ class DCASEModelContainer():
         else:
             raise AttributeError("model or folder are both None")
         self.model_name = model_name
+        self.metrics = metrics
 
     def train(self, X_train, Y_train, X_val, Y_val, weights_path= './',  log_path= './',
                optimizer = 'Adam',learning_rate = 0.001, early_stopping=100, considered_improvement=0.01,
-               losses='categorical_crossentropy', loss_weights=[1], **kwargs_keras_fit):
+               losses='categorical_crossentropy', loss_weights=[1], sequence_time_sec=0.5, metric_resolution_sec=1.0, **kwargs_keras_fit):
         """
         Train the keras model using the data and paramaters of arguments.
         This function runs a function named "train_{model_name}" (i.e train_APNet).
@@ -113,7 +112,13 @@ class DCASEModelContainer():
 
         file_weights = os.path.join(weights_path, 'best_weights.hdf5') 
         file_log = os.path.join(weights_path, 'training.log') 
-        metrics_callback = MetricsCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping, considered_improvement=considered_improvement)
+        if self.metrics[0] == 'accuracy':
+            metrics_callback = AccuracyCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping, 
+                                                considered_improvement=considered_improvement)
+        if 'F1' in self.metrics: 
+            metrics_callback = F1ERCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping, 
+                                            considered_improvement=considered_improvement, sequence_time_sec=sequence_time_sec, 
+                                            metric_resolution_sec=metric_resolution_sec)
         log = CSVLogger(file_log)
         history = self.model.fit(x = X_train, y = Y_train, shuffle = True,
                                  callbacks = [metrics_callback,log], **kwargs_keras_fit)              
@@ -145,7 +150,7 @@ class DCASEModelContainer():
         """
         if scaler is not None:
             X_test = scaler.transform(X_test)
-        return accuracy(self.model, X_test, Y_test)
+        return evaluate_metrics(self.model, X_test, Y_test, self.metrics)
 
     def load_model_from_json(self, folder, **kwargs):
         """
@@ -240,7 +245,7 @@ class SB_CNN(DCASEModelContainer):
         Function to debug the model by eliminating similar prototypes
     """
 
-    def __init__(self, model=None, folder=None, n_classes=10, n_frames_cnn=64, 
+    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64, 
                 n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2,2),
                 large_cnn=False, n_dense_cnn=64, n_chanels=0): 
         """
@@ -280,7 +285,7 @@ class SB_CNN(DCASEModelContainer):
                      n_freq_cnn=n_freq_cnn, filter_size_cnn=filter_size_cnn, pool_size_cnn=pool_size_cnn,
                      large_cnn=large_cnn, n_dense_cnn=n_dense_cnn, n_chanels=n_chanels)
 
-        super().__init__(model=model, folder=folder, model_name='SB_CNN')
+        super().__init__(model=model, folder=folder, model_name='SB_CNN', metrics=metrics)
 
     def create_model(self, n_classes=10, n_frames_cnn=64, 
                      n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2,2),
@@ -296,7 +301,7 @@ class SB_CNN(DCASEModelContainer):
 
             # CONV 1
             y = Conv2D(24, filter_size_cnn, padding='valid', activation='relu', name='conv1')(y)
-            y = MaxPooling2D(pool_size=(4,2), strides=None, padding='valid', name='maxpool1')(y)
+            y = MaxPooling2D(pool_size=(2,2), strides=None, padding='valid', name='maxpool1')(y)
             y = BatchNormalization(name='batchnorm1')(y)
 
             # CONV 2
