@@ -64,7 +64,7 @@ class DCASEModelContainer():
         self.model_name = model_name
         self.metrics = metrics
 
-    def train(self, X_train, Y_train, X_val, Y_val, weights_path= './',  log_path= './',
+    def train(self, X_train, Y_train, X_val, Y_val, weights_path= './',
                optimizer = 'Adam',learning_rate = 0.001, early_stopping=100, considered_improvement=0.01,
                losses='categorical_crossentropy', loss_weights=[1], sequence_time_sec=0.5, metric_resolution_sec=1.0, **kwargs_keras_fit):
         """

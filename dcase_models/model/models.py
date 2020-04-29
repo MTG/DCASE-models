@@ -2,6 +2,7 @@ from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Fl
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from keras.regularizers import l2
+import keras.backend as K
 
 from .container import DCASEModelContainer
 
@@ -68,15 +69,6 @@ class SB_CNN(DCASEModelContainer):
         
         """ 
         if folder is None:
-            model = self.create_model(n_classes=n_classes, n_frames_cnn=n_frames_cnn, 
-                     n_freq_cnn=n_freq_cnn, filter_size_cnn=filter_size_cnn, pool_size_cnn=pool_size_cnn,
-                     large_cnn=large_cnn, n_dense_cnn=n_dense_cnn, n_chanels=n_chanels)
-
-        super().__init__(model=model, folder=folder, model_name='SB_CNN', metrics=metrics)
-
-    def create_model(self, n_classes=10, n_frames_cnn=64, 
-                     n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2,2),
-                     large_cnn=False, n_dense_cnn=64, n_chanels=0):
             ### Here define the keras model
             # INPUT
             if n_chanels == 0:
@@ -109,7 +101,9 @@ class SB_CNN(DCASEModelContainer):
 
             # creates keras Model
             model = Model(inputs=x, outputs=y)
-            return model
+
+        super().__init__(model=model, folder=folder, model_name='SB_CNN', metrics=metrics)
+
     def sub_model():
         # example code on how define a new model based on the original
         new_model = Model(inputs=self.model.input, outputs=self.model.get_layer('dense1').output)
