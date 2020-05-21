@@ -60,20 +60,24 @@ class FeatureExtractor():
                     stft = librosa.core.phase_vocoder(stft, rate=self.augmentation_param)
 
             # stft padding
-            pad = 0
-            if stft.shape[1] < self.sequence_frames:
-                #stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'constant', constant_values=(0, 0))
-                #stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'wrap')
-               # print('stft',stft.shape,self.sequence_frames)
-               # stft = librosa.core.phase_vocoder(stft, rate=stft.shape[1]/self.sequence_frames)
-               pad = self.sequence_frames-stft.shape[1]
-               stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'constant', constant_values=(0,0))
+            #print(stft.shape)
+            stft = np.pad(stft, ((0,0),(self.sequence_frames//2, self.sequence_frames//2)), 'reflect')
+            #print(stft.shape)
+            # pad = 0
+            # if stft.shape[1] < self.sequence_frames:
+            #     #stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'constant', constant_values=(0, 0))
+            #     #stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'wrap')
+            #    # print('stft',stft.shape,self.sequence_frames)
+            #    # stft = librosa.core.phase_vocoder(stft, rate=stft.shape[1]/self.sequence_frames)
+            #    pad = self.sequence_frames-stft.shape[1]
+            #    stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'constant', constant_values=(0,0))
                
                 #print(stft.shape)
 
             # window padding
           #  expected_n_sequences = (stft.shape[1]-1)/ float(self.sequence_hop)
             hop_times = np.arange(0,stft.shape[1]-self.sequence_frames+1,self.sequence_hop)
+           # print(hop_times)
           #  if (expected_n_sequences > len(hop_times)) & (stft.shape[1] > self.sequence_frames):
           #      hop_times = np.concatenate((hop_times, (stft.shape[1]-self.sequence_frames,)),axis=0)
 
@@ -161,10 +165,10 @@ class FeatureExtractor():
                 features.append(feature)
                 
         params = {'sr': self.sr, 'mel_bands': self.mel_bands,
-                'sequence_time': self.sequence_time, 
-                'sequence_hop_time': self.sequence_hop_time,
-                'audio_hop': self.audio_hop, 'audio_win': self.audio_win,
-                'n_fft': self.n_fft, 'features': features}
+                  'sequence_time': self.sequence_time, 
+                  'sequence_hop_time': self.sequence_hop_time,
+                  'audio_hop': self.audio_hop, 'audio_win': self.audio_win,
+                  'n_fft': self.n_fft, 'features': features}
 
         with open(path, 'w') as fp:
             json.dump(params, fp)

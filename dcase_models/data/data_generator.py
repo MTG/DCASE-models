@@ -377,7 +377,8 @@ from sed_eval.util.event_roll import event_list_to_event_roll
 # URBAN-SED class
 class URBAN_SED(DataGenerator):
     def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None,
-                 evaluation_mode='tran-validate-test', use_validate_set=True, sequence_hop_time=1.0, metric_resolution_sec=1.0):
+                 evaluation_mode='tran-validate-test', use_validate_set=True, sequence_time=1.0,sequence_hop_time=0.5, metric_resolution_sec=1.0):
+        self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
         self.metric_resolution_sec = metric_resolution_sec
         super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
@@ -402,7 +403,7 @@ class URBAN_SED(DataGenerator):
             features_list.append(features)               
             y_sequences = self.get_annotations(file_name, features, time_resolution=self.sequence_hop_time)
             y_grid_metrics = self.get_annotations(file_name, features, time_resolution=self.metric_resolution_sec)
-
+            #print(y_sequences.shape,y_grid_metrics.shape,features.shape)
             y_sequences = y_sequences[:len(features)]
             #print(y_sequences.shape, features.shape)
             assert y_sequences.shape[0] == features.shape[0]
@@ -422,16 +423,21 @@ class URBAN_SED(DataGenerator):
         labels.columns = ['event_onset', 'event_offset','event_label']
 
         #print(features.shape[0], self.sequence_hop_time, time_resolution)
-        N_seqs = int(np.floor(audio_len_sec / time_resolution))
+        N_seqs = int(np.floor((audio_len_sec + self.sequence_time) / time_resolution))
         event_roll = np.zeros((N_seqs,len(self.label_list)))
+        #print(event_roll.shape)
         for event in labels.to_dict('records'):
             pos = self.label_list.index(event['event_label'])
             
             event_onset = event['event_onset']
             event_offset = event['event_offset']
-            onset = int(math.floor(event_onset * 1 / float(time_resolution)))
-            offset = int(math.ceil(event_offset * 1 / float(time_resolution)))
-            
+
+            #event_offset = 5.0
+            #event_onset = 0.0
+
+            onset = int(np.round(event_onset * 1 / float(time_resolution))) #math.floor
+            offset = int(np.round(event_offset * 1 / float(time_resolution))) + 1 #math.ceil
+            #print(event_onset,event_offset,onset,offset)
             event_roll[onset:offset, pos] = 1 
         return event_roll
  

@@ -84,7 +84,7 @@ def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
         y_true = Y_val[i]
         pred = Y_predicted[i]
         #change resolution
-   #     print(y_true.shape, pred.shape)
+        #print(y_true.shape, pred.shape)
   #      time_grid_Y = np.linspace(0, y_true.shape[0]*metric_resolution_sec, y_true.shape[0])
   #      time_grid_pred = np.linspace(0, pred.shape[0]*sequence_time_sec, pred.shape[0])
   #      print(time_grid_pred.shape, pred.shape)
@@ -92,11 +92,13 @@ def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
   #      print(time_grid_pred)
  #       f = interpolate.interp1d(time_grid_pred, pred, axis=0)
   #      y_pred = f(time_grid_Y)
-
-        y_pred = np.zeros_like(y_true)
-        ratio = int(np.round(metric_resolution_sec / sequence_time_sec))
-        for j in range(len(y_true)):
-            y_pred[j] = np.mean(pred[j*ratio:(j+1)*ratio],axis=0)
+        if pred.shape[0] == y_true.shape[0]:
+            y_pred = pred
+        else:
+            y_pred = np.zeros_like(y_true)
+            ratio = int(np.round(metric_resolution_sec / sequence_time_sec))
+            for j in range(len(y_true)):
+                y_pred[j] = np.mean(pred[j*ratio:(j+1)*ratio],axis=0)
 
         annotations.append(y_true)
         predictions.append(y_pred)
@@ -140,11 +142,13 @@ def F1(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
   #      print(time_grid_pred)
  #       f = interpolate.interp1d(time_grid_pred, pred, axis=0)
   #      y_pred = f(time_grid_Y)
-
-        y_pred = np.zeros_like(y_true)
-        ratio = int(np.round(metric_resolution_sec / sequence_time_sec))
-        for j in range(len(y_true)):
-            y_pred[j] = np.mean(pred[j*ratio:(j+1)*ratio],axis=0)
+        if pred.shape[0] == y_true.shape[0]:
+            y_pred = pred
+        else:
+            y_pred = np.zeros_like(y_true)
+            ratio = int(np.round(metric_resolution_sec / sequence_time_sec))
+            for j in range(len(y_true)):
+                y_pred[j] = np.mean(pred[j*ratio:(j+1)*ratio],axis=0)
 
         annotations.append(y_true)
         predictions.append(y_pred)
