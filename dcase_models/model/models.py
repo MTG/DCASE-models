@@ -8,29 +8,9 @@ from .container import DCASEModelContainer
 
 class SB_CNN(DCASEModelContainer):
     """
-    Child class of ModelContainer with specific attributs and methods for
+    Inherit class of DCASEModelContainer with specific attributs and methods for
     SB_CNN model.
 
-    Attributes
-    ----------
-    prototypes : Prototypes
-        Instance that includes prototypes information for visualization
-        and debugging.
-    data_instances : DataInstances
-        Instance that includes data information for visualization
-        and debugging.
-
-    Methods
-    -------
-    get_prototypes(X_train, convert_audio_params=None, projection2D=None)
-        Extract prototypes from model (embeddings, mel-spectrograms and audio
-        if convert_audio_params is not None). Init self.prototypes instance. 
-
-    get_data_instances(X_feat, X_train, Y_train, Files_names_train)
-        Init self.data_instances object. Load data instances.
-        
-    debug_prototypes(self, X_train, force_get_prototypes=False)
-        Function to debug the model by eliminating similar prototypes
     """
 
     def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64, 
