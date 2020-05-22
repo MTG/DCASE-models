@@ -19,3 +19,5 @@ root/
 There is two different ways for using this library:
 1) Clone the library and change/overwrite whatever you want
 2) Import this library and re-define some classes.
+
+See (urban-sound-classification)[https://github.com/pzinemanas/urban-sound-classification] repository as a complete example on how to use DCASE-models.
