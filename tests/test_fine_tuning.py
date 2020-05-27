@@ -46,13 +46,14 @@ X_val = scaler.transform(X_val)
 exp_folder_source = os.path.join(args.model, args.source_dataset)
 exp_folder_source_fold = os.path.join(exp_folder_source, fold_test)
 
-exp_folder_destination = os.path.join(args.model, args.destination_dataset)
+exp_folder_destination = os.path.join(args.model, args.source_dataset + '_ft_' + args.destination_dataset)
 mkdir_if_not_exists(exp_folder_destination)
 exp_folder_destination_fold = os.path.join(exp_folder_destination, fold_test)
 mkdir_if_not_exists(exp_folder_destination_fold)
 
-# load source model 
+# load source model and weights
 model_container = model_container_class(model=None, folder=exp_folder_source_fold)
+model_container.load_model_weights(exp_folder_source_fold)
 model_container.model.summary()
 
 # fine-tune the model
