@@ -8,17 +8,11 @@ sys.path.append('../')
 from dcase_models.utils.files import load_json, mkdir_if_not_exists
 from dcase_models.data.data_generator import *
 from dcase_models.model.container import *
+from dcase_models.model.models import *
 from dcase_models.data.scaler import Scaler
+from dcase_models.utils.misc import get_class_by_name
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
-def get_class_by_name(name, default_class):
-    try:
-        class_by_name = globals()[name]
-    except:
-        print('Warning: using default: ', default_class)
-        class_by_name = default_class()
-    return class_by_name
 
 parser = argparse.ArgumentParser(description='Test DataGenerator')
 parser.add_argument('-d', '--dataset', type=str, help='dataset to use for the test', default='UrbanSound8k')
@@ -29,14 +23,14 @@ args = parser.parse_args()
 params = load_json('parameters.json')
 
 # get dataset class
-data_generator_class = get_class_by_name(args.dataset, DataGenerator)
+data_generator_class = get_class_by_name(globals(), args.dataset, DataGenerator)
 params_dataset = params["datasets"][args.dataset]
 data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], params_dataset['annotations_folder'], 
                                       'mel_spectrograms', params_dataset['folds'], params_dataset['label_list'])
 data_generator.load_data()
 
 # get model class
-model_container_class = get_class_by_name(args.model, DCASEModelContainer)
+model_container_class = get_class_by_name(globals(), args.model, DCASEModelContainer)
 params_model = params["models"][args.model]
 model_container = model_container_class(model=None, folder=None, n_classes=10, n_frames_cnn=64, 
                                         n_freq_cnn=128, **params_model['model_arguments'])
@@ -60,14 +54,17 @@ mkdir_if_not_exists(exp_folder_fold)
 print('saving model to %s' % exp_folder_fold)
 model_container.save_model_json(exp_folder_fold)
 
+# train model
 kwargs = params["train"]
 train_arguments = params_model['train_arguments']
-#model_container.train(X_train, Y_train, X_val, Y_val, weights_path= exp_folder_fold,  log_path= exp_folder_fold, **train_arguments, **kwargs)
+model_container.train(X_train, Y_train, X_val, Y_val, weights_path=exp_folder_fold,  **train_arguments, **kwargs)
 
+# load best_weights
 model_container.load_model_weights(exp_folder_fold)
 
+# test model
 X_test, Y_test = data_generator.get_data_for_testing(fold_test)
 X_test = scaler.transform(X_test)
-accuracy,_,_ = model_container.evaluate(X_test, Y_test)
+results = model_container.evaluate(X_test, Y_test)
 
-print('Accuracy in test fold: %f' % accuracy)
+print('Accuracy in test fold: %f' % results['accuracy'])
