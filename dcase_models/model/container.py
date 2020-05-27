@@ -4,8 +4,10 @@ import json
 
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint,CSVLogger
-from keras.models import model_from_json
+from keras.models import model_from_json, Model
 import keras.backend as K
+from keras.layers import Dense, Input
+
 
 from ..utils.files import save_json
 from ..utils.metrics import evaluate_metrics
@@ -214,3 +216,52 @@ class DCASEModelContainer():
         trainable_count = int(np.sum([K.count_params(p) for p in set(models.trainable_weights)]))
         return trainable_count
 
+    def fine_tuning(self, layer_where_to_cut, new_number_of_classes=10, new_activation='softmax', 
+                    freeze_source_model=True, new_model=None):
+        """
+        Create a new model for fine-tuning. Cut the model in the layer_where_to_cut layer 
+        and add a new fully-connected layer.
+
+        Parameters
+        ----------
+        layer_where_to_cut : str or int
+            Name (str) of index (int) of the layer where cut the model. This layer
+            is included in the new model.
+
+        new_number_of_classes : int
+            Number of units in the new fully-connected layer (number of classes)
+
+        new_activation : str
+            Activitation of the new fully-connected layer
+
+        freeze_source_model : bool
+            If True, the source model is set to not be trainable
+
+        new_model : Keras Model
+            If is not None, this model is add after the cut model. This is useful if you
+            want add more than a fully-connected layer. 
+        """
+        # cut last layer
+        if type(layer_where_to_cut) == str:
+            last_layer = self.model.get_layer(layer_where_to_cut)
+        elif type(layer_where_to_cut) == int:
+            last_layer = self.model.layers[layer_where_to_cut]
+        else:
+            raise AttributeError("layer_where_to_cut has to be str or int type") 
+        model_without_last_layer = Model(self.model.input, last_layer.output, name='source_model')
+
+        # add a new fully connected layer
+        input_shape = self.model.layers[0].output_shape[1:]
+        x = Input(shape=input_shape, dtype='float32', name='input')
+        y = model_without_last_layer(x)
+        
+        if new_model is None:
+            y = Dense(new_number_of_classes, activation=new_activation, name='new_dense_layer')(y)
+        else:
+            y = new_model(y)
+
+        # change self.model with fine_tuned model
+        self.model = Model(x, y)
+
+        # freeze the source model if freeze_source_model is True
+        self.model.get_layer('source_model').trainable = not freeze_source_model

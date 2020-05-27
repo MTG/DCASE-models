@@ -65,7 +65,7 @@ class SB_CNN(DCASEModelContainer):
 
             # CONV 2
             y = Conv2D(48, filter_size_cnn, padding='valid', activation='relu', name='conv2')(y)
-            y = MaxPooling2D(pool_size=(2,2), strides=None, padding='valid', name='maxpool2')(y)
+            y = MaxPooling2D(pool_size=(4,2), strides=None, padding='valid', name='maxpool2')(y)
             y = BatchNormalization(name='batchnorm2')(y)
 
             # CONV 3
