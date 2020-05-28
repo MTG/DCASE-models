@@ -19,7 +19,9 @@ class SB_CNN(DCASEModelContainer):
         """
         Function that init the SB-CNN [1] model.
         
-        [1] Deep Convolutional Neural Networks and Data Augmentation for Environmental SoundClassification
+        [1] ​Deep Convolutional Neural Networks and Data Augmentation For Environmental Sound Classification
+​            J. Salamon and J. P. Bello
+            IEEE Signal Processing Letters, 24(3), pages 279 - 283, 2017.
         
         ----------
         model : keras Model
@@ -89,8 +91,94 @@ class SB_CNN(DCASEModelContainer):
         new_model = Model(inputs=self.model.input, outputs=self.model.get_layer('dense1').output)
         return new_model
 
-
     # def train(...):  # i.e if want to redefine train function
+
+class SB_CNN_SED(DCASEModelContainer):
+    """
+    Inherit class of DCASEModelContainer with specific attributs and methods for
+    SB_CNN_SED model.
+
+    """
+
+    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64, 
+                n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2,2),
+                large_cnn=False, n_dense_cnn=64, n_filters_cnn=64, n_chanels=0): 
+        """
+        Function that init the SB-CNN-SED [2] model.
+        
+        [2] Scaper: A Library for Soundscape Synthesis and Augmentation
+            J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello.
+            In IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (WASPAA), New Paltz, NY, USA, Oct. 2017
+
+        ----------
+        model : keras Model
+            
+        n_freq_cnn : int
+            number of frecuency bins of the input
+        n_frames_cnn : int
+            number of time steps (hops) of the input
+        n_filters_cnn : int
+            number of filter in each conv layer
+        filter_size_cnn : tuple of int
+            kernel size of each conv filter
+        pool_size_cnn : tuple of int
+            kernel size of the pool operations
+        n_classes : int
+            number of classes for the classification taks 
+            (size of the last layer)
+        large_cnn : bool
+            If true, the model has one more dense layer 
+        n_dense_cnn : int
+            Size of middle dense layers
+
+        Notes
+        -----
+        Code based on Salamon's implementation 
+        https://github.com/justinsalamon/scaper_waspaa2017
+        
+        """ 
+        if folder is None:
+            ### Here define the keras model
+            if large_cnn:
+                n_filters_cnn = 128
+                n_dense_cnn = 128
+
+            # INPUT
+            x = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32')
+                        
+            y = Lambda(lambda x: K.expand_dims(x,-1))(y) 
+            # CONV 1
+            y = Conv2D(n_filters_cnn, filter_size_cnn, padding='valid',
+                    activation='relu')(y)
+            y = MaxPooling2D(pool_size=pool_size_cnn, strides=None, padding='valid')(y)
+            y = BatchNormalization()(y)
+
+            # CONV 2
+            y = Conv2D(n_filters_cnn, filter_size_cnn, padding='valid',
+                    activation='relu')(y)
+            y = MaxPooling2D(pool_size=pool_size_cnn, strides=None, padding='valid')(y)
+            y = BatchNormalization()(y)
+
+            # CONV 3
+            y = Conv2D(n_filters_cnn, filter_size_cnn, padding='valid',
+                    activation='relu')(y)
+            # y = MaxPooling2D(pool_size=pool_size_cnn, strides=None, padding='valid')(y)
+            y = BatchNormalization()(y)
+
+            # Flatten for dense layers
+            y = Flatten()(y)
+            y = Dropout(0.5)(y)
+            y = Dense(n_dense_cnn, activation='relu')(y)
+            if large_cnn:
+                y = Dropout(0.5)(y)
+                y = Dense(n_dense_cnn, activation='relu')(y)
+            y = Dropout(0.5)(y)
+            y = Dense(n_classes, activation='sigmoid')(y)
+
+            model = Model(inputs=x, outputs=y)
+            model.summary()
+            
+        super().__init__(model=model, folder=folder, model_name='SB_CNN_SED', metrics=metrics)
 
 from keras.layers import GRU, Bidirectional, TimeDistributed, Activation, Permute, Reshape
 class A_CRNN(DCASEModelContainer):
@@ -99,12 +187,15 @@ class A_CRNN(DCASEModelContainer):
                 n_freq_cnn=128, cnn_nb_filt=128, cnn_pool_size=[5, 2, 2], rnn_nb = [32, 32],
                 fc_nb = [32], dropout_rate = 0.5, n_channels=0, final_activation='softmax', sed=False, bidirectional=False): 
 
-        # SOUND EVENT DETECTION USING SPATIAL FEATURES AND
-        # CONVOLUTIONAL RECURRENT NEURAL NETWORK
+        '''
+        Sound event detection using spatial features and convolutional recurrent neural network
+        S Adavanne, P Pertilä, T Virtanen
+        ICASSP 2017
         
         # based on https://github.com/sharathadavanne/sed-crnn
         # ref https://arxiv.org/pdf/1706.02291.pdf
 
+        '''
         if folder is None:
             if n_channels == 0:
                 x = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32', name='input')
@@ -153,7 +244,16 @@ from functools import partial
 from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D
 
 class VGGish(DCASEModelContainer):
-    # based on vggish-keras https://pypi.org/project/vggish-keras/
+
+    '''
+
+    Audio Set: An ontology and human-labeled dataset for audio events
+    Jort F. Gemmeke Daniel P. W. Ellis Dylan Freedman Aren Jansen Wade Lawrence R. Channing Moore Manoj Plakal Marvin Ritter
+    Proc. IEEE ICASSP 2017, New Orleans, LA
+
+    https://research.google.com/audioset/
+    based on vggish-keras https://pypi.org/project/vggish-keras/
+    ''''
     def __init__(self, model=None, folder=None, metrics=['accuracy'], n_frames_cnn=96, 
                 n_freq_cnn=64, n_classes=10, n_channels=0, embedding_size=128, pooling='avg', include_top=False, compress=False):
 
