@@ -15,7 +15,7 @@ class SB_CNN(DCASEModelContainer):
 
     def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64, 
                 n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2,2),
-                large_cnn=False, n_dense_cnn=64, n_chanels=0): 
+                large_cnn=False, n_dense_cnn=64, n_channels=0): 
         """
         Function that init the SB-CNN [1] model.
         
@@ -51,7 +51,7 @@ class SB_CNN(DCASEModelContainer):
         if folder is None:
             ### Here define the keras model
             # INPUT
-            if n_chanels == 0:
+            if n_channels == 0:
                 x = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32', name='input')
                 y = Lambda(lambda x: K.expand_dims(x,-1), name='lambda')(x) 
             else:
@@ -91,3 +91,62 @@ class SB_CNN(DCASEModelContainer):
 
 
     # def train(...):  # i.e if want to redefine train function
+
+from keras.layers import GRU, Bidirectional, TimeDistributed, Activation, Permute, Reshape
+class A_CRNN(DCASEModelContainer):
+
+    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64, 
+                n_freq_cnn=128, cnn_nb_filt=128, cnn_pool_size=[5, 2, 2], rnn_nb = [32, 32],
+                fc_nb = [32], dropout_rate = 0.5, n_channels=0, final_activation='softmax', sed=False, bidirectional=False): 
+
+        # SOUND EVENT DETECTION USING SPATIAL FEATURES AND
+        # CONVOLUTIONAL RECURRENT NEURAL NETWORK
+        
+        # based on https://github.com/sharathadavanne/sed-crnn
+        # ref https://arxiv.org/pdf/1706.02291.pdf
+
+        if folder is None:
+            if n_channels == 0:
+                x = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32', name='input')
+                spec_start = Lambda(lambda x: K.expand_dims(x,-1), name='lambda')(x) 
+            else:
+                x = Input(shape=(n_frames_cnn,n_freq_cnn, n_chanels), dtype='float32', name='input')
+                spec_start = Lambda(lambda x: x, name='lambda')(x) 
+
+            spec_x = spec_start
+            for i, cnt in enumerate(cnn_pool_size):
+                spec_x = Conv2D(filters=cnn_nb_filt, kernel_size=(3, 3), padding='same')(spec_x)
+                print(i, spec_x.shape)
+                #spec_x = BatchNormalization(axis=1)(spec_x)
+                spec_x = BatchNormalization(axis=2)(spec_x)
+                spec_x = Activation('relu')(spec_x)
+                spec_x = MaxPooling2D(pool_size=(1, cnt))(spec_x)
+                spec_x = Dropout(dropout_rate)(spec_x)
+            #spec_x = Permute((2, 1, 3))(spec_x)
+            spec_x = Reshape((n_frames_cnn, -1))(spec_x)
+
+            for r in rnn_nb:
+                if bidirectional:
+                    spec_x = Bidirectional(
+                        GRU(r, activation='tanh', dropout=dropout_rate, recurrent_dropout=dropout_rate, return_sequences=True),
+                        merge_mode='mul')(spec_x)
+                else:
+                    spec_x = GRU(r, activation='tanh', dropout=dropout_rate, recurrent_dropout=dropout_rate, return_sequences=True)(spec_x)                        
+
+            for f in fc_nb:
+                spec_x = TimeDistributed(Dense(f))(spec_x)
+                spec_x = Dropout(dropout_rate)(spec_x)
+
+            spec_x = TimeDistributed(Dense(n_classes))(spec_x)
+
+            if not sed:
+                spec_x = Lambda(lambda x: K.mean(x,1), name='mean')(spec_x)
+            out = Activation(final_activation, name='strong_out')(spec_x)
+             
+            #out = Activation('sigmoid', name='strong_out')(spec_x)
+
+            model = Model(inputs=x, outputs=out)
+
+        super().__init__(model=model, folder=folder, model_name='A_CRNN', metrics=metrics)
+
+

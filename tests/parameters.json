@@ -6,7 +6,7 @@
         "audio_win":1024,
         "n_fft":1024, 
         "sr": 22050, 
-        "mel_bands": 128,
+        "mel_bands": 40,
         "features": ["mel_spectrogram"]
     },
 
@@ -31,7 +31,12 @@
                 "pool_size_cnn" : [2,2]
             },
             "train_arguments": {}
-        }
+        },
+        "A_CRNN" : {
+            "normalizer" : "minmax",     
+            "model_arguments" : {},
+            "train_arguments": {}
+        }        
     },
 
     "datasets" : {

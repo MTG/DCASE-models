@@ -150,7 +150,6 @@ class FeatureExtractor():
 
                 feature_path = os.path.join(folder_features,folder_name)
                 mkdir_if_not_exists(feature_path)
-
                 np.save(os.path.join(feature_path,file_features),features_list[feature])
                 
     def save_mel_basis(self, path):
