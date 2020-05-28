@@ -7,6 +7,8 @@ import pickle
 import librosa
 import soundfile as sf
 import csv
+import shutil
+import sox
 
 import numpy as np
 import keras
@@ -16,6 +18,7 @@ from scipy.signal import hanning
 
 from ..utils.ui import progressbar
 from ..utils.data import get_fold_val
+from ..utils.files import mkdir_if_not_exists, download_files_and_unzip, move_all_files_to_parent
 import time     
 
     
@@ -284,6 +287,11 @@ class DataGenerator():
     def return_file_list(self, fold_test):
         return self.file_lists[fold_test]
 
+    def download_dataset(self, dataset_folder, zenodo_url, zenodo_files):
+        download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files)
+
+
+
 # UrbanSound8k class (just a copy of DataGenerator)
 import csv
 class UrbanSound8k(DataGenerator):
@@ -291,6 +299,11 @@ class UrbanSound8k(DataGenerator):
                  label_list, meta_file=None, evaluation_mode='cross-validation', use_validate_set=True):
         super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, evaluation_mode, use_validate_set)
 
+    def download_dataset(self, dataset_folder):
+        zenodo_url = "https://zenodo.org/record/1203745/files"
+        zenodo_files = ["UrbanSound8K.tar.gz"]
+        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
+        move_all_files_to_parent(dataset_folder, "UrbanSound8K") 
 
 # ESC50 cllass
 class ESC50(DataGenerator):
@@ -314,7 +327,6 @@ class ESC50(DataGenerator):
                 self.metadata[filename] = {'fold': fold, 'class_ix': class_ix, 'class_name': class_name, 'esc10': esc10}
                 if class_name not in label_list:
                     label_list[class_ix] = class_name
-
         super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, evaluation_mode, use_validate_set)
 
     def get_file_lists(self):
@@ -341,6 +353,12 @@ class ESC50(DataGenerator):
     def get_basename_wav(self, filename):
         # convert ..../xxxx.npy in xxxx.wav
         return os.path.basename(filename).split('.')[0] + '.wav'
+
+    def download_dataset(self, dataset_folder):
+        github_url = "https://github.com/karoldvl/ESC-50/archive/"
+        github_files = ["master.zip"]
+        super().download_dataset(dataset_folder, github_url, github_files)
+        move_all_files_to_parent(dataset_folder, "ESC-50-master") 
 
 
 class ESC10(ESC50):
@@ -457,3 +475,10 @@ class URBAN_SED(DataGenerator):
         Y_test = self.data[fold_test]['Y'][1]
 
         return X_test, Y_test
+
+    def download_dataset(self, dataset_folder):
+        zenodo_url = "https://zenodo.org/record/1324404/files"
+        zenodo_files = ["URBAN-SED_v2.0.0.tar.gz"]
+
+        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
+        move_all_files_to_parent(dataset_folder, "URBAN-SED_v2.0.0")     

@@ -227,4 +227,3 @@ def check_model_exists(path):
     file_json = os.path.join(path, "model.json")
     file_scaler = os.path.join(path, "scaler.pickle")
     return os.path.exists(file_weights) & os.path.exists(file_json) & os.path.exists(file_scaler) 
-
