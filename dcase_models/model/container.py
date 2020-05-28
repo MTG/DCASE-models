@@ -201,7 +201,7 @@ class DCASEModelContainer():
 
     def load_model_weights(self, weights_folder):
         """
-        Save self.model weights in weights_folder/best_weights.hdf5.
+        Load self.model weights in weights_folder/best_weights.hdf5.
 
         Parameters
         ----------
@@ -211,6 +211,20 @@ class DCASEModelContainer():
         weights_file = 'best_weights.hdf5'
         weights_path = os.path.join(weights_folder, weights_file)  
         self.model.load_weights(weights_path)        
+
+    def load_pretrained_model_weights(self, weights_folder='./pretrained_weights'):
+        """
+        Load pretrained weights to self.model weights
+
+        Parameters
+        ----------
+        weights_folder : str
+            Path to load the weights file
+        """
+        basepath = os.path.dirname(__file__)
+        weights_file = self.model_name +  '.hdf5'
+        weights_path = os.path.join(basepath, weights_folder, weights_file)  
+        self.model.load_weights(weights_path, by_name=True) 
 
     def get_numer_of_parameters(self):
         trainable_count = int(np.sum([K.count_params(p) for p in set(models.trainable_weights)]))

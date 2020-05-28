@@ -26,25 +26,6 @@ params = load_json('parameters.json')
 params_dataset = params["datasets"][args.dataset]
 params_model = params["models"][args.model]
 
-# Feature extraction
-extract_features = False
-if extract_features:
-    audio_folder = params_dataset['audio_folder']
-    feature_folder = params_dataset['feature_folder']
-    feature_extractor = FeatureExtractor(**params['features'])
-    mkdir_if_not_exists(feature_folder)
-    if args.dataset[:3] == 'ESC':
-        feature_extractor.extract(audio_folder, feature_folder)
-    else:
-        for fold in params_dataset["folds"]:
-            print('Extracting features of fold: %s' % fold)
-            audio_folder_fold = os.path.join(audio_folder, fold)
-            feature_folder_fold = os.path.join(feature_folder, fold)
-            feature_extractor.extract(audio_folder_fold, feature_folder_fold)
-
-    feature_extractor.save_mel_basis(os.path.join(feature_folder,'mel_basis.npy'))
-    feature_extractor.save_parameters_json(os.path.join(feature_folder,'parameters.json'))        
-
 # get dataset class
 data_generator_class = get_class_by_name(globals(), args.dataset, DataGenerator)
 data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], params_dataset['annotations_folder'], 
@@ -69,6 +50,12 @@ model_container = model_container_class(model=None, folder=None, n_classes=n_cla
                                         n_freq_cnn=n_freq_cnn, **params_model['model_arguments'])
 
 model_container.model.summary()
+
+# load pre-trained weights
+# only for VGGish
+if args.model == 'VGGish':
+    model_container.load_pretrained_model_weights()
+    model_container.fine_tuning(-1, new_number_of_classes=10, new_activation='softmax', freeze_source_model=True)
 
 mkdir_if_not_exists(args.model)
 exp_folder = os.path.join(args.model, args.dataset)

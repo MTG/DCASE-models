@@ -149,4 +149,68 @@ class A_CRNN(DCASEModelContainer):
 
         super().__init__(model=model, folder=folder, model_name='A_CRNN', metrics=metrics)
 
+from functools import partial
+from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D
 
+class VGGish(DCASEModelContainer):
+    # based on vggish-keras https://pypi.org/project/vggish-keras/
+    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_frames_cnn=96, 
+                n_freq_cnn=64, n_classes=10, n_channels=0, embedding_size=128, pooling='avg', include_top=False, compress=False):
+
+        if folder is None:
+            if n_channels == 0:
+                inputs = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32', name='input')
+                x = Lambda(lambda x: K.expand_dims(x,-1), name='lambda')(inputs) 
+            else:
+                inputs = Input(shape=(n_frames_cnn,n_freq_cnn, n_chanels), dtype='float32', name='input')
+                x = Lambda(lambda x: x, name='lambda')(inputs) 
+
+            # setup layer params
+            conv = partial(Conv2D, kernel_size=(3, 3), strides=(1, 1), activation='relu', padding='same')
+            maxpool = partial(MaxPooling2D, pool_size=(2, 2), strides=(2, 2), padding='same')
+
+            # Block 1
+            x = conv(64, name='conv1')(x)
+            x = maxpool(name='pool1')(x)
+
+            # Block 2
+            x = conv(128, name='conv2')(x)
+            x = maxpool(name='pool2')(x)
+
+            # Block 3
+            x = conv(256, name='conv3/conv3_1')(x)
+            x = conv(256, name='conv3/conv3_2')(x)
+            x = maxpool(name='pool3')(x)
+
+            # Block 4
+            x = conv(512, name='conv4/conv4_1')(x)
+            x = conv(512, name='conv4/conv4_2')(x)
+            x = maxpool(name='pool4')(x)
+
+            if include_top:
+                dense = partial(Dense, activation='relu')
+
+                # FC block
+                x = Flatten(name='flatten_')(x)
+                x = dense(4096, name='fc1/fc1_1')(x)
+                x = dense(4096, name='fc1/fc1_2')(x)
+                x = dense(embedding_size, name='fc2')(x)
+
+                if compress:
+                    x = Postprocess()(x)
+            else:
+                globalpool = (
+                    GlobalAveragePooling2D() if pooling == 'avg' else
+                    GlobalMaxPooling2D() if pooling == 'max' else None)
+
+                if globalpool:
+                    x = globalpool(x)
+
+            # Create model
+            model = Model(inputs, x, name='vggish_model')
+
+
+        super().__init__(model=model, folder=folder, model_name='VGGish', metrics=metrics)
+
+
+    

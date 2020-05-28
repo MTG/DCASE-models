@@ -36,7 +36,12 @@
             "normalizer" : "minmax",     
             "model_arguments" : {},
             "train_arguments": {}
-        }        
+        },     
+        "VGGish" : {
+            "normalizer" : "minmax",     
+            "model_arguments" : {},
+            "train_arguments": {}
+        } 
     },
 
     "datasets" : {
