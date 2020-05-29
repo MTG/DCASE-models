@@ -52,3 +52,5 @@ def encode_audio(data,sr):
 	src =  """data:{type};base64,{base64}""".format(type="audio/wav",
                                                 base64=data_audio)
 	return src
+
+

@@ -5,9 +5,16 @@
         "audio_hop":670,
         "audio_win":1024,
         "n_fft":1024, 
-        "sr": 22050, 
-        "mel_bands": 40,
-        "features": ["mel_spectrogram"]
+        "sr": 22050,
+        "Spectrogram" : {},
+        "MelSpectrogram" : {
+            "mel_bands": 40
+        },
+        "Openl3" : {
+            "content_type" : "env",
+            "input_repr" : "mel256", 
+            "embedding_size" : 512
+        }
     },
 
     "train" : {
@@ -99,6 +106,17 @@
             "folds" : ["train", "validate"],
             "metadata" : "/data/pzinemanas/SONYC_UST/annotations.csv",
             "taxonomy" : "/data/pzinemanas/SONYC_UST/dcase-ust-taxonomy.yaml"
+        },
+        "TAUUrbanAcousticScenes2020Mobile" : {
+            "label_list" : [],
+            "dataset_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
+            "audio_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile/audio",
+            "feature_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile/features",
+            "annotations_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile/annotations",
+            "evaluation_mode" : "train-validate-test",
+            "folds" : ["train", "validate"],
+            "metadata" : "",
+            "taxonomy" : ""            
         }
     }
 }

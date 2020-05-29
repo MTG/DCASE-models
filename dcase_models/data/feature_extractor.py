@@ -5,169 +5,225 @@ import librosa
 import glob
 import soundfile as sf
 import json
+import openl3
+
 from ..utils.ui import progressbar
 from ..utils.files import mkdir_if_not_exists
 
-class FeatureExtractor():
-    
-    def __init__(self,sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_hop=882, audio_win=1764, n_fft=2048, sr=44100, mel_bands=128,
-                 features=['spec','melspec'], fmax=None, augmentation=None):
 
-        self.sr = sr
-        self.n_fft = n_fft
-        self.mel_bands = mel_bands
+class FeatureExtractor():
+    """
+    FeatureExtractor includes functions to calculates features.
+    This class can be inherited to customize (i.e. see MelSpectrogram, Openl3)
+
+    Attributes
+    ----------
+
+    Methods
+    -------
+
+    """    
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5, audio_win=1024, audio_hop=512, n_fft=1024, sr=44100):
+        """ Initialize the FeatureExtractor 
+        Parameters
+        ----------
+
+        """
+        self.sequence_time = sequence_time
+        self.sequence_hop_time = sequence_hop_time
         self.audio_hop = audio_hop
         self.audio_win = audio_win
-        self.mel_basis = librosa.filters.mel(sr,n_fft,mel_bands,htk=True,fmax=fmax)
+        self.n_fft = n_fft
+        self.sr = sr
+
         self.sequence_frames = int( (sequence_time * sr - self.audio_win) / float(audio_hop))
         self.sequence_hop = int(sequence_hop_time * sr / float(audio_hop))
-        self.sequence_samples = int(sequence_time * sr)
-        self.hop_time = audio_hop / float(sr)
-        self.sequence_hop_time = sequence_hop_time
-        self.sequence_time = sequence_time
-        self.features = features
-        self.augmentation = augmentation
-        if self.augmentation is not None:
-            self.augmentation_type = list(self.augmentation.keys())[0]
-            self.augmentation_param = self.augmentation[self.augmentation_type]
-        print(self.sequence_frames, self.sequence_hop)
+
+        self.params = {'sr': self.sr,
+                    'sequence_time': self.sequence_time, 
+                    'sequence_hop_time': self.sequence_hop_time,
+                    'audio_hop': self.audio_hop, 'audio_win': self.audio_win,
+                    'n_fft': self.n_fft, 'features': 'FeatureExtractor'}
+
+    def get_sequences(self, x, pad=True):
+        """ Extract sequences (windows) of a 2D representation
+        Parameters
+        ----------
+        x : ndarray
+            2D representation
+        pad : bool 
+            if True, pad x before windowing
+
+        Returns
+        -------
+        list of ndarray
+            list of sequences      
+
+        """
+        if pad:
+            x = np.pad(x, ((0,0),(self.sequence_frames//2, self.sequence_frames//2)), 'reflect') #
+        hop_times = np.arange(0,x.shape[1]-self.sequence_frames+1,self.sequence_hop)
+
+        y = []
+        for i in hop_times:
+            x_seq = x[:,i:i+self.sequence_frames]
+            y.append(x_seq)
+        
+        return y
+
+    def load_audio(self, file_name, mono=True):
+        """ Load an audio signal and convert to mono if needed
+
+        Parameters
+        ----------
+        file_name : str
+            Path to the audio file
+        mono : bool 
+            if True, only returns left channel
+
+        Returns
+        -------
+        array
+            audio signal
+
+        """
+        audio,sr_old = sf.read(file_name)
+
+        # convert to mono
+        if (len(audio.shape) > 1) & (mono):
+            audio = audio[:,0]       
+
+        # continuous array (for some librosa functions)
+        audio = np.asfortranarray(audio)
+        return audio 
 
     def calculate_features(self, file_name):
-            audio,sr_old = sf.read(file_name)
-            if len(audio.shape) > 1:
-                audio = audio[:,0]
-                
-            if self.sr != sr_old:
-                print('changing sampling rate',sr_old,self.sr)
-                audio = librosa.resample(audio, sr_old, self.sr)                    
-              
-            audio = np.asfortranarray(audio)
+        """ Calculates features of an audio file
 
-            if self.augmentation is not None:
-                if self.augmentation_type == 'pitch_shift':
-                    audio = librosa.effects.pitch_shift(audio, self.sr, self.augmentation_param)
+        Parameters
+        ----------
+        file_name : str
+            Path to the audio file
 
-            # complex stft
-            stft = librosa.core.stft(audio, n_fft=self.n_fft, hop_length=self.audio_hop,
-                                                win_length=self.audio_win, center=True)
+        Returns
+        -------
+        ndarray
+            feature representation of the audio signal
 
-            #print(stft.shape)
-            
-           # print(stft.shape)
-            if self.augmentation is not None:
-                if self.augmentation_type == 'time_stretch':
-                    stft = librosa.core.phase_vocoder(stft, rate=self.augmentation_param)
+        """
 
-            # stft padding
-            #print(stft.shape)
-            stft = np.pad(stft, ((0,0),(self.sequence_frames//2, self.sequence_frames//2)), 'reflect')
-            #print(stft.shape)
-            # pad = 0
-            # if stft.shape[1] < self.sequence_frames:
-            #     #stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'constant', constant_values=(0, 0))
-            #     #stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'wrap')
-            #    # print('stft',stft.shape,self.sequence_frames)
-            #    # stft = librosa.core.phase_vocoder(stft, rate=stft.shape[1]/self.sequence_frames)
-            #    pad = self.sequence_frames-stft.shape[1]
-            #    stft = np.pad(stft, ((0,0),(0, self.sequence_frames-stft.shape[1])), 'constant', constant_values=(0,0))
-               
-                #print(stft.shape)
+        audio = self.load_audio(file_name)
 
-            # window padding
-          #  expected_n_sequences = (stft.shape[1]-1)/ float(self.sequence_hop)
-            hop_times = np.arange(0,stft.shape[1]-self.sequence_frames+1,self.sequence_hop)
-           # print(hop_times)
-          #  if (expected_n_sequences > len(hop_times)) & (stft.shape[1] > self.sequence_frames):
-          #      hop_times = np.concatenate((hop_times, (stft.shape[1]-self.sequence_frames,)),axis=0)
+        # spectrogram
+        stft = librosa.core.stft(audio, n_fft=self.n_fft, hop_length=self.audio_hop,
+                                            win_length=self.audio_win, center=True)
+        
+        # power
+        spectrogram = np.abs(stft)**2
 
-            # power
-            stft = np.abs(stft)**2
+        # convert to sequences (windowing)
+        spectrogram_seqs = self.get_sequences(spectrogram, pad=True)
 
-            features_list = {}
-            #spectrograms = []  
+        # convert to numpy
+        spectrogram_np = np.asarray(spectrogram_seqs)
 
-            for i in hop_times:
-                #print(i, i+self.sequence_frames, stft.shape[1])
-                spectrogram = stft[:,i:i+self.sequence_frames]
+        # transpose time and freq dims
+        spectrogram_np = np.transpose(spectrogram_np, (0, 2, 1))
+        print(spectrogram_np.shape)
 
-                for feature in self.features:
-                    if feature not in features_list:
-                        features_list[feature] = []
-
-                    if feature == 'spectrogram':
-                        features_list[feature].append(spectrogram.T)
-                    if feature == 'mel_spectrogram':
-                        melspec = self.mel_basis.dot(spectrogram)
-                        melspec = librosa.core.power_to_db(melspec)
-                        features_list[feature].append(melspec.T)
-
-                    if feature == 'chroma':    
-                        chroma = librosa.feature.chroma_stft(sr=self.sr,S=spectrogram)
-                        features_list[feature].append(chroma.T)
-
-                    if feature == 'tonnetz':
-                        if chroma is None:
-                            chroma = librosa.feature.chroma_stft(sr=self.sr,S=spectrogram)
-                        tonnetz = librosa.feature.tonnetz(sr=self.sr, chroma=chroma)
-                        features_list[feature].append(tonnetz.T)
-
-                    if feature == 'spectral_contrast':     
-                        spectral_contrast = librosa.feature.spectral_contrast(sr=self.sr,S=spectrogram)
-                        features_list[feature].append(spectral_contrast.T)
-
-                    # if feature is a function
-                    if callable(feature):
-                        sequence_samples = int(self.sequence_time * self.sr)
-                        audio_slice = audio[i*self.audio_hop:i*self.audio_hop + sequence_samples]
-                        custom_feature = feature(sr=self.sr, S=spectrogram, audio=audio_slice)
-                        features_list[feature].append(custom_feature.T)
-
-            for feature in self.features:
-                features_list[feature] = np.asarray(features_list[feature])
-                #print(features_list[feature].shape)
-            return features_list
+        return spectrogram_np
 
     def extract(self, folder_audio, folder_features):
+        """ Extract feauters for all files present in folder_audio
+
+        Parameters
+        ----------
+        folder_audio : str
+            Path to the audio folder
+        folder_features : str 
+            Path to the feature folder.
+
+        """
+
         mkdir_if_not_exists(folder_features)
         files_orig = sorted(glob.glob(os.path.join(folder_audio, '*.wav')))
         for file_audio in progressbar(files_orig, "Computing: ", 40):
             
-            features_list = self.calculate_features(file_audio)
+            features_array = self.calculate_features(file_audio)
             #print(spectrograms.shape)
             file_features = file_audio.split('/')[-1]
             file_features = file_features.replace('wav','npy')
             
-            for feature in self.features:
-                feature_name = feature
-                if callable(feature):
-                    feature_name = feature.__name__
+            feature_name = self.params['name']
 
-                if self.augmentation is not None:
-                    folder_name = '%s_%s_%02.1f' % (feature_name, self.augmentation_type, self.augmentation_param)
-                else:
-                    folder_name = feature_name
-
-                feature_path = os.path.join(folder_features,folder_name)
-                mkdir_if_not_exists(feature_path)
-                np.save(os.path.join(feature_path,file_features),features_list[feature])
+            feature_path = os.path.join(folder_features,feature_name)
+            mkdir_if_not_exists(feature_path)
+            np.save(os.path.join(feature_path,file_features),features_array)
                 
-    def save_mel_basis(self, path):
-        np.save(path,self.mel_basis)
 
     def save_parameters_json(self, path):
-        features = []
-        for feature in self.features:
-            if callable(feature):
-                features.append(feature.__name__)
-            else:
-                features.append(feature)
-                
-        params = {'sr': self.sr, 'mel_bands': self.mel_bands,
-                  'sequence_time': self.sequence_time, 
-                  'sequence_hop_time': self.sequence_hop_time,
-                  'audio_hop': self.audio_hop, 'audio_win': self.audio_win,
-                  'n_fft': self.n_fft, 'features': features}
+        """ Save a json file with the self.params. Useful for checking if 
+        the features files were calculated with same parameters.
 
+        Parameters
+        ----------
+        path : str
+            Path to the JSON file
+
+        """
         with open(path, 'w') as fp:
-            json.dump(params, fp)
+            json.dump(self.params, fp)
+
+
+class Spectrogram(FeatureExtractor):
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5, audio_win=1024, audio_hop=512, n_fft=1024, sr=44100):
+
+        super().__init__(sequence_time=sequence_time, sequence_hop_time=sequence_hop_time, 
+                         audio_win=audio_win, audio_hop=audio_hop, n_fft=n_fft, sr=sr)
+
+        self.params['name'] = 'Spectrogram'
+
+class MelSpectrogram(FeatureExtractor):
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5, audio_win=1024, audio_hop=512, 
+                 n_fft=1024, sr=44100, mel_bands=128, fmax=None):
+
+        super().__init__(sequence_time=sequence_time, sequence_hop_time=sequence_hop_time, 
+                         audio_win=audio_win, audio_hop=audio_hop, n_fft=n_fft, sr=sr)
+
+        self.params['name'] = 'MelSpectrogram'
+        self.params['mel_bands'] = mel_bands
+        self.params['fmax'] = fmax
+
+        self.mel_basis = librosa.filters.mel(sr, n_fft, mel_bands, htk=True, fmax=fmax)
+
+    def calculate_features(self, file_name):
+        # get spectrograms
+        spectrograms = super().calculate_features(file_name)
+
+        # convert to mel-spectograms
+        mel_spectrograms = spectrograms.dot(self.mel_basis.T)
+        assert mel_spectrograms.shape[-1] == self.params['mel_bands']
+
+        return mel_spectrograms
+
+class Openl3(FeatureExtractor):
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5, audio_win=1024, audio_hop=512, 
+                 n_fft=1024, sr=44100, content_type="env", input_repr="mel256", embedding_size=512):
+
+        super().__init__(sequence_time=sequence_time, sequence_hop_time=sequence_hop_time, 
+                         audio_win=audio_win, audio_hop=audio_hop, n_fft=n_fft, sr=sr)
+
+        self.params['name'] = 'Openl3'
+        self.params['content_type'] = content_type
+        self.params['input_repr'] = input_repr
+        self.params['embedding_size'] = embedding_size
+
+    def calculate_features(self, file_name):
+        audio = self.load_audio(file_name)
+        emb, ts = openl3.get_audio_embedding(audio, self.sr, 
+                                             content_type=self.params['content_type'],
+                                             embedding_size=self.params['embedding_size'], 
+                                             input_repr=self.params['input_repr'],
+                                             hop_size=self.sequence_hop_time)
+
+        return emb
