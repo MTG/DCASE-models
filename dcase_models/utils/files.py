@@ -58,7 +58,6 @@ def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
             continue
         print('Downloading file: ', zip_file)
         www_path = os.path.join(zenodo_url, zip_file)
-        print(www_path)
         wget.download(www_path, dataset_folder)
         print()
     print('Done!')
@@ -76,8 +75,10 @@ def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
         #zip_ref = zipfile.ZipFile(zip_file_path) # create zipfile object
         #zip_ref.extractall(dataset_folder) # extract file to dir
         #zip_ref.close() # close file
-        
-        shutil.unpack_archive(zip_file_path, dataset_folder)
+        try:
+            shutil.unpack_archive(zip_file_path, dataset_folder)
+        except:
+            continue
         os.remove(zip_file_path) # delete zipped file
     print('Done!')
 

@@ -88,6 +88,17 @@
             "evaluation_mode" : "train-validate-test",
             "folds" : ["train", "validate", "test"],
             "metadata" : ""
-        }               
+        },
+        "SONYC_UST" : {
+            "label_list" : [],
+            "dataset_folder" : "/data/pzinemanas/SONYC_UST",
+            "audio_folder" : "/data/pzinemanas/SONYC_UST/audio",
+            "feature_folder" : "/data/pzinemanas/SONYC_UST/features",
+            "annotations_folder" : "/data/pzinemanas/SONYC_UST/annotations",
+            "evaluation_mode" : "train-validate-test",
+            "folds" : ["train", "validate"],
+            "metadata" : "/data/pzinemanas/SONYC_UST/annotations.csv",
+            "taxonomy" : "/data/pzinemanas/SONYC_UST/dcase-ust-taxonomy.yaml"
+        }
     }
 }

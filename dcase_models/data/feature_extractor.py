@@ -120,7 +120,7 @@ class FeatureExtractor():
                     if callable(feature):
                         sequence_samples = int(self.sequence_time * self.sr)
                         audio_slice = audio[i*self.audio_hop:i*self.audio_hop + sequence_samples]
-                        custom_feature = feature(sr=self.sr,S=spectrogram, audio=audio_slice)
+                        custom_feature = feature(sr=self.sr, S=spectrogram, audio=audio_slice)
                         features_list[feature].append(custom_feature.T)
 
             for feature in self.features:

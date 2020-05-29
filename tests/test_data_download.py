@@ -27,9 +27,4 @@ if args.dataset == 'URBAN_SED':
 data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], params_dataset['annotations_folder'], 
                                       'mel_spectrogram', params_dataset['folds'], params_dataset['label_list'], params_dataset['metadata'], **kwargs)
 
-#data_generator.download_dataset('/data/pzinemanas/UrbanSound8K_TEST')
-#data_generator.download_dataset(params_dataset['dataset_folder'])
-
-
-## Test change sampling rate
-data_generator.re_sampling('/data/pzinemanas/UrbanSound8K_TEST/audio', 22050)
+data_generator.download_dataset(params_dataset['dataset_folder'])

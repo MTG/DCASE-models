@@ -214,6 +214,8 @@ from .files import load_json
 import os
 def check_features_folder(features_folder, params_features):
     json_features_folder = os.path.join(features_folder, "parameters.json")
+    if not os.path.exists(json_features_folder):
+        return False
     parameters_features_folder = load_json(json_features_folder)
 
     for key in parameters_features_folder.keys():

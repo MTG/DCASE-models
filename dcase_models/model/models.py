@@ -312,5 +312,45 @@ class VGGish(DCASEModelContainer):
 
         super().__init__(model=model, folder=folder, model_name='VGGish', metrics=metrics)
 
+from autopool import AutoPool1D
+class DCASE2020Task5Baseline(DCASEModelContainer):
+    '''
+
+    Baseline of Urban Sound Tagging with Spatiotemporal Context
+    DCASE 2020 Challenge - Task 5
+
+    Mark Cartwright, Ana Elisa Mendez Mendez, Jason Cramer, Vincent Lostanlen, Graham Dove, 
+    Ho-Hsiang Wu, Justin Salamon, Oded Nov, and Juan Bello. 
+    SONYC urban sound tagging (SONYC-UST): a multilabel dataset from an urban acoustic sensor network. 
+    In Proceedings of the Workshop on Detection and Classification of Acoustic Scenes and Events (DCASE), 35–39. October 2019
 
     
+    based on https://github.com/sonyc-project/dcase2020task5-uststc-baseline/blob/master/src/classify.py
+    ''''
+    def __init__(self, model=None, folder=None, metrics=['microAUPRC', 'macroAUPRC'], n_frames_cnn=96, 
+                n_freq_cnn=64, n_classes=10, hidden_layer_size=128, num_hidden_layers=1, l2_reg=1e-5):
+
+        if folder is None:
+
+            # input
+            inputs = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32', name='input')
+
+            # Hidden layers
+            for idx in range(num_hidden_layers):
+                y = TimeDistributed(Dense(hidden_layer_size, activation='relu',
+                                        kernel_regularizer=regularizers.l2(l2_reg)),
+                                    name='dense_{}'.format(idx+1))(y)
+
+            # Output layer
+            y = TimeDistributed(Dense(num_classes, activation='sigmoid',
+                                    kernel_regularizer=regularizers.l2(l2_reg)),
+                                name='output_t',
+                                input_shape=(num_frames, repr_size))(y)
+
+            # Apply autopool over time dimension
+            y = AutoPool1D(axis=1, name='output')(y)
+
+            # Create model
+            model = Model(inputs=inp, outputs=y, name='model')
+
+        super().__init__(model=model, folder=folder, model_name='DCASE2020Task5Baseline', metrics=metrics)

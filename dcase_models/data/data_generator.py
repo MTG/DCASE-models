@@ -71,7 +71,7 @@ class DataGenerator():
         Returns self.file_lists
     """
     def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
         """ Initialize the DataGenerator 
         Parameters
         ----------
@@ -98,6 +98,7 @@ class DataGenerator():
         self.fold_list = fold_list
         self.label_list = label_list
         self.meta_file = meta_file
+        self.taxonomy_file = taxonomy_file
         self.evaluation_mode = evaluation_mode   
         self.use_validate_set = use_validate_set  
         self.file_lists = {}
@@ -296,8 +297,9 @@ class DataGenerator():
 import csv
 class UrbanSound8k(DataGenerator):
     def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, evaluation_mode='cross-validation', use_validate_set=True):
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, evaluation_mode, use_validate_set)
+                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
+                         taxonomy_file, evaluation_mode, use_validate_set)
 
     def download_dataset(self, dataset_folder):
         zenodo_url = "https://zenodo.org/record/1203745/files"
@@ -308,7 +310,7 @@ class UrbanSound8k(DataGenerator):
 # ESC50 cllass
 class ESC50(DataGenerator):
     def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
         self.metadata = {}
         n_classes = 50
         label_list = ['']*n_classes
@@ -327,7 +329,8 @@ class ESC50(DataGenerator):
                 self.metadata[filename] = {'fold': fold, 'class_ix': class_ix, 'class_name': class_name, 'esc10': esc10}
                 if class_name not in label_list:
                     label_list[class_ix] = class_name
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, evaluation_mode, use_validate_set)
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
+                         taxonomy_file, evaluation_mode, use_validate_set)
 
     def get_file_lists(self):
         self.file_lists = {}
@@ -363,9 +366,10 @@ class ESC50(DataGenerator):
 
 class ESC10(ESC50):
     def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
         # first call init of ESC50 class
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, evaluation_mode, use_validate_set)
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
+                         taxonomy_file, evaluation_mode, use_validate_set)
         
         # then change self.metadata and self.laberl_lsit to keep only ESC-10
         new_metada = {}
@@ -394,7 +398,7 @@ from pandas import read_csv
 from sed_eval.util.event_roll import event_list_to_event_roll
 # URBAN-SED class
 class URBAN_SED(DataGenerator):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None,
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None, taxonomy_file=None,
                  evaluation_mode='tran-validate-test', use_validate_set=True, sequence_time=1.0,sequence_hop_time=0.5, metric_resolution_sec=1.0):
         self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
@@ -482,3 +486,69 @@ class URBAN_SED(DataGenerator):
 
         super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
         move_all_files_to_parent(dataset_folder, "URBAN-SED_v2.0.0")     
+
+from pandas import read_csv
+import yaml
+class SONYC_UST(DataGenerator):
+    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
+                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='train-validation', use_validate_set=True):
+
+        self.metadata = read_csv(meta_file).sort_values('audio_filename')
+        with open(taxonomy_file, 'r') as f:
+            label_list = yaml.load(f, Loader=yaml.Loader)
+
+        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
+                         taxonomy_file, evaluation_mode, use_validate_set)
+
+    def get_file_lists(self):
+        filename_to_split = self.metadata[['audio_filename','split']].drop_duplicates()
+        all_files_in_metadata = filename_to_split['audio_filename'].to_list()
+        splits = filename_to_split['split'].to_list()
+
+        self.file_lists = {}
+        for fold in self.fold_list:
+            self.file_lists[fold] = []
+            features_folder = os.path.join(self.features_folder, self.features)   
+            all_files = sorted(glob.glob(os.path.join(features_folder, '*.npy')))
+            assert len(all_files) != 0
+            for fil in all_files:
+                basename = os.path.basename(fil).split('.')[0] + '.wav'
+                if basename in all_files_in_metadata:
+                    j = all_files_in_metadata.index(basename)
+                    if splits[j] == fold:
+                        self.file_lists[fold].append(fil) 
+
+    def get_annotations(self, file_name, features):
+       # only coarse level
+       # TODO add fine level
+        n_classes_coarse_level = len(self.label_list['coarse'])
+        y = np.zeros(n_classes_coarse_level)
+        basename = os.path.basename(file_name).split('.')[0] + '.wav'
+
+        metadata_of_file = self.metadata[self.metadata['audio_filename'] == basename]
+        for class_ix in self.label_list['coarse']:
+            class_column = str(class_ix) + '_' + self.label_list['coarse'][class_ix] + '_presence'
+            # class present if any annotator check presence
+            y[class_ix-1] = np.sum(metadata_of_file[class_column].values) >= 1
+
+        y = np.expand_dims(y, 0)
+        y = np.repeat(y, len(features), 0)
+        return y
+
+    def get_data_for_training(self, fold_test='test'):
+        # train-val-test mode
+        X_val = self.data['validate']['X']
+        Y_val = self.data['validate']['Y']
+
+        X_train = np.concatenate(self.data['train']['X'],axis=0)
+        Y_train = np.concatenate(self.data['train']['Y'],axis=0)
+
+        return X_train, Y_train, X_val, Y_val
+
+    def get_data_for_testing(self, fold_test='test'):
+        return None, None
+
+    def download_dataset(self, dataset_folder):
+        zenodo_url = "https://zenodo.org/record/3693077/files"
+        zenodo_files = ["annotations.csv", "audio.tar.gz", "dcase-ust-taxonomy.yaml", "README.md"]
+        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
