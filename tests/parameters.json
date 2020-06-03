@@ -5,7 +5,7 @@
         "audio_hop":670,
         "audio_win":1024,
         "n_fft":1024, 
-        "sr": 22050,
+        "sr": 44100,
         "Spectrogram" : {},
         "MelSpectrogram" : {
             "mel_bands": 40
@@ -53,70 +53,34 @@
 
     "datasets" : {
         "UrbanSound8k" : {
-            "label_list" : ["air_conditioner", "car_horn", "children_playing",
-                "dog_bark", "drilling", "engine_idling", "gun_shot",
-                "jackhammer", "siren", "street_music"],
-            "dataset_folder" : "/data/pzinemanas/UrbanSound8K",
-            "audio_folder" : "/data/pzinemanas/UrbanSound8K/audio22050",
-            "feature_folder" : "/data/pzinemanas/UrbanSound8K/features",
-            "annotations_folder" : "",
-            "evaluation_mode" : "cross-validation",
-            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"],
-            "metadata" : ""
+            "dataset_path" : "/data/pzinemanas/UrbanSound8K",
+            "audio_folder" : "audio22050",
+            "feature_folder" : "features"
         },
         "ESC50" : {
-            "label_list" : [],
-            "dataset_folder" : "/data/pzinemanas/ESC50",
-            "audio_folder" : "/data/pzinemanas/ESC50/audio22050",
-            "feature_folder" : "/data/pzinemanas/ESC50/features",
-            "annotations_folder" : "",
-            "evaluation_mode" : "cross-validation",
-            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
-            "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
+            "dataset_path" : "/data/pzinemanas/ESC50",
+            "audio_folder" : "audio22050",
+            "feature_folder" : "features"
         },
         "ESC10" : {
-            "label_list" : [],
-            "dataset_folder" : "/data/pzinemanas/ESC50",
-            "audio_folder" : "/data/pzinemanas/ESC50/audio22050",
-            "feature_folder" : "/data/pzinemanas/ESC50/features",
-            "annotations_folder" : "",
-            "evaluation_mode" : "cross-validation",
-            "folds" : ["fold1", "fold2", "fold3", "fold4", "fold5"],
-            "metadata" : "/data/pzinemanas/ESC50/meta/esc50.csv"
+            "dataset_path" : "/data/pzinemanas/ESC50",
+            "audio_folder" : "audio22050",
+            "feature_folder" : "features"
         },
         "URBAN_SED" : {
-            "label_list" : ["air_conditioner", "car_horn", "children_playing",
-                "dog_bark", "drilling", "engine_idling", "gun_shot",
-                "jackhammer", "siren", "street_music"],
-            "dataset_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0",
-            "audio_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0/audio",
-            "feature_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0/features",
-            "annotations_folder" : "/data/pzinemanas/URBAN-SED_v2.0.0/annotations",
-            "evaluation_mode" : "train-validate-test",
-            "folds" : ["train", "validate", "test"],
-            "metadata" : ""
+            "dataset_path" : "/data/pzinemanas/URBAN-SED_v2.0.0",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"
         },
         "SONYC_UST" : {
-            "label_list" : [],
-            "dataset_folder" : "/data/pzinemanas/SONYC_UST",
-            "audio_folder" : "/data/pzinemanas/SONYC_UST/audio",
-            "feature_folder" : "/data/pzinemanas/SONYC_UST/features",
-            "annotations_folder" : "/data/pzinemanas/SONYC_UST/annotations",
-            "evaluation_mode" : "train-validate-test",
-            "folds" : ["train", "validate"],
-            "metadata" : "/data/pzinemanas/SONYC_UST/annotations.csv",
-            "taxonomy" : "/data/pzinemanas/SONYC_UST/dcase-ust-taxonomy.yaml"
+            "dataset_path" : "/data/pzinemanas/SONYC_UST",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"
         },
         "TAUUrbanAcousticScenes2020Mobile" : {
-            "label_list" : [],
-            "dataset_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
-            "audio_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile/audio",
-            "feature_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile/features",
-            "annotations_folder" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile/annotations",
-            "evaluation_mode" : "train-validate-test",
-            "folds" : ["train", "validate"],
-            "metadata" : "",
-            "taxonomy" : ""            
+            "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"           
         }
     }
 }

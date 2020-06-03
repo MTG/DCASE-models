@@ -8,7 +8,7 @@ import json
 import openl3
 
 from ..utils.ui import progressbar
-from ..utils.files import mkdir_if_not_exists
+from ..utils.files import mkdir_if_not_exists, load_json
 
 
 class FeatureExtractor():
@@ -93,6 +93,10 @@ class FeatureExtractor():
         if (len(audio.shape) > 1) & (mono):
             audio = audio[:,0]       
 
+        if self.sr != sr_old:
+            print('changing sampling rate',sr_old,self.sr)
+            audio = librosa.resample(audio, sr_old, self.sr)
+
         # continuous array (for some librosa functions)
         audio = np.asfortranarray(audio)
         return audio 
@@ -129,7 +133,6 @@ class FeatureExtractor():
 
         # transpose time and freq dims
         spectrogram_np = np.transpose(spectrogram_np, (0, 2, 1))
-        print(spectrogram_np.shape)
 
         return spectrogram_np
 
@@ -144,22 +147,28 @@ class FeatureExtractor():
             Path to the feature folder.
 
         """
+        feature_name = self.params['name']
+        feature_path = os.path.join(folder_features, feature_name)
+
+        # if features already were extracted, exit. 
+        if self.check_features_folder(feature_path):
+            return None
 
         mkdir_if_not_exists(folder_features)
+        mkdir_if_not_exists(feature_path)
+
         files_orig = sorted(glob.glob(os.path.join(folder_audio, '*.wav')))
+
         for file_audio in progressbar(files_orig, "Computing: ", 40):
             
             features_array = self.calculate_features(file_audio)
             #print(spectrograms.shape)
             file_features = file_audio.split('/')[-1]
             file_features = file_features.replace('wav','npy')
-            
-            feature_name = self.params['name']
+            np.save(os.path.join(feature_path, file_features), features_array)
 
-            feature_path = os.path.join(folder_features,feature_name)
-            mkdir_if_not_exists(feature_path)
-            np.save(os.path.join(feature_path,file_features),features_array)
-                
+        self.save_parameters_json(feature_path) 
+        return 1       
 
     def save_parameters_json(self, path):
         """ Save a json file with the self.params. Useful for checking if 
@@ -171,8 +180,22 @@ class FeatureExtractor():
             Path to the JSON file
 
         """
-        with open(path, 'w') as fp:
+        json_path = os.path.join(path, "parameters.json")
+        with open(json_path, 'w') as fp:
             json.dump(self.params, fp)
+
+
+    def check_features_folder(self, features_folder):
+        json_features_folder = os.path.join(features_folder, "parameters.json")
+        if not os.path.exists(json_features_folder):
+            return False
+        parameters_features_folder = load_json(json_features_folder)
+
+        for key in parameters_features_folder.keys():
+            if parameters_features_folder[key] != self.params[key]:
+                return False
+
+        return True
 
 
 class Spectrogram(FeatureExtractor):
@@ -198,13 +221,33 @@ class MelSpectrogram(FeatureExtractor):
 
     def calculate_features(self, file_name):
         # get spectrograms
-        spectrograms = super().calculate_features(file_name)
+        #spectrograms = super().calculate_features(file_name)
 
-        # convert to mel-spectograms
-        mel_spectrograms = spectrograms.dot(self.mel_basis.T)
-        assert mel_spectrograms.shape[-1] == self.params['mel_bands']
+        # load audio        
+        audio = self.load_audio(file_name)
+        # spectrogram
+        stft = librosa.core.stft(audio, n_fft=self.n_fft, hop_length=self.audio_hop,
+                                            win_length=self.audio_win, center=True)
+        # power
+        spectrogram = np.abs(stft)**2
+        # convert to mel_spectrogram
+        
+        mel_spectrogram = self.mel_basis.dot(spectrogram)
+        assert mel_spectrogram.shape[0] == self.params['mel_bands']
 
-        return mel_spectrograms
+        # convert power to db
+        mel_spectrogram = librosa.power_to_db(mel_spectrogram)
+
+        # convert to sequences (windowing)
+        mel_spectrogram_seqs = self.get_sequences(mel_spectrogram, pad=True)
+
+        # convert to numpy
+        mel_spectrogram_np = np.asarray(mel_spectrogram_seqs)
+
+        # transpose time and freq dims
+        mel_spectrogram_np = np.transpose(mel_spectrogram_np, (0, 2, 1))        
+
+        return mel_spectrogram_np
 
 class Openl3(FeatureExtractor):
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5, audio_win=1024, audio_hop=512, 

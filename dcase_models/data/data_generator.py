@@ -70,8 +70,7 @@ class DataGenerator():
     return_file_list()
         Returns self.file_lists
     """
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
         """ Initialize the DataGenerator 
         Parameters
         ----------
@@ -91,19 +90,40 @@ class DataGenerator():
             Path to the metadata file of dataset, default None
 
         """
-        self.audio_folder = audio_folder
-        self.features_folder = features_folder
-        self.annotations_folder = annotations_folder
+        # General attributes
+        self.dataset_path = dataset_path
         self.features = features
-        self.fold_list = fold_list
-        self.label_list = label_list
-        self.meta_file = meta_file
-        self.taxonomy_file = taxonomy_file
-        self.evaluation_mode = evaluation_mode   
-        self.use_validate_set = use_validate_set  
+        self.use_validate_set = use_validate_set 
+
+        if audio_folder is None:
+            self.audio_folder = os.path.join(dataset_path, 'audio')
+        else:
+            self.audio_folder = os.path.join(dataset_path, audio_folder)
+        self.features_folder = os.path.join(dataset_path, features_folder)
+
+        # make features folder if does not exists
+        mkdir_if_not_exists(self.features_folder)
+        
+        # Specific attributes
+        self.set_specific_attributes()
+
         self.file_lists = {}
         self.data = {}
         self.get_file_lists()
+
+    def set_specific_attributes(self):
+        self.fold_list = ["fold1", "fold2", "fold3", "fold4", "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"]
+        self.label_list = ["air_conditioner", "car_horn", "children_playing",
+                           "dog_bark", "drilling", "engine_idling", "gun_shot",
+                           "jackhammer", "siren", "street_music"]
+      #  self.meta_file = None
+      #  self.taxonomy_file = None
+        self.evaluation_mode = 'cross-validation'
+
+        self.folders_list = []
+        for fold in self.fold_list:
+            self.folders_list.append({'audio': os.path.join(self.audio_folder, fold), 
+                                      'features': os.path.join(self.features_folder, fold)})
 
     def get_file_lists(self):
         """ Create self.file_lists, a dict thath includes a list of files per fold 
@@ -127,11 +147,9 @@ class DataGenerator():
             annotations of the file file_name      
 
         """
-        y = np.zeros((len(self.label_list)))
+        y = np.zeros((len(features), len(self.label_list)))
         class_ix = int(os.path.basename(file_name).split('-')[1])
-        y[class_ix] = 1
-        y = np.expand_dims(y, 0)
-        y = np.repeat(y, len(features), 0)
+        y[:, class_ix] = 1
         return y
 
     def data_generation(self, list_files_temp):
@@ -288,18 +306,20 @@ class DataGenerator():
     def return_file_list(self, fold_test):
         return self.file_lists[fold_test]
 
+    def get_folder_lists(self):
+        return self.folders_list
+
     def download_dataset(self, dataset_folder, zenodo_url, zenodo_files):
         download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files)
+
 
 
 
 # UrbanSound8k class (just a copy of DataGenerator)
 import csv
 class UrbanSound8k(DataGenerator):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
-                         taxonomy_file, evaluation_mode, use_validate_set)
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
 
     def download_dataset(self, dataset_folder):
         zenodo_url = "https://zenodo.org/record/1203745/files"
@@ -309,11 +329,13 @@ class UrbanSound8k(DataGenerator):
 
 # ESC50 cllass
 class ESC50(DataGenerator):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+        # load metadata information and create label_list
+        meta_file = os.path.join(dataset_path, 'meta/esc50.csv')
+
         self.metadata = {}
         n_classes = 50
-        label_list = ['']*n_classes
+        self.label_list = ['']*n_classes
         with open(meta_file) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0
@@ -327,10 +349,18 @@ class ESC50(DataGenerator):
                 class_name = row[3]
                 esc10 = row[4] == 'True' 
                 self.metadata[filename] = {'fold': fold, 'class_ix': class_ix, 'class_name': class_name, 'esc10': esc10}
-                if class_name not in label_list:
-                    label_list[class_ix] = class_name
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
-                         taxonomy_file, evaluation_mode, use_validate_set)
+                if class_name not in self.label_list:
+                    self.label_list[class_ix] = class_name
+
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
+
+    def set_specific_attributes(self):
+        self.fold_list = ["fold1", "fold2", "fold3", "fold4", "fold5"]
+        self.evaluation_mode = 'cross-validation'
+
+        # all wav files are in the same folder
+        self.folders_list = [{'audio': os.path.join(self.audio_folder),
+                              'features': os.path.join(self.features_folder)}]
 
     def get_file_lists(self):
         self.file_lists = {}
@@ -365,11 +395,9 @@ class ESC50(DataGenerator):
 
 
 class ESC10(ESC50):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='cross-validation', use_validate_set=True):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True): 
         # first call init of ESC50 class
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
-                         taxonomy_file, evaluation_mode, use_validate_set)
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
         
         # then change self.metadata and self.laberl_lsit to keep only ESC-10
         new_metada = {}
@@ -398,12 +426,25 @@ from pandas import read_csv
 from sed_eval.util.event_roll import event_list_to_event_roll
 # URBAN-SED class
 class URBAN_SED(DataGenerator):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file=None, taxonomy_file=None,
-                 evaluation_mode='tran-validate-test', use_validate_set=True, sequence_time=1.0,sequence_hop_time=0.5, metric_resolution_sec=1.0):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True, 
+                 sequence_time=1.0,sequence_hop_time=0.5, metric_resolution_sec=1.0): 
         self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
         self.metric_resolution_sec = metric_resolution_sec
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file)
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
+
+    def set_specific_attributes(self):
+        self.annotations_folder = os.path.join(self.dataset_path, 'annotations')
+        self.fold_list = ["train", "validate", "test"]
+        self.label_list = ["air_conditioner", "car_horn", "children_playing",
+                           "dog_bark", "drilling", "engine_idling", "gun_shot",
+                           "jackhammer", "siren", "street_music"]
+        self.evaluation_mode = 'train-validate-test'
+
+        self.folders_list = []
+        for fold in self.fold_list:
+            self.folders_list.append({'audio': os.path.join(self.audio_folder, fold), 
+                                      'features': os.path.join(self.features_folder, fold)})
 
     def get_file_lists(self):
         super().get_file_lists()
@@ -490,15 +531,23 @@ class URBAN_SED(DataGenerator):
 from pandas import read_csv
 import yaml
 class SONYC_UST(DataGenerator):
-    def __init__(self, audio_folder, features_folder, annotations_folder, features, fold_list, 
-                 label_list, meta_file=None, taxonomy_file=None, evaluation_mode='train-validation', use_validate_set=True):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True): 
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
 
-        self.metadata = read_csv(meta_file).sort_values('audio_filename')
-        with open(taxonomy_file, 'r') as f:
-            label_list = yaml.load(f, Loader=yaml.Loader)
+    def set_specific_attributes(self):
+        self.fold_list = ["train", "validate"]
+        self.evaluation_mode = 'train-validate-test'
+        self.meta_file = os.path.join(self.dataset_path, 'annotations.csv')
+        self.taxonomy_file = os.path.join(self.dataset_path, 'dcase-ust-taxonomy.yaml')
 
-        super().__init__(audio_folder, features_folder, annotations_folder, features, fold_list, label_list, meta_file, 
-                         taxonomy_file, evaluation_mode, use_validate_set)
+        self.metadata = read_csv(self.meta_file).sort_values('audio_filename')
+
+        with open(self.taxonomy_file, 'r') as f:
+            self.label_list = yaml.load(f, Loader=yaml.Loader)
+
+        # all wav files are in the same folder
+        self.folders_list = [{'audio': os.path.join(self.audio_folder),
+                              'features': os.path.join(self.features_folder)}]
 
     def get_file_lists(self):
         filename_to_split = self.metadata[['audio_filename','split']].drop_duplicates()
@@ -509,14 +558,15 @@ class SONYC_UST(DataGenerator):
         for fold in self.fold_list:
             self.file_lists[fold] = []
             features_folder = os.path.join(self.features_folder, self.features)   
-            all_files = sorted(glob.glob(os.path.join(features_folder, '*.npy')))
+            all_files = sorted(glob.glob(os.path.join(self.audio_folder, '*.wav')))
             assert len(all_files) != 0
             for fil in all_files:
-                basename = os.path.basename(fil).split('.')[0] + '.wav'
+                basename = os.path.basename(fil)
                 if basename in all_files_in_metadata:
                     j = all_files_in_metadata.index(basename)
                     if splits[j] == fold:
-                        self.file_lists[fold].append(fil) 
+                        file_npy = os.path.join(features_folder, basename.split('.')[0] + '.npy')
+                        self.file_lists[fold].append(file_npy) 
 
     def get_annotations(self, file_name, features):
        # only coarse level
@@ -555,3 +605,76 @@ class SONYC_UST(DataGenerator):
 
 
 
+class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True): 
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
+
+    def set_specific_attributes(self):
+        self.fold_list = ["train", "test"]
+        self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
+        self.label_list = ['airport', 'shopping_mall', 'metro_station', 
+                           'street_pedestrian', 'public_square', 'street_traffic',
+                           'tram', 'bus', 'metro', 'park']
+
+        self.evaluation_setup_train = os.path.join(self.dataset_path, 'evaluation_setup', 'fold1_train.csv')
+        self.evaluation_setup_test = os.path.join(self.dataset_path, 'evaluation_setup', 'fold1_test.csv')
+        self.annotations_folder = os.path.join(self.dataset_path, 'annotations')
+
+        # all wav files are in the same folder
+        self.folders_list = [{'audio': os.path.join(self.audio_folder),
+                              'features': os.path.join(self.features_folder)}]
+
+    def get_file_lists(self):
+        self.file_lists = {}
+        evaluation_files = [self.evaluation_setup_train, self.evaluation_setup_test]
+        for j, fold in enumerate(['train', 'test']):
+            self.file_lists[fold] = []
+            csv_filename = evaluation_files[j]
+            with open(csv_filename) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter='\t')
+                line_count = 0
+                for row in csv_reader:
+                    if line_count == 0:
+                        line_count += 1
+                        continue
+                    file_name = row[0].split('/')[-1]
+                    file_name_npy = os.path.basename(file_name).split('.')[0] + '.npy'
+                    self.file_lists[fold].append(os.path.join(self.features_folder, self.features, file_name_npy))
+
+
+    def get_annotations(self, file_name, features):
+        y = np.zeros((len(features), len(self.label_list)))
+        basename = os.path.basename(file_name)
+        # delete file extension
+        basename = basename.split('.')[0]
+        scene_label, city, location_id, segment_id, device_id = basename.split('-')
+        class_ix = self.label_list.index(scene_label)
+        y[:, class_ix] = 1
+        return y
+
+    def get_data_for_training(self, fold_test='test'):
+        # train-val-test mode
+
+        X_train = np.concatenate(self.data['train']['X'],axis=0)
+        Y_train = np.concatenate(self.data['train']['Y'],axis=0)
+
+        # TODO: make a validation set
+        X_val = X_train
+        Y_val = Y_train
+
+        return X_train, Y_train, X_val, Y_val
+
+    def get_data_for_testing(self, fold_test='test'):
+        X_test = np.concatenate(self.data['test']['X'],axis=0)
+        Y_test = np.concatenate(self.data['test']['Y'],axis=0)        
+        return X_test, Y_test
+
+
+    def download_dataset(self, dataset_folder):
+        zenodo_url = "https://zenodo.org/record/3819968/files"
+        zenodo_files = ["TAU-urban-acoustic-scenes-2020-mobile-development.audio.%d.zip" % j for j in range(1,17)]
+        zenodo_files.append('TAU-urban-acoustic-scenes-2020-mobile-development.doc.zip')
+        zenodo_files.append('TAU-urban-acoustic-scenes-2020-mobile-development.meta.zip')
+
+        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
+        move_all_files_to_parent(dataset_folder, "TAU-urban-acoustic-scenes-2020-mobile-development")  
