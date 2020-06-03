@@ -33,8 +33,11 @@ feature_extractor = feature_extractor_class(sequence_time=params_features['seque
 # get dataset class
 data_generator_class = get_class_by_name(globals(), args.dataset, DataGenerator)
 # init data_generator
+kwargs = {}
+if args.dataset == 'URBAN_SED':
+    kwargs = {'sequence_hop_time': params['features']['sequence_hop_time']}
 data_generator = data_generator_class(params_dataset['dataset_path'], params_dataset['feature_folder'], args.features, 
-                                      audio_folder=params_dataset['audio_folder'])
+                                      audio_folder=params_dataset['audio_folder'], **kwargs)
 
 # extract features if needed
 folders_list = data_generator.get_folder_lists()

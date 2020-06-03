@@ -93,12 +93,13 @@ class FeatureExtractor():
         if (len(audio.shape) > 1) & (mono):
             audio = audio[:,0]       
 
+        # continuous array (for some librosa functions)
+        audio = np.asfortranarray(audio)
+
         if self.sr != sr_old:
             print('changing sampling rate',sr_old,self.sr)
             audio = librosa.resample(audio, sr_old, self.sr)
 
-        # continuous array (for some librosa functions)
-        audio = np.asfortranarray(audio)
         return audio 
 
     def calculate_features(self, file_name):
@@ -231,7 +232,7 @@ class MelSpectrogram(FeatureExtractor):
         # power
         spectrogram = np.abs(stft)**2
         # convert to mel_spectrogram
-        
+
         mel_spectrogram = self.mel_basis.dot(spectrogram)
         assert mel_spectrogram.shape[0] == self.params['mel_bands']
 

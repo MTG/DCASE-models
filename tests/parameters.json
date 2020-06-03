@@ -5,7 +5,7 @@
         "audio_hop":670,
         "audio_win":1024,
         "n_fft":1024, 
-        "sr": 44100,
+        "sr": 22050,
         "Spectrogram" : {},
         "MelSpectrogram" : {
             "mel_bands": 40
@@ -33,7 +33,7 @@
             "model_arguments" : {
                 "large_cnn" : 0,
                 "n_dense_cnn" : 64,
-                "n_chanels" : 0,
+                "n_channels" : 0,
                 "filter_size_cnn" : [5, 5], 
                 "pool_size_cnn" : [2,2]
             },

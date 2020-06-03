@@ -253,7 +253,7 @@ class VGGish(DCASEModelContainer):
 
     https://research.google.com/audioset/
     based on vggish-keras https://pypi.org/project/vggish-keras/
-    ''''
+    '''
     def __init__(self, model=None, folder=None, metrics=['accuracy'], n_frames_cnn=96, 
                 n_freq_cnn=64, n_classes=10, n_channels=0, embedding_size=128, pooling='avg', include_top=False, compress=False):
 
@@ -326,7 +326,7 @@ class DCASE2020Task5Baseline(DCASEModelContainer):
 
     
     based on https://github.com/sonyc-project/dcase2020task5-uststc-baseline/blob/master/src/classify.py
-    ''''
+    '''
     def __init__(self, model=None, folder=None, metrics=['microAUPRC', 'macroAUPRC'], n_frames_cnn=96, 
                 n_freq_cnn=64, n_classes=10, hidden_layer_size=128, num_hidden_layers=1, l2_reg=1e-5):
 

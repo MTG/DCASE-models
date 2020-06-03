@@ -39,7 +39,7 @@ feature_extractor.extract('audio/','features/')
 
 # load features files and show them
 
-files = ['features/mel_spectrogram/40722-8-0-7.npy', 'features/mel_spectrogram/147764-4-7-0.npy', 'features/mel_spectrogram/176787-5-0-0.npy']
+files = ['features/Spectrogram/40722-8-0-7.npy', 'features/Spectrogram/147764-4-7-0.npy', 'features/Spectrogram/176787-5-0-0.npy']
 
 for i,fi in enumerate(files):
     mel_spec = np.load(fi)
@@ -58,4 +58,4 @@ for i,fi in enumerate(files):
     plt.show()
 
 
-feature_extractor.save_parameters_json('features/parameters.json')
+#feature_extractor.save_parameters_json('features')

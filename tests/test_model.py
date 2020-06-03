@@ -10,7 +10,7 @@ from dcase_models.data.data_generator import *
 from dcase_models.model.container import *
 from dcase_models.model.models import *
 from dcase_models.data.scaler import Scaler
-from dcase_models.data.feature_extractor import FeatureExtractor
+from dcase_models.data.feature_extractor import *
 from dcase_models.utils.misc import get_class_by_name
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -19,21 +19,51 @@ parser = argparse.ArgumentParser(description='Test DataGenerator')
 parser.add_argument('-d', '--dataset', type=str, help='dataset to use for the test', default='UrbanSound8k')
 parser.add_argument('-m', '--model', type=str, help='model to use for the test', default='SB_CNN')
 parser.add_argument('-f', '--fold', type=str, help='fold of the dataset', default='fold1')
+parser.add_argument('-feat', '--features', type=str, help='features to use for the test', default='MelSpectrogram')
 
 args = parser.parse_args()
 
 params = load_json('parameters.json')
 params_dataset = params["datasets"][args.dataset]
-params_model = params["models"][args.model]
+params_features = params["features"]
+params_model = params['models'][args.model]
 
+# get feature extractor class
+feature_extractor_class = get_class_by_name(globals(), args.features, FeatureExtractor)
+# init feature extractor
+feature_extractor = feature_extractor_class(sequence_time=params_features['sequence_time'], 
+                                            sequence_hop_time=params_features['sequence_hop_time'], 
+                                            audio_win=params_features['audio_win'], 
+                                            audio_hop=params_features['audio_hop'], 
+                                            n_fft=params_features['n_fft'], 
+                                            sr=params_features['sr'], **params_features[args.features])
 # get dataset class
 data_generator_class = get_class_by_name(globals(), args.dataset, DataGenerator)
-data_generator = data_generator_class(params_dataset['audio_folder'], params_dataset['feature_folder'], params_dataset['annotations_folder'], 
-                                      params['features']['features'][0], params_dataset['folds'], params_dataset['label_list'])
+# init data_generator
+kwargs = {}
+if args.dataset == 'URBAN_SED':
+    kwargs = {'sequence_hop_time': params['features']['sequence_hop_time']}
+data_generator = data_generator_class(params_dataset['dataset_path'], params_dataset['feature_folder'], args.features, 
+                                      audio_folder=params_dataset['audio_folder'], **kwargs)
+
+# extract features if needed
+folders_list = data_generator.get_folder_lists()
+for audio_features_paths in folders_list:
+    print('Extracting features from folder: ', audio_features_paths['audio'])
+    response = feature_extractor.extract(audio_features_paths['audio'], audio_features_paths['features'])
+    if response is None:
+        print('Features already were calculated, continue...')
+    print('Done!')
+
+# load data
+print('Loading data... ')
 data_generator.load_data()
+X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(args.fold)
+print('Done!')
 
 # get model class
 model_container_class = get_class_by_name(globals(), args.model, DCASEModelContainer)
+print(model_container_class)
 
 fold_test = 'fold1'
 X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(fold_test)
