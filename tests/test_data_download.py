@@ -24,7 +24,7 @@ kwargs = {}
 if args.dataset == 'URBAN_SED':
     kwargs = {'sequence_hop_time': params['features']['sequence_hop_time']}
 
-data_generator = data_generator_class(params_dataset['dataset_path'], params_dataset['feature_folder'], args.features, 
+data_generator = data_generator_class(params_dataset['dataset_path'], params_dataset['feature_folder'], '', 
                                       audio_folder=params_dataset['audio_folder'], **kwargs)
 
-data_generator.download_dataset(params_dataset['dataset_folder'])
+data_generator.download_dataset()

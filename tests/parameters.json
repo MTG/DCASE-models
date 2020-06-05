@@ -81,6 +81,11 @@
             "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
             "audio_folder" : "audio",
             "feature_folder" : "features"           
+        },
+        "TAUUrbanAcousticScenes2019" : {
+            "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2019",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"           
         }
     }
 }

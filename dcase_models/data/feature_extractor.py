@@ -71,7 +71,7 @@ class FeatureExtractor():
         
         return y
 
-    def load_audio(self, file_name, mono=True):
+    def load_audio(self, file_name, mono=True, change_sampling_rate=True):
         """ Load an audio signal and convert to mono if needed
 
         Parameters
@@ -96,7 +96,7 @@ class FeatureExtractor():
         # continuous array (for some librosa functions)
         audio = np.asfortranarray(audio)
 
-        if self.sr != sr_old:
+        if (self.sr != sr_old) & (change_sampling_rate):
             print('changing sampling rate',sr_old,self.sr)
             audio = librosa.resample(audio, sr_old, self.sr)
 
@@ -263,11 +263,12 @@ class Openl3(FeatureExtractor):
         self.params['embedding_size'] = embedding_size
 
     def calculate_features(self, file_name):
-        audio = self.load_audio(file_name)
+        audio = self.load_audio(file_name, change_sampling_rate=False)
         emb, ts = openl3.get_audio_embedding(audio, self.sr, 
                                              content_type=self.params['content_type'],
                                              embedding_size=self.params['embedding_size'], 
                                              input_repr=self.params['input_repr'],
-                                             hop_size=self.sequence_hop_time)
+                                             hop_size=self.sequence_hop_time,
+                                             verbose=False)
 
         return emb

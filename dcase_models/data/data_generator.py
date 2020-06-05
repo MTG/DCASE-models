@@ -8,7 +8,7 @@ import librosa
 import soundfile as sf
 import csv
 import shutil
-import sox
+#import sox
 
 import numpy as np
 import keras
@@ -100,6 +100,16 @@ class DataGenerator():
         else:
             self.audio_folder = os.path.join(dataset_path, audio_folder)
         self.features_folder = os.path.join(dataset_path, features_folder)
+
+        # check if the dataset was download
+        # TODO improve this
+        if not self.check_if_dataset_was_downloaded():
+            response = input('The dataset was not downloaded : download [y] or continue without downloading [n] : ')
+            if response == 'y':
+                self.download_dataset()
+
+        # make dataset folder if does not exists
+        mkdir_if_not_exists(self.dataset_path)
 
         # make features folder if does not exists
         mkdir_if_not_exists(self.features_folder)
@@ -309,9 +319,21 @@ class DataGenerator():
     def get_folder_lists(self):
         return self.folders_list
 
-    def download_dataset(self, dataset_folder, zenodo_url, zenodo_files):
-        download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files)
+    def download_dataset(self, zenodo_url, zenodo_files):
+        if self.check_if_dataset_was_downloaded():
+            response = input('The dataset was downloaded already: download again [y] or continue [n] : ')
+            if response == 'n':
+                return None
+        download_files_and_unzip(self.dataset_path, zenodo_url, zenodo_files)
 
+    def set_dataset_download_finish(self):
+        log_file = os.path.join(self.dataset_path, 'download.txt')
+        with open(log_file, 'w') as txt_file:
+            txt_file.write('The dataset was download ...\n')
+
+    def check_if_dataset_was_downloaded(self):
+        log_file = os.path.join(self.dataset_path, 'download.txt')
+        return os.path.exists(log_file)
 
 
 
@@ -321,11 +343,12 @@ class UrbanSound8k(DataGenerator):
     def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
         super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
 
-    def download_dataset(self, dataset_folder):
+    def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/1203745/files"
         zenodo_files = ["UrbanSound8K.tar.gz"]
-        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
-        move_all_files_to_parent(dataset_folder, "UrbanSound8K") 
+        super().download_dataset(zenodo_url, zenodo_files)
+        move_all_files_to_parent(self.dataset_path, "UrbanSound8K") 
+        self.set_dataset_download_finish()
 
 # ESC50 cllass
 class ESC50(DataGenerator):
@@ -387,11 +410,12 @@ class ESC50(DataGenerator):
         # convert ..../xxxx.npy in xxxx.wav
         return os.path.basename(filename).split('.')[0] + '.wav'
 
-    def download_dataset(self, dataset_folder):
+    def download_dataset(self):
         github_url = "https://github.com/karoldvl/ESC-50/archive/"
         github_files = ["master.zip"]
-        super().download_dataset(dataset_folder, github_url, github_files)
-        move_all_files_to_parent(dataset_folder, "ESC-50-master") 
+        super().download_dataset(github_url, github_files)
+        move_all_files_to_parent(self.dataset_path, "ESC-50-master") 
+        self.set_dataset_download_finish()
 
 
 class ESC10(ESC50):
@@ -521,12 +545,13 @@ class URBAN_SED(DataGenerator):
 
         return X_test, Y_test
 
-    def download_dataset(self, dataset_folder):
+    def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/1324404/files"
         zenodo_files = ["URBAN-SED_v2.0.0.tar.gz"]
 
-        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
-        move_all_files_to_parent(dataset_folder, "URBAN-SED_v2.0.0")     
+        super().download_dataset(zenodo_url, zenodo_files)
+        move_all_files_to_parent(self.dataset_path, "URBAN-SED_v2.0.0")  
+        self.set_dataset_download_finish()   
 
 from pandas import read_csv
 import yaml
@@ -598,11 +623,87 @@ class SONYC_UST(DataGenerator):
     def get_data_for_testing(self, fold_test='test'):
         return None, None
 
-    def download_dataset(self, dataset_folder):
+    def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/3693077/files"
         zenodo_files = ["annotations.csv", "audio.tar.gz", "dcase-ust-taxonomy.yaml", "README.md"]
-        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
+        super().download_dataset(zenodo_url, zenodo_files)
+        self.set_dataset_download_finish()
 
+
+class TAUUrbanAcousticScenes2019(DataGenerator):
+    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True): 
+        super().__init__(dataset_path, features_folder, features, audio_folder, use_validate_set)
+
+    def set_specific_attributes(self):
+        self.fold_list = ["train", "test"]
+        self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
+        self.label_list = ['airport', 'shopping_mall', 'metro_station', 
+                           'street_pedestrian', 'public_square', 'street_traffic',
+                           'tram', 'bus', 'metro', 'park']
+
+        self.evaluation_setup_train = os.path.join(self.dataset_path, 'evaluation_setup', 'fold1_train.csv')
+        self.evaluation_setup_test = os.path.join(self.dataset_path, 'evaluation_setup', 'fold1_test.csv')
+        self.annotations_folder = os.path.join(self.dataset_path, 'annotations')
+
+        # all wav files are in the same folder
+        self.folders_list = [{'audio': os.path.join(self.audio_folder),
+                              'features': os.path.join(self.features_folder)}]
+
+    def get_file_lists(self):
+        self.file_lists = {}
+        evaluation_files = [self.evaluation_setup_train, self.evaluation_setup_test]
+        for j, fold in enumerate(['train', 'test']):
+            self.file_lists[fold] = []
+            csv_filename = evaluation_files[j]
+            with open(csv_filename) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter='\t')
+                line_count = 0
+                for row in csv_reader:
+                    if line_count == 0:
+                        line_count += 1
+                        continue
+                    file_name = row[0].split('/')[-1]
+                    file_name_npy = os.path.basename(file_name).split('.')[0] + '.npy'
+                    self.file_lists[fold].append(os.path.join(self.features_folder, self.features, file_name_npy))
+
+
+    def get_annotations(self, file_name, features):
+        y = np.zeros((len(features), len(self.label_list)))
+        basename = os.path.basename(file_name)
+        # delete file extension
+        basename = basename.split('.')[0]
+        scene_label, city, location_id, segment_id, device_id = basename.split('-')
+        class_ix = self.label_list.index(scene_label)
+        y[:, class_ix] = 1
+        return y
+
+    def get_data_for_training(self, fold_test='test'):
+        # train-val-test mode
+
+        X_train = np.concatenate(self.data['train']['X'],axis=0)
+        Y_train = np.concatenate(self.data['train']['Y'],axis=0)
+
+        # TODO: make a validation set
+        X_val = self.data['train']['X']
+        Y_val = self.data['train']['Y']
+
+        return X_train, Y_train, X_val, Y_val
+
+    def get_data_for_testing(self, fold_test='test'):
+        X_test = self.data['test']['X']
+        Y_test = self.data['test']['Y']
+        return X_test, Y_test
+
+
+    def download_dataset(self):
+        zenodo_url = "https://zenodo.org/record/2589280/files"
+        zenodo_files = ["TAU-urban-acoustic-scenes-2019-development.audio.%d.zip" % j for j in range(1,22)]
+        zenodo_files.append('TAU-urban-acoustic-scenes-2019-development.doc.zip')
+        zenodo_files.append('TAU-urban-acoustic-scenes-2019-development.meta.zip')
+
+        super().download_dataset(zenodo_url, zenodo_files)
+        move_all_files_to_parent(self.dataset_path, "TAU-urban-acoustic-scenes-2019-development")  
+        self.set_dataset_download_finish()
 
 
 class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
@@ -659,22 +760,23 @@ class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
         Y_train = np.concatenate(self.data['train']['Y'],axis=0)
 
         # TODO: make a validation set
-        X_val = X_train
-        Y_val = Y_train
+        X_val = self.data['train']['X']
+        Y_val = self.data['train']['Y']
 
         return X_train, Y_train, X_val, Y_val
 
     def get_data_for_testing(self, fold_test='test'):
-        X_test = np.concatenate(self.data['test']['X'],axis=0)
-        Y_test = np.concatenate(self.data['test']['Y'],axis=0)        
+        X_test = self.data['test']['X']
+        Y_test = self.data['test']['Y']   
         return X_test, Y_test
 
 
-    def download_dataset(self, dataset_folder):
+    def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/3819968/files"
         zenodo_files = ["TAU-urban-acoustic-scenes-2020-mobile-development.audio.%d.zip" % j for j in range(1,17)]
         zenodo_files.append('TAU-urban-acoustic-scenes-2020-mobile-development.doc.zip')
         zenodo_files.append('TAU-urban-acoustic-scenes-2020-mobile-development.meta.zip')
 
-        super().download_dataset(dataset_folder, zenodo_url, zenodo_files)
-        move_all_files_to_parent(dataset_folder, "TAU-urban-acoustic-scenes-2020-mobile-development")  
+        super().download_dataset(zenodo_url, zenodo_files)
+        move_all_files_to_parent(self.dataset_path, "TAU-urban-acoustic-scenes-2020-mobile-development")  
+        self.set_dataset_download_finish()
