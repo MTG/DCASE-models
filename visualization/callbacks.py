@@ -8,12 +8,10 @@ sys.path.append('../')
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
+from dcase_models.data.data_generator import DataGenerator
 from dcase_models.utils.gui import encode_audio
 from dcase_models.utils.misc import get_default_args_of_function
-from dcase_models.data.feature_extractor import *
 from dcase_models.data.scaler import Scaler
-from dcase_models.model.container import DCASEModelContainer
-from dcase_models.data.data_generator import *
 from dcase_models.utils.files import save_pickle, load_pickle
 from dcase_models.utils.files import load_json, mkdir_if_not_exists, load_training_log
 
