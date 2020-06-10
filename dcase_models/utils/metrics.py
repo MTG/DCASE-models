@@ -1,4 +1,4 @@
-from scipy import interpolate
+# from scipy import interpolate
 import numpy as np
 from scipy.stats import mode
 
@@ -29,17 +29,18 @@ def evaluate_metrics(model, X_val, Y_val, metrics, **kwargs):
         of one file. Shape of each element: (N_windows, N_hops, N_mel_bands)
         N_windows can be different in each file (element)
     Y_val : list ndarray
-        Each element in the list is a 1D array with the annotations (one hot encoding).
+        Each element in the list is a 1D array with
+        the annotations (one hot encoding).
         Shape of each elment (N_classes,)
     """
     n_files = len(X_val)
 
     predictions = []  # np.zeros(n_files)
-    #annotations = np.zeros(n_files)
+    # annotations = np.zeros(n_files)
 
     for i in range(n_files):
         X = X_val[i]
-        Y = Y_val[i]
+        # Y = Y_val[i]
         Y_predicted = model.predict(X)
         # if multiple outputs, select the first
         if type(Y_predicted) == list:
@@ -87,15 +88,7 @@ def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
     for i in range(n_files):
         y_true = Y_val[i]
         pred = Y_predicted[i]
-        # change resolution
-        #print(y_true.shape, pred.shape)
-  #      time_grid_Y = np.linspace(0, y_true.shape[0]*metric_resolution_sec, y_true.shape[0])
-  #      time_grid_pred = np.linspace(0, pred.shape[0]*sequence_time_sec, pred.shape[0])
-  #      print(time_grid_pred.shape, pred.shape)
-  #      print(time_grid_Y)
-  #      print(time_grid_pred)
- #       f = interpolate.interp1d(time_grid_pred, pred, axis=0)
-  #      y_pred = f(time_grid_Y)
+
         if pred.shape[0] == y_true.shape[0]:
             y_pred = pred
         else:
@@ -117,11 +110,11 @@ def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
     Nref = np.sum(annotations)
     Nsys = np.sum(predictions)
 
-    S = min(Nref, Nsys) - Ntp
-    D = max(0.0, Nref - Nsys)
-    I = max(0.0, Nsys - Nref)
+    Sus = min(Nref, Nsys) - Ntp
+    Del = max(0.0, Nref - Nsys)
+    Ins = max(0.0, Nsys - Nref)
 
-    ER = (S+D+I)/float(Nref + eps)
+    ER = (Sus+Del+Ins)/float(Nref + eps)
 
     return ER
 
@@ -129,23 +122,13 @@ def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
 def F1(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
     n_files = len(Y_val)
 
-  #  print(Y_val[0].shape,Y_predicted[0].shape)
-
     predictions = []
     annotations = []
 
     for i in range(n_files):
         y_true = Y_val[i]
         pred = Y_predicted[i]
-        # change resolution
-   #     print(y_true.shape, pred.shape)
-  #      time_grid_Y = np.linspace(0, y_true.shape[0]*metric_resolution_sec, y_true.shape[0])
-  #      time_grid_pred = np.linspace(0, pred.shape[0]*sequence_time_sec, pred.shape[0])
-  #      print(time_grid_pred.shape, pred.shape)
-  #      print(time_grid_Y)
-  #      print(time_grid_pred)
- #       f = interpolate.interp1d(time_grid_pred, pred, axis=0)
-  #      y_pred = f(time_grid_Y)
+
         if pred.shape[0] == y_true.shape[0]:
             y_pred = pred
         else:
@@ -164,9 +147,9 @@ def F1(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
 
     predictions = (predictions > 0.5).astype(int)
     Ntp = np.sum(predictions + annotations > 1)
-    Ntn = np.sum(predictions + annotations > 0)
-    Nfp = np.sum(predictions - annotations > 0)
-    Nfn = np.sum(annotations - predictions > 0)
+    # Ntn = np.sum(predictions + annotations > 0)
+    # Nfp = np.sum(predictions - annotations > 0)
+    # Nfn = np.sum(annotations - predictions > 0)
     Nref = np.sum(annotations)
     Nsys = np.sum(predictions)
 

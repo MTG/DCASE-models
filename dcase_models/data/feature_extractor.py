@@ -4,7 +4,6 @@ import librosa
 import glob
 import soundfile as sf
 import json
-import openl3
 
 from ..utils.ui import progressbar
 from ..utils.files import mkdir_if_not_exists, load_json
@@ -23,8 +22,9 @@ class FeatureExtractor():
 
     """
 
-    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5, audio_win=1024, audio_hop=512, n_fft=1024, sr=44100):
-        """ Initialize the FeatureExtractor 
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
+                 audio_win=1024, audio_hop=512, n_fft=1024, sr=44100):
+        """ Initialize the FeatureExtractor
         Parameters
         ----------
 
@@ -43,7 +43,8 @@ class FeatureExtractor():
         self.params = {'sr': self.sr,
                        'sequence_time': self.sequence_time,
                        'sequence_hop_time': self.sequence_hop_time,
-                       'audio_hop': self.audio_hop, 'audio_win': self.audio_win,
+                       'audio_hop': self.audio_hop,
+                       'audio_win': self.audio_win,
                        'n_fft': self.n_fft, 'features': 'FeatureExtractor'}
 
     def get_sequences(self, x, pad=True):
@@ -52,13 +53,13 @@ class FeatureExtractor():
         ----------
         x : ndarray
             2D representation
-        pad : bool 
+        pad : bool
             if True, pad x before windowing
 
         Returns
         -------
         list of ndarray
-            list of sequences      
+            list of sequences
 
         """
         if pad:
@@ -81,7 +82,7 @@ class FeatureExtractor():
         ----------
         file_name : str
             Path to the audio file
-        mono : bool 
+        mono : bool
             if True, only returns left channel
 
         Returns
@@ -123,7 +124,8 @@ class FeatureExtractor():
         audio = self.load_audio(file_name)
 
         # spectrogram
-        stft = librosa.core.stft(audio, n_fft=self.n_fft, hop_length=self.audio_hop,
+        stft = librosa.core.stft(audio, n_fft=self.n_fft,
+                                 hop_length=self.audio_hop,
                                  win_length=self.audio_win, center=True)
 
         # power
@@ -147,7 +149,7 @@ class FeatureExtractor():
         ----------
         folder_audio : str
             Path to the audio folder
-        folder_features : str 
+        folder_features : str
             Path to the feature folder.
 
         """
@@ -175,7 +177,7 @@ class FeatureExtractor():
         return 1
 
     def save_parameters_json(self, path):
-        """ Save a json file with the self.params. Useful for checking if 
+        """ Save a json file with the self.params. Useful for checking if
         the features files were calculated with same parameters.
 
         Parameters
@@ -200,4 +202,3 @@ class FeatureExtractor():
                 return False
 
         return True
-

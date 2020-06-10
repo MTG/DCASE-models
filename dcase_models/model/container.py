@@ -1,11 +1,9 @@
 import numpy as np
 import os
 import json
-import ast
 
 import keras.backend as K
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint, CSVLogger
+from keras.callbacks import CSVLogger
 from keras.models import model_from_json, Model
 from keras.layers import Dense, Input
 
@@ -48,7 +46,9 @@ class DCASEModelContainer():
 
     """
 
-    def __init__(self, model=None, folder=None, model_name="APNet", metrics=['accuracy'], **kwargs):
+    def __init__(self, model=None, folder=None,
+                 model_name="DCASEModelContainer",
+                 metrics=['accuracy'], **kwargs):
         """
         Parameters
         ----------
@@ -68,11 +68,12 @@ class DCASEModelContainer():
         self.metrics = metrics
 
     def train(self, X_train, Y_train, X_val, Y_val, weights_path='./',
-              optimizer='Adam', learning_rate=0.001, early_stopping=100, considered_improvement=0.01,
-              losses='categorical_crossentropy', loss_weights=[1], sequence_time_sec=0.5, metric_resolution_sec=1.0, **kwargs_keras_fit):
+              optimizer='Adam', learning_rate=0.001, early_stopping=100,
+              considered_improvement=0.01, losses='categorical_crossentropy',
+              loss_weights=[1], sequence_time_sec=0.5,
+              metric_resolution_sec=1.0, **kwargs_keras_fit):
         """
         Train the keras model using the data and paramaters of arguments.
-        This function runs a function named "train_{model_name}" (i.e train_APNet).
 
         Parameters
         ----------
@@ -87,16 +88,17 @@ class DCASEModelContainer():
             Shape = (N_instances, N_hops, N_mel_bands)
         Y_val : ndarray
             2D array with the annotations of validation set (one hot encoding).
-            Shape (N_instances, N_classes)            
+            Shape (N_instances, N_classes)
         weights_path : str
-            Path where to save the best weights of the model in the training process
+            Path where to save the best weights of the model
+            in the training process
         weights_path : str
             Path where to save log of the training process
         loss_weights : list
             List of weights for each loss function ('categorical_crossentropy',
             'mean_squared_error', 'prototype_loss')
         optimizer : str
-            Optimizer used to train the model  
+            Optimizer used to train the model
         learning_rate : float
             Learning rate used to train the model
         batch_size : int
@@ -117,15 +119,23 @@ class DCASEModelContainer():
         file_weights = os.path.join(weights_path, 'best_weights.hdf5')
         file_log = os.path.join(weights_path, 'training.log')
         if self.metrics[0] == 'accuracy':
-            metrics_callback = AccuracyCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping,
-                                                considered_improvement=considered_improvement)
+            metrics_callback = AccuracyCallback(
+                X_val, Y_val, file_weights=file_weights,
+                early_stopping=early_stopping,
+                considered_improvement=considered_improvement
+            )
         if 'F1' in self.metrics:
-            metrics_callback = F1ERCallback(X_val, Y_val, file_weights=file_weights, early_stopping=early_stopping,
-                                            considered_improvement=considered_improvement, sequence_time_sec=sequence_time_sec,
-                                            metric_resolution_sec=metric_resolution_sec)
+            metrics_callback = F1ERCallback(
+                X_val, Y_val, file_weights=file_weights,
+                early_stopping=early_stopping,
+                considered_improvement=considered_improvement,
+                sequence_time_sec=sequence_time_sec,
+                metric_resolution_sec=metric_resolution_sec
+            )
         log = CSVLogger(file_log)
-        history = self.model.fit(x=X_train, y=Y_train, shuffle=True,
-                                 callbacks=[metrics_callback, log], **kwargs_keras_fit)
+        self.model.fit(x=X_train, y=Y_train, shuffle=True,
+                       callbacks=[metrics_callback, log],
+                       **kwargs_keras_fit)
 
     def evaluate(self, X_test, Y_test, scaler=None):
         """
@@ -149,7 +159,7 @@ class DCASEModelContainer():
         list
             list of annotations (ground_truth)
         list
-            list of model predictions 
+            list of model predictions
 
         """
         if scaler is not None:
@@ -166,7 +176,7 @@ class DCASEModelContainer():
         folder : str
             Path to the folder that contains model.json file
         """
-        #weights_file = os.path.join(folder, 'best_weights.hdf5')
+        # weights_file = os.path.join(folder, 'best_weights.hdf5')
         json_file = os.path.join(folder, 'model.json')
 
         with open(json_file) as json_f:
@@ -214,7 +224,8 @@ class DCASEModelContainer():
         weights_path = os.path.join(weights_folder, weights_file)
         self.model.load_weights(weights_path)
 
-    def load_pretrained_model_weights(self, weights_folder='./pretrained_weights'):
+    def load_pretrained_model_weights(self,
+                                      weights_folder='./pretrained_weights'):
         """
         Load pretrained weights to self.model weights
 
@@ -230,12 +241,14 @@ class DCASEModelContainer():
 
     def get_numer_of_parameters(self):
         trainable_count = int(
-            np.sum([K.count_params(p) for p in set(models.trainable_weights)]))
+            np.sum([K.count_params(p) for p in
+                    set(self.model.trainable_weights)]))
         return trainable_count
 
     def check_if_model_exists(self, folder, **kwargs):
         """
-        Save model parameters to parameters.json file in the path given by argument.
+        Save model parameters to parameters.json file in
+        the path given by argument.
 
         Parameters
         ----------
@@ -280,20 +293,23 @@ class DCASEModelContainer():
 
         return model_without_last_layer
 
-    def fine_tuning(self, layer_where_to_cut, new_number_of_classes=10, new_activation='softmax',
+    def fine_tuning(self, layer_where_to_cut, new_number_of_classes=10,
+                    new_activation='softmax',
                     freeze_source_model=True, new_model=None):
         """
-        Create a new model for fine-tuning. Cut the model in the layer_where_to_cut layer 
+        Create a new model for fine-tuning. Cut the model in
+        the layer_where_to_cut layer
         and add a new fully-connected layer.
 
         Parameters
         ----------
         layer_where_to_cut : str or int
-            Name (str) of index (int) of the layer where cut the model. This layer
-            is included in the new model.
+            Name (str) of index (int) of the layer where cut the model.
+            This layer is included in the new model.
 
         new_number_of_classes : int
-            Number of units in the new fully-connected layer (number of classes)
+            Number of units in the new fully-connected layer
+            (number of classes)
 
         new_activation : str
             Activitation of the new fully-connected layer
@@ -302,8 +318,9 @@ class DCASEModelContainer():
             If True, the source model is set to not be trainable
 
         new_model : Keras Model
-            If is not None, this model is add after the cut model. This is useful if you
-            want add more than a fully-connected layer. 
+            If is not None, this model is add after the cut model.
+            This is useful if you want add more than
+            a fully-connected layer.
         """
         # cut last layer
         model_without_last_layer = self.cut_network(layer_where_to_cut)

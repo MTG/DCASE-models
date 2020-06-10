@@ -1,7 +1,6 @@
 import wget
 import csv
 import shutil
-import zipfile
 import pickle
 import os
 import json
@@ -35,18 +34,6 @@ def mkdir_if_not_exists(path):
 
 
 def load_training_log(weights_folder):
-    # log_path = os.path.join(weights_folder, 'fold' + str(fold_test) + '_training.log')
-    # epochs = []
-    # val_accs = []
-    # if os.path.exists(log_path):
-    #     df = read_csv(log_path)
-    #     epochs = list(df['epoch'].values)
-
-    #     for column in ['val_logits_acc','val_out_acc','val_acc']:
-    #         if column in df.columns:
-    #             val_accs = list(df[column].values)
-    #             break
-    # return epochs,val_accs
     log_file = 'training.log'
     log_path = os.path.join(weights_folder, log_file)
 
@@ -93,8 +80,10 @@ def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
     for zip_file in zenodo_files:
         zip_file_path = os.path.join(dataset_folder, zip_file)
         if not os.path.exists(zip_file_path):
-            all_files = [f for f in os.listdir(dataset_folder) if os.path.isfile(
-                os.path.join(dataset_folder, f))]
+            all_files = [
+                f for f in os.listdir(dataset_folder) if
+                os.path.isfile(os.path.join(dataset_folder, f))
+            ]
             for f in all_files:
                 if f.split('-')[-1] == zip_file:
                     zip_file_path = os.path.join(dataset_folder, f)

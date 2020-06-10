@@ -11,7 +11,7 @@ import numpy as np
 def mel_spec_to_audio(melspec_db, mel_basis, audio_hop, audio_win):
     """
     Generate self.audios with the data of self.mel_spectrograms and the
-    parameters given by self.convert_audio_params.    
+    parameters given by self.convert_audio_params.
     """
     melspec = db_to_power(melspec_db)
     inverse = nnls(mel_basis, melspec)
@@ -53,4 +53,3 @@ def encode_audio(data, sr):
     src = """data:{type};base64,{base64}""".format(type="audio/wav",
                                                    base64=data_audio)
     return src
-

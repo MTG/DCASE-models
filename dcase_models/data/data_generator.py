@@ -4,7 +4,8 @@ import numpy as np
 
 from ..utils.ui import progressbar
 from ..utils.data import get_fold_val
-from ..utils.files import mkdir_if_not_exists, download_files_and_unzip
+from ..utils.files import download_files_and_unzip
+# from ..utils.files import mkdir_if_not_exists
 
 
 class DataGenerator():
@@ -16,13 +17,13 @@ class DataGenerator():
     ----------
     audio_folder : str
         Path to the folder with audio files
-    features_folder : str 
-        Path to the folder with the features files    
-    annotations_folder : str 
-        Path to the folder with the annotation files    
+    features_folder : str
+        Path to the folder with the features files
+    annotations_folder : str
+        Path to the folder with the annotation files
     features : list of str
-        Names of features to be loaded    
-    fold_list : list of str 
+        Names of features to be loaded
+    fold_list : list of str
         List of fold names
     label_list : list of str
         List of label names
@@ -32,7 +33,8 @@ class DataGenerator():
         Dict of form {'fold1' : [file1, file2 ...], ...}
     data : dict
         Dict that contains the data.
-        Form: {'fold1' : {'X' : [features1, features2, ...], 'Y': [ann1, ann2, ...]}, ...}
+        Form: {'fold1' : {'X' : [features1, features2, ...],
+                          'Y': [ann1, ann2, ...]}, ...}
 
     Methods
     -------
@@ -50,25 +52,26 @@ class DataGenerator():
     get_data_for_testing(fold_test):
         Returns lists to use to evaluate a model
     get_one_example_per_file(fold_test)
-        Similar to get_data_for_training, but returns only one example (sequence)
-        for each file
+        Similar to get_data_for_training, but returns only one
+        example (sequence) for each file
     return_file_list()
         Returns self.file_lists
     """
 
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
-        """ Initialize the DataGenerator 
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
+        """ Initialize the DataGenerator
         Parameters
         ----------
         audio_folder : str
             Path to the folder with audio files
-        features_folder : str 
-            Path to the folder with the features files    
-        annotations_folder : str 
-            Path to the folder with the annotation files    
+        features_folder : str
+            Path to the folder with the features files
+        annotations_folder : str
+            Path to the folder with the annotation files
         features : list of str
-            Names of features to be loaded    
-        fold_list : list of str 
+            Names of features to be loaded
+        fold_list : list of str
             List of fold names
         label_list : list of str
             List of label names
@@ -93,12 +96,13 @@ class DataGenerator():
         # check if the dataset was download
         # TODO improve this
         # if not self.check_if_dataset_was_downloaded():
-        #    response = input('The dataset was not downloaded : download [y] or continue without downloading [n] : ')
+        #    response = input('The dataset was not downloaded : download [y]
+        #                       or continue without downloading [n] : ')
         #    if response == 'y':
         #        self.download_dataset()
 
         # make dataset folder if does not exists
-       # mkdir_if_not_exists(self.dataset_path)
+        # mkdir_if_not_exists(self.dataset_path)
 
         # make features folder if does not exists
         # if self.check_if_dataset_was_downloaded():
@@ -110,21 +114,25 @@ class DataGenerator():
 
     def set_specific_attributes(self):
         self.fold_list = ["fold1", "fold2", "fold3", "fold4",
-                          "fold5", "fold6", "fold7", "fold8", "fold9", "fold10"]
+                          "fold5", "fold6", "fold7", "fold8",
+                          "fold9", "fold10"]
         self.label_list = ["air_conditioner", "car_horn", "children_playing",
                            "dog_bark", "drilling", "engine_idling", "gun_shot",
                            "jackhammer", "siren", "street_music"]
-      #  self.meta_file = None
-      #  self.taxonomy_file = None
+        # self.meta_file = None
+        # self.taxonomy_file = None
         self.evaluation_mode = 'cross-validation'
 
         self.folders_list = []
         for fold in self.fold_list:
-            self.folders_list.append({'audio': os.path.join(self.audio_folder, fold),
-                                      'features': os.path.join(self.features_folder, fold)})
+            audio_path = os.path.join(self.audio_folder, fold)
+            features_path = os.path.join(self.features_folder, fold)
+            audio_features_path = {'audio': audio_path,
+                                   'features': features_path}
+            self.folders_list.append(audio_features_path)
 
     def get_file_lists(self):
-        """ Create self.file_lists, a dict thath includes a list of files per fold 
+        """ Create self.file_lists, a dict thath includes a list of files per fold
         """
         for fold in self.fold_list:
             features_folder = os.path.join(
@@ -138,13 +146,13 @@ class DataGenerator():
         ----------
         file_name : str
             Path to the file
-        features : ndarray 
+        features : ndarray
             3D array with the features of file_name
 
         Returns
         -------
         ndarray
-            annotations of the file file_name      
+            annotations of the file file_name
 
         """
         y = np.zeros((len(features), len(self.label_list)))
@@ -163,7 +171,7 @@ class DataGenerator():
         Return
         ----------
         features_list : list of ndarray
-            List of features for each file    
+            List of features for each file
         annotations : list of ndarray
             List of annotations matrix for each file
 
@@ -201,12 +209,12 @@ class DataGenerator():
         ----------
         X_train : ndarray
             3D array with all instances of train set.
-            Shape: (N_instances, N_hops, N_freqs)  
+            Shape: (N_instances, N_hops, N_freqs)
         Y_train : list of ndarray
             2D array with annotations (one-hot coding)
-            Shape: (N_instances, N_classes)  
+            Shape: (N_instances, N_classes)
         X_val : list of ndarray
-            List of features for each file of validation set  
+            List of features for each file of validation set
         Y_val : list of ndarray
             List of annotations matrix for each file in validation set
 
@@ -264,7 +272,7 @@ class DataGenerator():
         Return
         ----------
         X_test : list of ndarray
-            List of features for each file of test set  
+            List of features for each file of test set
         Y_test : list of ndarray
             List of annotations matrix for each file in test set
 
@@ -282,8 +290,8 @@ class DataGenerator():
         folds_train.remove(fold_test)
         folds_train.remove(fold_val)
 
-        X_val = self.data[fold_val]['X']
-        Y_val = self.data[fold_val]['Y']
+        # X_val = self.data[fold_val]['X']
+        # Y_val = self.data[fold_val]['Y']
 
         X_train = []
         Y_train = []
@@ -316,7 +324,8 @@ class DataGenerator():
     def download_dataset(self, zenodo_url, zenodo_files):
         if self.check_if_dataset_was_downloaded():
             response = input(
-                'The dataset was downloaded already: download again [y] or continue [n] : ')
+                'The dataset was downloaded already: download again [y]' +
+                ' or continue [n] : ')
             if response == 'n':
                 return None
         download_files_and_unzip(self.dataset_path, zenodo_url, zenodo_files)
@@ -331,12 +340,11 @@ class DataGenerator():
         return os.path.exists(log_file)
 
     def convert_features_path_to_audio_path(self, fetures_path):
-        # convert ../features/foldX/MelSpectrogram/x.npy to ../audio/foldX/x.wav'
+        ''' convert ../features/foldX/MelSpectrogram/x.npy
+            to ../audio/foldX/x.wav '''
         audio_folder = self.audio_folder.split('/')[-1]
         features_folder = self.features_folder.split('/')[-1]
         audio_path = fetures_path.replace(self.features+'/', '')
         audio_path = audio_path.replace(features_folder, audio_folder)
         audio_path = audio_path.replace('.npy', '.wav')
         return audio_path
-
-

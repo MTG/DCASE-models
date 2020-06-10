@@ -1,19 +1,18 @@
 from .metrics import evaluate_metrics
-import matplotlib.pyplot as plt
-from keras import backend as K
+# from keras import backend as K
 from keras.callbacks import Callback
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+# import matplotlib
+# matplotlib.use('Agg')
 eps = 1e-6
 
 
 class AccuracyCallback(Callback):
-    """Keras callback to calculate acc after each epoch and save 
+    """Keras callback to calculate acc after each epoch and save
     file with the weights if the evaluation improves
     """
 
-    def __init__(self, X_val, Y_val, file_weights=None, best_acc=0, early_stopping=0, considered_improvement=0.01):
+    def __init__(self, X_val, Y_val, file_weights=None, best_acc=0,
+                 early_stopping=0, considered_improvement=0.01):
         """ Initialize the keras callback
         Parameters
         ----------
@@ -27,11 +26,11 @@ class AccuracyCallback(Callback):
             Path to the file with the weights
 
         best_acc : float
-            Last accuarcy value, only if continue 
+            Last accuarcy value, only if continue
 
         early_stopping : int
             Number of epochs for cut the training if not improves
-            if 0, do not use it    
+            if 0, do not use it
         """
 
         self.X_val = X_val
@@ -65,8 +64,8 @@ class AccuracyCallback(Callback):
         if self.current_acc > self.best_acc + self.considered_improvement:
             self.best_acc = self.current_acc
             self.model.save_weights(self.file_weights)
-            print('Acc = {:.4f} -  Best val Acc: {:.4f} (IMPROVEMENT, saving)\n'.format(
-                self.current_acc, self.best_acc))
+            msg = 'Acc = {:.4f} - Best val Acc: {:.4f} (IMPROVEMENT, saving)\n'
+            print(msg.format(self.current_acc, self.best_acc))
             self.epochs_since_improvement = 0
             self.epoch_best = epoch
         else:
@@ -80,11 +79,13 @@ class AccuracyCallback(Callback):
 
 
 class F1ERCallback(Callback):
-    """Keras callback to calculate F1 and ER after each epoch and save 
+    """Keras callback to calculate F1 and ER after each epoch and save
     file with the weights if the evaluation improves
     """
 
-    def __init__(self, X_val, Y_val, file_weights=None, best_F1=0, early_stopping=0, considered_improvement=0.01, sequence_time_sec=0.5, metric_resolution_sec=1.0):
+    def __init__(self, X_val, Y_val, file_weights=None, best_F1=0,
+                 early_stopping=0, considered_improvement=0.01,
+                 sequence_time_sec=0.5, metric_resolution_sec=1.0):
         """ Initialize the keras callback
         Parameters
         ----------
@@ -98,11 +99,11 @@ class F1ERCallback(Callback):
             Path to the file with the weights
 
         best_acc : float
-            Last accuarcy value, only if continue 
+            Last accuarcy value, only if continue
 
         early_stopping : int
             Number of epochs for cut the training if not improves
-            if 0, do not use it    
+            if 0, do not use it
         """
 
         self.X_val = X_val
@@ -128,8 +129,11 @@ class F1ERCallback(Callback):
             log data (from Callback class)
 
         """
-        results = evaluate_metrics(self.model, self.X_val, self.Y_val, ['F1', 'ER'],
-                                   sequence_time_sec=self.sequence_time_sec, metric_resolution_sec=self.metric_resolution_sec)
+        results = evaluate_metrics(
+            self.model, self.X_val, self.Y_val, ['F1', 'ER'],
+            sequence_time_sec=self.sequence_time_sec,
+            metric_resolution_sec=self.metric_resolution_sec
+        )
         F1 = results['F1']
         ER = results['ER']
         logs['F1'] = F1
@@ -140,13 +144,15 @@ class F1ERCallback(Callback):
         if self.current_F1 > self.best_F1 + self.considered_improvement:
             self.best_F1 = self.current_F1
             self.model.save_weights(self.file_weights)
-            print('F1 = {:.4f}, ER = {:.4f} -  Best val F1: {:.4f} (IMPROVEMENT, saving)\n'.format(
-                self.current_F1, ER, self.best_F1))
+            msg = """F1 = {:.4f}, ER = {:.4f} - Best val F1: {:.4f}
+                  (IMPROVEMENT, saving)\n"""
+            print(msg.format(self.current_F1, ER, self.best_F1))
             self.epochs_since_improvement = 0
             self.epoch_best = epoch
         else:
-            print('F1 = {:.4f}, ER = {:.4f} - Best val F1: {:.4f} ({:d})\n'.format(
-                self.current_F1, ER, self.best_F1, self.epoch_best))
+            msg = 'F1 = {:.4f}, ER = {:.4f} - Best val F1: {:.4f} ({:d})\n'
+            print(msg.format(self.current_F1, ER,
+                             self.best_F1, self.epoch_best))
             self.epochs_since_improvement += 1
         if self.epochs_since_improvement >= self.early_stopping-1:
             print('Not improvement for %d epochs, stopping the training' %

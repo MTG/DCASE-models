@@ -2,9 +2,12 @@ from functools import partial
 import inspect
 import sys
 
-from keras.layers import GRU, Bidirectional, TimeDistributed, Activation, Permute, Reshape
-from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D
-from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Flatten
+from keras.layers import GRU, Bidirectional
+from keras.layers import TimeDistributed, Activation, Reshape
+from keras.layers import GlobalAveragePooling2D
+from keras.layers import GlobalMaxPooling2D
+from keras.layers import Input, Lambda, Conv2D, MaxPooling2D
+from keras.layers import Dropout, Dense, Flatten
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from keras.regularizers import l2
@@ -16,18 +19,20 @@ from .container import DCASEModelContainer
 
 class SB_CNN(DCASEModelContainer):
     """
-    Inherit class of DCASEModelContainer with specific attributs and methods for
-    SB_CNN model.
+    Inherit class of DCASEModelContainer with specific attributs
+    and methods for SB_CNN model.
 
     """
 
-    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64,
+    def __init__(self, model=None, folder=None, metrics=['accuracy'],
+                 n_classes=10, n_frames_cnn=64,
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
                  large_cnn=False, n_dense_cnn=64, n_channels=0):
         """
         Function that init the SB-CNN [1] model.
 
-        [1] ​Deep Convolutional Neural Networks and Data Augmentation For Environmental Sound Classification
+        [1] ​Deep Convolutional Neural Networks and Data Augmentation
+            For Environmental Sound Classification
 ​            J. Salamon and J. P. Bello
             IEEE Signal Processing Letters, 24(3), pages 279 - 283, 2017.
 
@@ -45,16 +50,16 @@ class SB_CNN(DCASEModelContainer):
         pool_size_cnn : tuple of int
             kernel size of the pool operations
         n_classes : int
-            number of classes for the classification taks 
+            number of classes for the classification task
             (size of the last layer)
         large_cnn : bool
-            If true, the model has one more dense layer 
+            If true, the model has one more dense layer
         n_dense_cnn : int
             Size of middle dense layers
 
         Notes
         -----
-        Code based on Salamon's implementation 
+        Code based on Salamon's implementation
         https://github.com/justinsalamon/scaper_waspaa2017
 
         """
@@ -66,7 +71,7 @@ class SB_CNN(DCASEModelContainer):
                           dtype='float32', name='input')
                 y = Lambda(lambda x: K.expand_dims(x, -1), name='lambda')(x)
             else:
-                x = Input(shape=(n_frames_cnn, n_freq_cnn, n_chanels),
+                x = Input(shape=(n_frames_cnn, n_freq_cnn, n_channels),
                           dtype='float32', name='input')
                 y = Lambda(lambda x: x, name='lambda')(x)
 
@@ -101,9 +106,12 @@ class SB_CNN(DCASEModelContainer):
             # creates keras Model
             model = Model(inputs=x, outputs=y)
 
-        super().__init__(model=model, folder=folder, model_name='SB_CNN', metrics=metrics)
+        super().__init__(
+            model=model, folder=folder,
+            model_name='SB_CNN', metrics=metrics
+        )
 
-    def sub_model():
+    def sub_model(self):
         # example code on how define a new model based on the original
         new_model = Model(inputs=self.model.input,
                           outputs=self.model.get_layer('dense1').output)
@@ -114,20 +122,23 @@ class SB_CNN(DCASEModelContainer):
 
 class SB_CNN_SED(DCASEModelContainer):
     """
-    Inherit class of DCASEModelContainer with specific attributs and methods for
-    SB_CNN_SED model.
+    Inherit class of DCASEModelContainer with specific
+    attributs and methods for SB_CNN_SED model.
 
     """
 
-    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64,
+    def __init__(self, model=None, folder=None, metrics=['accuracy'],
+                 n_classes=10, n_frames_cnn=64,
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
-                 large_cnn=False, n_dense_cnn=64, n_filters_cnn=64, n_chanels=0):
+                 large_cnn=False, n_dense_cnn=64,
+                 n_filters_cnn=64, n_chanels=0):
         """
         Function that init the SB-CNN-SED [2] model.
 
         [2] Scaper: A Library for Soundscape Synthesis and Augmentation
             J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello.
-            In IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (WASPAA), New Paltz, NY, USA, Oct. 2017
+            In IEEE Workshop on Applications of Signal Processing to
+            Audio and Acoustics (WASPAA), New Paltz, NY, USA, Oct. 2017
 
         ----------
         model : keras Model
@@ -143,16 +154,16 @@ class SB_CNN_SED(DCASEModelContainer):
         pool_size_cnn : tuple of int
             kernel size of the pool operations
         n_classes : int
-            number of classes for the classification taks 
+            number of classes for the classification taks
             (size of the last layer)
         large_cnn : bool
-            If true, the model has one more dense layer 
+            If true, the model has one more dense layer
         n_dense_cnn : int
             Size of middle dense layers
 
         Notes
         -----
-        Code based on Salamon's implementation 
+        Code based on Salamon's implementation
         https://github.com/justinsalamon/scaper_waspaa2017
 
         """
@@ -183,7 +194,8 @@ class SB_CNN_SED(DCASEModelContainer):
             # CONV 3
             y = Conv2D(n_filters_cnn, filter_size_cnn, padding='valid',
                        activation='relu')(y)
-            # y = MaxPooling2D(pool_size=pool_size_cnn, strides=None, padding='valid')(y)
+            # y = MaxPooling2D(pool_size=pool_size_cnn,
+            #                  strides=None, padding='valid')(y)
             y = BatchNormalization()(y)
 
             # Flatten for dense layers
@@ -205,11 +217,16 @@ class SB_CNN_SED(DCASEModelContainer):
 
 class A_CRNN(DCASEModelContainer):
 
-    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_classes=10, n_frames_cnn=64,
-                 n_freq_cnn=128, cnn_nb_filt=128, cnn_pool_size=[5, 2, 2], rnn_nb=[32, 32],
-                 fc_nb=[32], dropout_rate=0.5, n_channels=0, final_activation='softmax', sed=False, bidirectional=False):
+    def __init__(self, model=None, folder=None, metrics=['accuracy'],
+                 n_classes=10, n_frames_cnn=64,
+                 n_freq_cnn=128, cnn_nb_filt=128,
+                 cnn_pool_size=[5, 2, 2], rnn_nb=[32, 32],
+                 fc_nb=[32], dropout_rate=0.5, n_channels=0,
+                 final_activation='softmax', sed=False,
+                 bidirectional=False):
         '''
-        Sound event detection using spatial features and convolutional recurrent neural network
+        Sound event detection using spatial features and
+        convolutional recurrent neural network
         S Adavanne, P Pertilä, T Virtanen
         ICASSP 2017
 
@@ -224,7 +241,7 @@ class A_CRNN(DCASEModelContainer):
                 spec_start = Lambda(
                     lambda x: K.expand_dims(x, -1), name='lambda')(x)
             else:
-                x = Input(shape=(n_frames_cnn, n_freq_cnn, n_chanels),
+                x = Input(shape=(n_frames_cnn, n_freq_cnn, n_channels),
                           dtype='float32', name='input')
                 spec_start = Lambda(lambda x: x, name='lambda')(x)
 
@@ -233,23 +250,25 @@ class A_CRNN(DCASEModelContainer):
                 spec_x = Conv2D(filters=cnn_nb_filt, kernel_size=(
                     3, 3), padding='same')(spec_x)
                 print(i, spec_x.shape)
-                #spec_x = BatchNormalization(axis=1)(spec_x)
+                # spec_x = BatchNormalization(axis=1)(spec_x)
                 spec_x = BatchNormalization(axis=2)(spec_x)
                 spec_x = Activation('relu')(spec_x)
                 spec_x = MaxPooling2D(pool_size=(1, cnt))(spec_x)
                 spec_x = Dropout(dropout_rate)(spec_x)
-            #spec_x = Permute((2, 1, 3))(spec_x)
+            # spec_x = Permute((2, 1, 3))(spec_x)
             spec_x = Reshape((n_frames_cnn, -1))(spec_x)
 
             for r in rnn_nb:
                 if bidirectional:
                     spec_x = Bidirectional(
                         GRU(r, activation='tanh', dropout=dropout_rate,
-                            recurrent_dropout=dropout_rate, return_sequences=True),
+                            recurrent_dropout=dropout_rate,
+                            return_sequences=True),
                         merge_mode='mul')(spec_x)
                 else:
                     spec_x = GRU(r, activation='tanh', dropout=dropout_rate,
-                                 recurrent_dropout=dropout_rate, return_sequences=True)(spec_x)
+                                 recurrent_dropout=dropout_rate,
+                                 return_sequences=True)(spec_x)
 
             for f in fc_nb:
                 spec_x = TimeDistributed(Dense(f))(spec_x)
@@ -261,11 +280,14 @@ class A_CRNN(DCASEModelContainer):
                 spec_x = Lambda(lambda x: K.mean(x, 1), name='mean')(spec_x)
             out = Activation(final_activation, name='strong_out')(spec_x)
 
-            #out = Activation('sigmoid', name='strong_out')(spec_x)
+            # out = Activation('sigmoid', name='strong_out')(spec_x)
 
             model = Model(inputs=x, outputs=out)
 
-        super().__init__(model=model, folder=folder, model_name='A_CRNN', metrics=metrics)
+        super().__init__(
+            model=model, folder=folder,
+            model_name='A_CRNN', metrics=metrics
+        )
 
 
 class VGGish(DCASEModelContainer):
@@ -273,15 +295,18 @@ class VGGish(DCASEModelContainer):
     '''
 
     Audio Set: An ontology and human-labeled dataset for audio events
-    Jort F. Gemmeke Daniel P. W. Ellis Dylan Freedman Aren Jansen Wade Lawrence R. Channing Moore Manoj Plakal Marvin Ritter
+    Jort F. Gemmeke Daniel P. W. Ellis Dylan Freedman Aren Jansen Wade
+    Lawrence R. Channing Moore Manoj Plakal Marvin Ritter
     Proc. IEEE ICASSP 2017, New Orleans, LA
 
     https://research.google.com/audioset/
     based on vggish-keras https://pypi.org/project/vggish-keras/
     '''
 
-    def __init__(self, model=None, folder=None, metrics=['accuracy'], n_frames_cnn=96,
-                 n_freq_cnn=64, n_classes=10, n_channels=0, embedding_size=128, pooling='avg', include_top=False, compress=False):
+    def __init__(self, model=None, folder=None, metrics=['accuracy'],
+                 n_frames_cnn=96, n_freq_cnn=64, n_classes=10,
+                 n_channels=0, embedding_size=128, pooling='avg',
+                 include_top=False, compress=False):
 
         if folder is None:
             if n_channels == 0:
@@ -290,8 +315,8 @@ class VGGish(DCASEModelContainer):
                 x = Lambda(lambda x: K.expand_dims(
                     x, -1), name='lambda')(inputs)
             else:
-                inputs = Input(shape=(n_frames_cnn, n_freq_cnn,
-                                      n_chanels), dtype='float32', name='input')
+                inputs = Input(shape=(n_frames_cnn, n_freq_cnn, n_channels),
+                               dtype='float32', name='input')
                 x = Lambda(lambda x: x, name='lambda')(inputs)
 
             # setup layer params
@@ -327,8 +352,8 @@ class VGGish(DCASEModelContainer):
                 x = dense(4096, name='fc1/fc1_2')(x)
                 x = dense(embedding_size, name='fc2')(x)
 
-                if compress:
-                    x = Postprocess()(x)
+                # if compress:
+                #    x = Postprocess()(x)
             else:
                 globalpool = (
                     GlobalAveragePooling2D() if pooling == 'avg' else
@@ -340,7 +365,10 @@ class VGGish(DCASEModelContainer):
             # Create model
             model = Model(inputs, x, name='vggish_model')
 
-        super().__init__(model=model, folder=folder, model_name='VGGish', metrics=metrics)
+        super().__init__(
+            model=model, folder=folder,
+            model_name='VGGish', metrics=metrics
+        )
 
 
 class DCASE2020Task5Baseline(DCASEModelContainer):
@@ -349,17 +377,23 @@ class DCASE2020Task5Baseline(DCASEModelContainer):
     Baseline of Urban Sound Tagging with Spatiotemporal Context
     DCASE 2020 Challenge - Task 5
 
-    Mark Cartwright, Ana Elisa Mendez Mendez, Jason Cramer, Vincent Lostanlen, Graham Dove, 
-    Ho-Hsiang Wu, Justin Salamon, Oded Nov, and Juan Bello. 
-    SONYC urban sound tagging (SONYC-UST): a multilabel dataset from an urban acoustic sensor network. 
-    In Proceedings of the Workshop on Detection and Classification of Acoustic Scenes and Events (DCASE), 35–39. October 2019
+    Mark Cartwright, Ana Elisa Mendez Mendez, Jason Cramer,
+    Vincent Lostanlen, Graham Dove,
+    Ho-Hsiang Wu, Justin Salamon, Oded Nov, and Juan Bello.
+    SONYC urban sound tagging (SONYC-UST): a multilabel dataset
+    from an urban acoustic sensor network.
+    In Proceedings of the Workshop on Detection and Classification of
+    Acoustic Scenes and Events (DCASE), 35–39. October 2019
 
 
-    based on https://github.com/sonyc-project/dcase2020task5-uststc-baseline/blob/master/src/classify.py
+    based on https://github.com/sonyc-project/
+             dcase2020task5-uststc-baseline/blob/master/src/classify.py
     '''
 
-    def __init__(self, model=None, folder=None, metrics=['microAUPRC', 'macroAUPRC'], n_frames_cnn=96,
-                 n_freq_cnn=64, n_classes=10, hidden_layer_size=128, num_hidden_layers=1, l2_reg=1e-5):
+    def __init__(self, model=None, folder=None,
+                 metrics=['microAUPRC', 'macroAUPRC'], n_frames_cnn=96,
+                 n_freq_cnn=64, n_classes=10, hidden_layer_size=128,
+                 num_hidden_layers=1, l2_reg=1e-5):
 
         if folder is None:
 
@@ -369,30 +403,29 @@ class DCASE2020Task5Baseline(DCASEModelContainer):
 
             # Hidden layers
             for idx in range(num_hidden_layers):
+                if idx == 0:
+                    y = inputs
                 y = TimeDistributed(Dense(hidden_layer_size, activation='relu',
-                                          kernel_regularizer=regularizers.l2(l2_reg)),
+                                          kernel_regularizer=l2(l2_reg)),
                                     name='dense_{}'.format(idx+1))(y)
 
             # Output layer
-            y = TimeDistributed(Dense(num_classes, activation='sigmoid',
-                                      kernel_regularizer=regularizers.l2(l2_reg)),
-                                name='output_t',
-                                input_shape=(num_frames, repr_size))(y)
+            y = TimeDistributed(Dense(n_classes, activation='sigmoid',
+                                      kernel_regularizer=l2(l2_reg)),
+                                name='output_t')(y)
 
             # Apply autopool over time dimension
             y = AutoPool1D(axis=1, name='output')(y)
 
             # Create model
-            model = Model(inputs=inp, outputs=y, name='model')
+            model = Model(inputs=inputs, outputs=y, name='model')
 
         super().__init__(model=model, folder=folder,
                          model_name='DCASE2020Task5Baseline', metrics=metrics)
 
 
-
-
 def get_available_models():
-    available_models = {m[0]:m[1] for m in inspect.getmembers(
+    available_models = {m[0]: m[1] for m in inspect.getmembers(
         sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
 
     return available_models

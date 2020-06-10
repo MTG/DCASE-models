@@ -4,7 +4,8 @@ import numpy as np
 import sys
 import csv
 from pandas import read_csv
-
+import soundfile as sf
+import yaml
 
 from .data_generator import DataGenerator
 from ..utils.files import move_all_files_to_parent
@@ -12,10 +13,11 @@ from ..utils.files import move_all_files_to_parent
 import inspect
 
 
-
 class UrbanSound8k(DataGenerator):
     ''' UrbanSound8k class (just a copy of DataGenerator) '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
@@ -29,7 +31,9 @@ class UrbanSound8k(DataGenerator):
 
 class ESC50(DataGenerator):
     ''' DataGenerator for ESC50 Dataset '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
         # load metadata information and create label_list
         meta_file = os.path.join(dataset_path, 'meta/esc50.csv')
 
@@ -49,7 +53,8 @@ class ESC50(DataGenerator):
                 class_name = row[3]
                 esc10 = row[4] == 'True'
                 self.metadata[filename] = {
-                    'fold': fold, 'class_ix': class_ix, 'class_name': class_name, 'esc10': esc10}
+                    'fold': fold, 'class_ix': class_ix,
+                    'class_name': class_name, 'esc10': esc10}
                 if class_name not in self.label_list:
                     self.label_list[class_ix] = class_name
 
@@ -100,7 +105,9 @@ class ESC50(DataGenerator):
 
 class ESC10(ESC50):
     ''' DataGenerator for ESC10 Dataset '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
         # first call init of ESC50 class
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
@@ -109,7 +116,7 @@ class ESC10(ESC50):
         new_metada = {}
         new_label_list_ids = []
         for j in self.metadata.keys():
-            if self.metadata[j]['esc10'] == True:
+            if self.metadata[j]['esc10']:
                 new_metada[j] = self.metadata[j].copy()
                 if new_metada[j]['class_ix'] not in new_label_list_ids:
                     new_label_list_ids.append(new_metada[j]['class_ix'])
@@ -122,7 +129,7 @@ class ESC10(ESC50):
         self.metadata = new_metada.copy()
         self.label_list = new_label_list.copy()
         for j in self.metadata.keys():
-            assert self.metadata[j]['esc10'] == True
+            assert self.metadata[j]['esc10']
             self.metadata[j]['class_ix'] = [i for i, x in enumerate(
                 self.label_list) if x == self.metadata[j]['class_name']][0]
 
@@ -132,8 +139,11 @@ class ESC10(ESC50):
 
 class URBAN_SED(DataGenerator):
     ''' DataGenerator for URBAN-SED Dataset '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True,
-                 sequence_time=1.0, sequence_hop_time=0.5, metric_resolution_sec=1.0):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True,
+                 sequence_time=1.0, sequence_hop_time=0.5,
+                 metric_resolution_sec=1.0):
         self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
         self.metric_resolution_sec = metric_resolution_sec
@@ -151,8 +161,11 @@ class URBAN_SED(DataGenerator):
 
         self.folders_list = []
         for fold in self.fold_list:
-            self.folders_list.append({'audio': os.path.join(self.audio_folder, fold),
-                                      'features': os.path.join(self.features_folder, fold)})
+            audio_path = os.path.join(self.audio_folder, fold)
+            features_path = os.path.join(self.features_folder, fold)
+            audio_features_path = {'audio': audio_path,
+                                   'features': features_path}
+            self.folders_list.append(audio_features_path)
 
     def get_file_lists(self):
         super().get_file_lists()
@@ -175,17 +188,20 @@ class URBAN_SED(DataGenerator):
             features = np.load(file_name)
             features_list.append(features)
             y_sequences = self.get_annotations(
-                file_name, features, time_resolution=self.sequence_hop_time)
+                file_name, features,
+                time_resolution=self.sequence_hop_time)
             y_grid_metrics = self.get_annotations(
-                file_name, features, time_resolution=self.metric_resolution_sec)
+                file_name, features,
+                time_resolution=self.metric_resolution_sec)
             # print(y_sequences.shape,y_grid_metrics.shape,features.shape)
             y_sequences = y_sequences[:len(features)]
-            #print(y_sequences.shape, features.shape)
+            # print(y_sequences.shape, features.shape)
             assert y_sequences.shape[0] == features.shape[0]
-            #print('seq', y_sequences.shape, 'grid', y_grid_metrics.shape)
+            # print('seq', y_sequences.shape, 'grid', y_grid_metrics.shape)
             annotations_sequences.append(y_sequences)
             annotations_grid_metrics.append(y_grid_metrics)
-            #annotations.append({'y_frames': y_frames, 'y_grid_metrics': y_grid_metrics})
+            # annotations.append({'y_frames': y_frames,
+            #                     'y_grid_metrics': y_grid_metrics})
 
         return features_list, [annotations_sequences, annotations_grid_metrics]
 
@@ -197,7 +213,7 @@ class URBAN_SED(DataGenerator):
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
 
-        #print(features.shape[0], self.sequence_hop_time, time_resolution)
+        # print(features.shape[0], self.sequence_hop_time, time_resolution)
         N_seqs = int(
             np.floor((audio_len_sec + self.sequence_time) / time_resolution))
         event_roll = np.zeros((N_seqs, len(self.label_list)))
@@ -208,8 +224,8 @@ class URBAN_SED(DataGenerator):
             event_onset = event['event_onset']
             event_offset = event['event_offset']
 
-            #event_offset = 5.0
-            #event_onset = 0.0
+            # event_offset = 5.0
+            # event_onset = 0.0
 
             # math.floor
             onset = int(np.round(event_onset * 1 / float(time_resolution)))
@@ -248,7 +264,9 @@ class URBAN_SED(DataGenerator):
 
 class SONYC_UST(DataGenerator):
     ''' DataGenerator for SONYC-UST Dataset '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
@@ -291,13 +309,14 @@ class SONYC_UST(DataGenerator):
                         self.file_lists[fold].append(file_npy)
 
     def get_annotations(self, file_name, features):
-       # only coarse level
-       # TODO add fine level
+        # only coarse level
+        # TODO add fine level
         n_classes_coarse_level = len(self.label_list['coarse'])
         y = np.zeros(n_classes_coarse_level)
         basename = os.path.basename(file_name).split('.')[0] + '.wav'
 
-        metadata_of_file = self.metadata[self.metadata['audio_filename'] == basename]
+        metadata_of_file = self.metadata[
+            self.metadata['audio_filename'] == basename]
         for class_ix in self.label_list['coarse']:
             class_column = str(class_ix) + '_' + \
                 self.label_list['coarse'][class_ix] + '_presence'
@@ -331,7 +350,9 @@ class SONYC_UST(DataGenerator):
 
 class TAUUrbanAcousticScenes2019(DataGenerator):
     ''' DataGenerator for TAUUrbanAcousticScenes2019 Dataset '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
@@ -339,8 +360,8 @@ class TAUUrbanAcousticScenes2019(DataGenerator):
         self.fold_list = ["train", "test"]
         self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
         self.label_list = ['airport', 'shopping_mall', 'metro_station',
-                           'street_pedestrian', 'public_square', 'street_traffic',
-                           'tram', 'bus', 'metro', 'park']
+                           'street_pedestrian', 'public_square',
+                           'street_traffic', 'tram', 'bus', 'metro', 'park']
 
         self.evaluation_setup_train = os.path.join(
             self.dataset_path, 'evaluation_setup', 'fold1_train.csv')
@@ -404,7 +425,8 @@ class TAUUrbanAcousticScenes2019(DataGenerator):
     def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/2589280/files"
         zenodo_files = [
-            "TAU-urban-acoustic-scenes-2019-development.audio.%d.zip" % j for j in range(1, 22)]
+            "TAU-urban-acoustic-scenes-2019-development.audio.%d.zip" %
+            j for j in range(1, 22)]
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2019-development.doc.zip')
         zenodo_files.append(
@@ -418,7 +440,9 @@ class TAUUrbanAcousticScenes2019(DataGenerator):
 
 class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
     ''' DataGenerator for TAUUrbanAcousticScenes2020Mobile Dataset '''
-    def __init__(self, dataset_path, features_folder, features, audio_folder=None, use_validate_set=True):
+
+    def __init__(self, dataset_path, features_folder, features,
+                 audio_folder=None, use_validate_set=True):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
@@ -426,8 +450,8 @@ class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
         self.fold_list = ["train", "test"]
         self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
         self.label_list = ['airport', 'shopping_mall', 'metro_station',
-                           'street_pedestrian', 'public_square', 'street_traffic',
-                           'tram', 'bus', 'metro', 'park']
+                           'street_pedestrian', 'public_square',
+                           'street_traffic', 'tram', 'bus', 'metro', 'park']
 
         self.evaluation_setup_train = os.path.join(
             self.dataset_path, 'evaluation_setup', 'fold1_train.csv')
@@ -491,7 +515,8 @@ class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
     def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/3819968/files"
         zenodo_files = [
-            "TAU-urban-acoustic-scenes-2020-mobile-development.audio.%d.zip" % j for j in range(1, 17)]
+            "TAU-urban-acoustic-scenes-2020-mobile-development.audio.%d.zip" %
+            j for j in range(1, 17)]
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2020-mobile-development.doc.zip')
         zenodo_files.append(
@@ -499,12 +524,13 @@ class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
 
         super().download_dataset(zenodo_url, zenodo_files)
         move_all_files_to_parent(
-            self.dataset_path, "TAU-urban-acoustic-scenes-2020-mobile-development")
+            self.dataset_path,
+            "TAU-urban-acoustic-scenes-2020-mobile-development")
         self.set_dataset_download_finish()
 
 
 def get_available_datasets():
-    availabe_datasets = {m[0]:m[1] for m in inspect.getmembers(
+    availabe_datasets = {m[0]: m[1] for m in inspect.getmembers(
         sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
 
     return availabe_datasets
