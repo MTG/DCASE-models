@@ -1,20 +1,27 @@
+import wget
+import csv
+import shutil
+import zipfile
 import pickle
 import os
 import json
 
+
 def save_pickle(X, path):
     with open(path, 'wb') as f:
         pickle.dump(X, f)
-        
-        
+
+
 def load_pickle(path):
     with open(path, 'rb') as f:
         X = pickle.load(f)
     return X
 
+
 def save_json(path, json_string):
     with open(path, 'w') as outfile:
         json.dump(json_string, outfile)
+
 
 def load_json(path):
     with open(path) as json_f:
@@ -26,7 +33,7 @@ def mkdir_if_not_exists(path):
     if not os.path.exists(path):
         os.mkdir(path)
 
-import csv
+
 def load_training_log(weights_folder):
     # log_path = os.path.join(weights_folder, 'fold' + str(fold_test) + '_training.log')
     # epochs = []
@@ -54,19 +61,17 @@ def load_training_log(weights_folder):
                     for measure in measures:
                         log[measure] = []
                     line_count += 1
-                    continue 
+                    continue
                 for ix, value in enumerate(row):
                     measure = measures[ix]
-                    log[measure].append(value)    
-        return log           
+                    log[measure].append(value)
+        return log
     else:
         return None
 
-import wget
-import zipfile
-import shutil
+
 def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
-    # adapted from Rocamora's code 
+    # adapted from Rocamora's code
     # https://gitlab.fing.edu.uy/urban-noise-monitoring/alarm-monitoring/-/blob/master/dataset/get_MAVD_audio.py
 
     mkdir_if_not_exists(dataset_folder)
@@ -88,19 +93,20 @@ def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
     for zip_file in zenodo_files:
         zip_file_path = os.path.join(dataset_folder, zip_file)
         if not os.path.exists(zip_file_path):
-            all_files = [f for f in os.listdir(dataset_folder) if os.path.isfile(os.path.join(dataset_folder, f))]
+            all_files = [f for f in os.listdir(dataset_folder) if os.path.isfile(
+                os.path.join(dataset_folder, f))]
             for f in all_files:
                 if f.split('-')[-1] == zip_file:
                     zip_file_path = os.path.join(dataset_folder, f)
         print('Extracting file: ', zip_file_path)
-        #zip_ref = zipfile.ZipFile(zip_file_path) # create zipfile object
-        #zip_ref.extractall(dataset_folder) # extract file to dir
-        #zip_ref.close() # close file
+        # zip_ref = zipfile.ZipFile(zip_file_path) # create zipfile object
+        # zip_ref.extractall(dataset_folder) # extract file to dir
+        # zip_ref.close() # close file
         try:
             shutil.unpack_archive(zip_file_path, dataset_folder)
         except:
             continue
-        os.remove(zip_file_path) # delete zipped file
+        os.remove(zip_file_path)  # delete zipped file
     print('Done!')
 
 

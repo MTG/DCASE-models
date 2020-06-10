@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
-def plot_confusion_matrix(y_true, y_pred, classes,ax,
+
+def plot_confusion_matrix(y_true, y_pred, classes, ax,
                           normalize=False,
                           title=None,
-                          cmap=plt.cm.Blues,colorbar=False):
+                          cmap=plt.cm.Blues, colorbar=False):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -53,19 +54,21 @@ def plot_confusion_matrix(y_true, y_pred, classes,ax,
             ax.text(j, i, format(cm[i, j], fmt),
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
-    #fig.tight_layout()
-    return cm,im
+    # fig.tight_layout()
+    return cm, im
+
 
 def progressbar(it, prefix="", size=60, file=sys.stdout):
     count = len(it)
+
     def show(j):
         x = int(size*j/count)
-        file.write("'\r%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), j, count))
-        file.flush()        
+        file.write("'\r%s[%s%s] %i/%i\r" %
+                   (prefix, "#"*x, "."*(size-x), j, count))
+        file.flush()
     show(0)
     for i, item in enumerate(it):
         yield item
         show(i+1)
     file.write("\n")
     file.flush()
-

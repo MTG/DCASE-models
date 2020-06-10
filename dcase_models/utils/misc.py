@@ -1,3 +1,6 @@
+import inspect
+
+
 def get_class_by_name(classes_dict, class_name, default):
     try:
         class_by_name = classes_dict[class_name]
@@ -7,10 +10,9 @@ def get_class_by_name(classes_dict, class_name, default):
         except:
             print('Warning: using default, ', default)
             class_by_name = default
-    return class_by_name   
+    return class_by_name
 
 
-import inspect
 def get_default_args_of_function(func):
     signature = inspect.signature(func)
     return {
