@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import json
+import ast
 
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint,CSVLogger
@@ -164,15 +165,15 @@ class DCASEModelContainer():
         folder : str
             Path to the folder that contains model.json file
         """
-        weights_file = os.path.join(folder, 'best_weights.hdf5')
+        #weights_file = os.path.join(folder, 'best_weights.hdf5')
         json_file = os.path.join(folder, 'model.json')
         
         with open(json_file) as json_f:
             data = json.load(json_f)
         self.model = model_from_json(data, **kwargs)
-        self.model.load_weights(weights_file)    
+        #self.model.load_weights(weights_file)    
 
-    def save_model_json(self,folder):
+    def save_model_json(self, folder):
         """
         Save model to model.json file in the path given by argument.
 
@@ -230,6 +231,51 @@ class DCASEModelContainer():
         trainable_count = int(np.sum([K.count_params(p) for p in set(models.trainable_weights)]))
         return trainable_count
 
+
+    def check_if_model_exists(self, folder, **kwargs):
+        """
+        Save model parameters to parameters.json file in the path given by argument.
+
+        Parameters
+        ----------
+        folder : str
+            Path to the folder to save model.json file
+        """
+        json_file = os.path.join(folder, 'model.json')
+        if not os.path.exists(json_file):
+            return False
+            
+        with open(json_file) as json_f:
+            data = json.load(json_f)
+        model_saved = model_from_json(data, **kwargs)
+
+        models_are_same = True
+        self.model.summary()
+        model_saved.summary()
+        
+        for l1, l2 in zip(self.model.layers, model_saved.layers):
+            print(l1.get_config() == l2.get_config())
+            if l1.get_config() != l2.get_config():
+                models_are_same = False
+                break
+
+        #print(type(json_model))
+        #print(type(json_saved))
+        #print(json_model==json_saved)
+        print(models_are_same)
+        return models_are_same
+
+    def cut_network(self, layer_where_to_cut):
+        if type(layer_where_to_cut) == str:
+            last_layer = self.model.get_layer(layer_where_to_cut)
+        elif type(layer_where_to_cut) == int:
+            last_layer = self.model.layers[layer_where_to_cut]
+        else:
+            raise AttributeError("layer_where_to_cut has to be str or int type") 
+        model_without_last_layer = Model(self.model.input, last_layer.output, name='source_model')    
+
+        return  model_without_last_layer   
+
     def fine_tuning(self, layer_where_to_cut, new_number_of_classes=10, new_activation='softmax', 
                     freeze_source_model=True, new_model=None):
         """
@@ -256,13 +302,7 @@ class DCASEModelContainer():
             want add more than a fully-connected layer. 
         """
         # cut last layer
-        if type(layer_where_to_cut) == str:
-            last_layer = self.model.get_layer(layer_where_to_cut)
-        elif type(layer_where_to_cut) == int:
-            last_layer = self.model.layers[layer_where_to_cut]
-        else:
-            raise AttributeError("layer_where_to_cut has to be str or int type") 
-        model_without_last_layer = Model(self.model.input, last_layer.output, name='source_model')
+        model_without_last_layer = self.cut_network(layer_where_to_cut)
 
         # add a new fully connected layer
         input_shape = self.model.layers[0].output_shape[1:]

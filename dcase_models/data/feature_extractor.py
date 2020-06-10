@@ -188,6 +188,7 @@ class FeatureExtractor():
 
     def check_features_folder(self, features_folder):
         json_features_folder = os.path.join(features_folder, "parameters.json")
+        print(json_features_folder)
         if not os.path.exists(json_features_folder):
             return False
         parameters_features_folder = load_json(json_features_folder)
@@ -197,6 +198,7 @@ class FeatureExtractor():
                 return False
 
         return True
+
 
 
 class Spectrogram(FeatureExtractor):

@@ -101,22 +101,23 @@ class DataGenerator():
             self.audio_folder = os.path.join(dataset_path, audio_folder)
         self.features_folder = os.path.join(dataset_path, features_folder)
 
-        # check if the dataset was download
-        # TODO improve this
-        if not self.check_if_dataset_was_downloaded():
-            response = input('The dataset was not downloaded : download [y] or continue without downloading [n] : ')
-            if response == 'y':
-                self.download_dataset()
-
-        # make dataset folder if does not exists
-        mkdir_if_not_exists(self.dataset_path)
-
-        # make features folder if does not exists
-        mkdir_if_not_exists(self.features_folder)
-        
         # Specific attributes
         self.set_specific_attributes()
 
+        # check if the dataset was download
+        # TODO improve this
+        #if not self.check_if_dataset_was_downloaded():
+        #    response = input('The dataset was not downloaded : download [y] or continue without downloading [n] : ')
+        #    if response == 'y':
+        #        self.download_dataset()
+
+        # make dataset folder if does not exists
+       # mkdir_if_not_exists(self.dataset_path)
+
+        # make features folder if does not exists
+        #if self.check_if_dataset_was_downloaded():
+        #    mkdir_if_not_exists(self.features_folder)
+    
         self.file_lists = {}
         self.data = {}
         self.get_file_lists()
@@ -335,7 +336,14 @@ class DataGenerator():
         log_file = os.path.join(self.dataset_path, 'download.txt')
         return os.path.exists(log_file)
 
-
+    def convert_features_path_to_audio_path(self, fetures_path):
+        # convert ../features/foldX/MelSpectrogram/x.npy to ../audio/foldX/x.wav'
+        audio_folder = self.audio_folder.split('/')[-1]
+        features_folder = self.features_folder.split('/')[-1]
+        audio_path = fetures_path.replace(self.features+'/', '')
+        audio_path = audio_path.replace(features_folder, audio_folder)
+        audio_path = audio_path.replace('.npy', '.wav')
+        return audio_path
 
 # UrbanSound8k class (just a copy of DataGenerator)
 import csv

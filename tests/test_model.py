@@ -66,7 +66,6 @@ model_container_class = get_class_by_name(globals(), args.model, DCASEModelConta
 print(model_container_class)
 
 fold_test = 'fold1'
-X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(fold_test)
 scaler = Scaler(normalizer=params_model['normalizer'])
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)

@@ -26,20 +26,41 @@ def mkdir_if_not_exists(path):
     if not os.path.exists(path):
         os.mkdir(path)
 
+import csv
+def load_training_log(weights_folder):
+    # log_path = os.path.join(weights_folder, 'fold' + str(fold_test) + '_training.log')
+    # epochs = []
+    # val_accs = []
+    # if os.path.exists(log_path):
+    #     df = read_csv(log_path)
+    #     epochs = list(df['epoch'].values)
 
-def load_training_log(weights_folder,fold_test,row_ix=10):
-    log_path = os.path.join(weights_folder, 'fold' + str(fold_test) + '_training.log')
-    epochs = []
-    val_accs = []
+    #     for column in ['val_logits_acc','val_out_acc','val_acc']:
+    #         if column in df.columns:
+    #             val_accs = list(df[column].values)
+    #             break
+    # return epochs,val_accs
+    log_file = 'training.log'
+    log_path = os.path.join(weights_folder, log_file)
+
+    log = {}
     if os.path.exists(log_path):
-        df = read_csv(log_path)
-        epochs = list(df['epoch'].values)
-
-        for column in ['val_logits_acc','val_out_acc','val_acc']:
-            if column in df.columns:
-                val_accs = list(df[column].values)
-                break
-    return epochs,val_accs
+        with open(log_path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count == 0:
+                    measures = row
+                    for measure in measures:
+                        log[measure] = []
+                    line_count += 1
+                    continue 
+                for ix, value in enumerate(row):
+                    measure = measures[ix]
+                    log[measure].append(value)    
+        return log           
+    else:
+        return None
 
 import wget
 import zipfile

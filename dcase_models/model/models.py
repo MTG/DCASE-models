@@ -146,7 +146,7 @@ class SB_CNN_SED(DCASEModelContainer):
             # INPUT
             x = Input(shape=(n_frames_cnn,n_freq_cnn), dtype='float32')
                         
-            y = Lambda(lambda x: K.expand_dims(x,-1))(y) 
+            y = Lambda(lambda x: K.expand_dims(x,-1))(x) 
             # CONV 1
             y = Conv2D(n_filters_cnn, filter_size_cnn, padding='valid',
                     activation='relu')(y)
