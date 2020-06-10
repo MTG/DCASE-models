@@ -257,6 +257,7 @@ class DCASEModelContainer():
         for l1, l2 in zip(self.model.layers, model_saved.layers):
             print(l1.get_config() == l2.get_config())
             if l1.get_config() != l2.get_config():
+
                 models_are_same = False
                 break
 

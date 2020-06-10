@@ -1,16 +1,15 @@
 from figures import *
 
+import sys
 sys.path.append('../')
 from dcase_models.model import models
-from dcase_models.data import data_generator as datasets
-from dcase_models.data import feature_extractor
-from dcase_models.utils.gui import encode_audio
-from dcase_models.utils.misc import get_class_by_name, get_default_args_of_function
-from dcase_models.data.feature_extractor import *
-from dcase_models.data.scaler import Scaler
+
+from dcase_models.data.datasets import get_available_datasets
+from dcase_models.data.features import get_available_features
 from dcase_models.model.models import *
-from dcase_models.model.container import *
-from dcase_models.data.data_generator import *
+from dcase_models.model.container import DCASEModelContainer
+from dcase_models.data.data_generator import DataGenerator
+from dcase_models.data.feature_extractor import FeatureExtractor
 from dcase_models.utils.files import load_json, mkdir_if_not_exists, load_training_log
 
 import sys
@@ -29,6 +28,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+print(get_available_features())
 
 params = load_json('../tests/parameters.json')
 #params_dataset = params["datasets"][args.dataset]
@@ -116,10 +116,9 @@ n_fft_input = dbc.FormGroup(
 
 
 # Features selector
-features_classes = [m[0] for m in inspect.getmembers(
-    feature_extractor, inspect.isclass) if m[1].__module__ == 'dcase_models.data.feature_extractor']
+features_classes = get_available_features()
 options_features = [{'label': name, 'value': value}
-                    for value, name in enumerate(features_classes)]
+                    for value, name in enumerate(features_classes.keys())]
 feature_selector = dbc.FormGroup(
     [
         dbc.Label("Feature", html_for="dropdown", width=2),
@@ -148,10 +147,9 @@ msg_features = dbc.Alert(
 # Dataset parameters
 
 # Dataset selector
-datasets_classes = [m[0] for m in inspect.getmembers(
-    datasets, inspect.isclass) if m[1].__module__ == 'dcase_models.data.data_generator']
+datasets_classes = get_available_datasets()
 options_datasets = [{'label': name, 'value': value}
-                    for value, name in enumerate(datasets_classes)]
+                    for value, name in enumerate(datasets_classes.keys())]
 dataset_selector = dbc.FormGroup(
     [
         dbc.Label("Dataset", html_for="dropdown", width=2),

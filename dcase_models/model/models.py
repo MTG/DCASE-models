@@ -1,4 +1,6 @@
 from functools import partial
+import inspect
+import sys
 
 from keras.layers import GRU, Bidirectional, TimeDistributed, Activation, Permute, Reshape
 from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D
@@ -385,3 +387,12 @@ class DCASE2020Task5Baseline(DCASEModelContainer):
 
         super().__init__(model=model, folder=folder,
                          model_name='DCASE2020Task5Baseline', metrics=metrics)
+
+
+
+
+def get_available_models():
+    available_models = {m[0]:m[1] for m in inspect.getmembers(
+        sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
+
+    return available_models

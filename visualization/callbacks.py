@@ -3,18 +3,20 @@ from layout import options_datasets, options_features, options_folds, options_mo
 from app import app
 from figures import *
 
+import sys
 sys.path.append('../')
+from dcase_models.data.datasets import get_available_datasets
+from dcase_models.data.features import get_available_features
+from dcase_models.model.models import get_available_models
 from dcase_models.utils.gui import encode_audio
-from dcase_models.utils.misc import get_class_by_name, get_default_args_of_function
+from dcase_models.utils.misc import get_default_args_of_function
 from dcase_models.data.feature_extractor import *
 from dcase_models.data.scaler import Scaler
-from dcase_models.model.models import *
-from dcase_models.model.container import *
+from dcase_models.model.container import DCASEModelContainer
 from dcase_models.data.data_generator import *
 from dcase_models.utils.files import save_pickle, load_pickle
 from dcase_models.utils.files import load_json, mkdir_if_not_exists, load_training_log
 
-import sys
 import os
 import glob
 import numpy as np
@@ -167,11 +169,11 @@ def do_features_extraction(status_features, feature_ix, sequence_time, sequence_
     features_name = options_features[feature_ix]['label']
     dataset_name = options_datasets[dataset_ix]['label']
 
-    features_class = get_class_by_name(globals(), features_name, None)
+    features_class = get_available_features()[features_name]
 
     # get dataset class
-    data_generator_class = get_class_by_name(
-        globals(), dataset_name, DataGenerator)
+    data_generator_class = get_available_datasets()[dataset_name]
+
     data_generator = data_generator_class(dataset_path, features_folder, features_name,
                                           audio_folder=audio_folder, **kwargs)
     if not data_generator.check_if_dataset_was_downloaded():
@@ -220,7 +222,7 @@ def manage_button_features(n_intervals, status_features):
 def select_feature(feature_ix):
     if feature_ix is not None:
         features_name = options_features[feature_ix]['label']
-        features_class = get_class_by_name(globals(), features_name, None)
+        features_class = get_available_features()[features_name]
         default_arguments = get_default_args_of_function(
             features_class.__init__)
         delete = ['sequence_time', 'sequence_hop_time',
@@ -248,8 +250,7 @@ def select_dataset(dataset_ix):
         dataset_name = options_datasets[dataset_ix]['label']
         params_dataset = params['datasets'][dataset_name]
         # get dataset class
-        data_generator_class = get_class_by_name(
-            globals(), dataset_name, DataGenerator)
+        data_generator_class = get_available_datasets()[dataset_name]
         # init data_generator
         data_generator = data_generator_class(params_dataset['dataset_path'], params_dataset['feature_folder'],
                                               "", audio_folder=params_dataset['audio_folder'])
@@ -303,8 +304,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
         dataset_name = options_datasets[dataset_ix]['label']
         feature_name = options_features[feature_ix]['label'] if feature_ix is not None else ""
         # get dataset class
-        data_generator_class = get_class_by_name(
-            globals(), dataset_name, DataGenerator)
+        data_generator_class = get_available_datasets()[dataset_name]
         data_generator = data_generator_class(dataset_path, features_folder, feature_name,
                                               audio_folder=audio_folder)
         if data_generator.check_if_dataset_was_downloaded():
@@ -312,8 +312,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
 
         if feature_ix is not None:
             feature_name = options_features[feature_ix]['label']
-            feature_extractor_class = get_class_by_name(
-                globals(), feature_name, FeatureExtractor)
+            feature_extractor_class = get_available_features()[feature_name]
             print('parameters', specific_parameters)
             specific_parameters = ast.literal_eval(specific_parameters)
             feature_extractor = feature_extractor_class(sequence_time=sequence_time,
@@ -346,8 +345,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
 
                 n_classes = len(data_generator.label_list)
 
-                model_class = get_class_by_name(
-                    globals(), model_name, DCASEModelContainer)
+                model_class = get_available_models()[model_name]
                 print(model_class, model_name)
 
                 model_parameters = ast.literal_eval(model_parameters)
@@ -375,7 +373,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
 def select_model(model_ix):
     if model_ix is not None:
         model_name = options_models[model_ix]['label']
-        model_class = get_class_by_name(globals(), model_name, None)
+        model_class = get_available_models()[model_name]
         default_arguments = get_default_args_of_function(model_class.__init__)
         delete = ['model', 'folder', 'n_classes', 'n_frames_cnn', 'n_freq_cnn']
         for key in delete:
@@ -439,8 +437,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_i
         feature_name = options_features[feature_ix]['label']
         dataset_name = options_datasets[dataset_ix]['label']
 
-        feature_extractor_class = get_class_by_name(
-            globals(), feature_name, FeatureExtractor)
+        feature_extractor_class = get_available_features()[feature_name]
         print(specific_parameters)
         specific_parameters = ast.literal_eval(specific_parameters)
         print(specific_parameters)
@@ -458,8 +455,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_i
         print(features_example.shape)
 
         # get dataset class
-        data_generator_class = get_class_by_name(
-            globals(), dataset_name, DataGenerator)
+        data_generator_class = get_available_datasets()[dataset_name]
         print(data_generator_class)
         # init data_generator
         kwargs = {}
@@ -470,8 +466,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_i
 
         n_classes = len(data_generator.label_list)
 
-        model_class = get_class_by_name(
-            globals(), model_name, DCASEModelContainer)
+        model_class = get_available_models()[model_name]
         print(model_class, model_name)
 
         model_parameters = ast.literal_eval(model_parameters)
