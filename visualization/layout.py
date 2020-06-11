@@ -1,9 +1,6 @@
 from figures import *
 
-import sys
-sys.path.append('../')
 from dcase_models.model import models
-
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import *

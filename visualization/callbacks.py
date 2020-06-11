@@ -1,10 +1,5 @@
-from layout import params_features, params
-from layout import options_datasets, options_features, options_folds, options_models, options_normalizer, options_optimizers
-from app import app
-from figures import *
-
-import sys
-sys.path.append('../')
+# import sys
+# sys.path.append('../')
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
@@ -13,19 +8,24 @@ from dcase_models.utils.gui import encode_audio
 from dcase_models.utils.misc import get_default_args_of_function
 from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import save_pickle, load_pickle
-from dcase_models.utils.files import load_json, mkdir_if_not_exists, load_training_log
+from dcase_models.utils.files import mkdir_if_not_exists, load_training_log
+
+from layout import params
+from layout import options_datasets, options_features
+from layout import options_models, options_optimizers
+from app import app
+from figures import generate_figure2D, generate_figure_mel
+from figures import generate_figure_training
 
 import os
-import glob
 import numpy as np
-import argparse
 import ast
+import soundfile as sf
 from tensorflow import get_default_graph
 from sklearn.decomposition import PCA
 
 import dash
 import dash_bootstrap_components as dbc
-import dash_audio_components
 from dash.dependencies import Input, Output, State
 
 
@@ -59,7 +59,11 @@ def click_on_plot2d(clickData, x_select, y_select):
         audio_data, sr = sf.read(audio_file)
         figure_mel = generate_figure_mel(X[min_distance_index])
 
-        return [figure_mel, {'autoPlay': True, 'src': encode_audio(audio_data, sr)}]
+        return [
+            figure_mel, {
+                'autoPlay': True, 'src': encode_audio(audio_data, sr)
+            }
+        ]
 
 
 @app.callback(
@@ -71,7 +75,8 @@ def click_on_plot2d(clickData, x_select, y_select):
     [State('fold_name', 'value'),
      State('model_path', 'value')]
 )
-def update_plot2D(samples_per_class, x_select, y_select, active_tab, fold_ix, model_path):
+def update_plot2D(samples_per_class, x_select, y_select,
+                  active_tab, fold_ix, model_path):
     global X
     global X_pca
     global Y
@@ -80,7 +85,6 @@ def update_plot2D(samples_per_class, x_select, y_select, active_tab, fold_ix, mo
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if (button_id == 'tabs') & (active_tab == 'tab_visualization'):
-        #print('data', data_generator.data)
         if len(data_generator.data) == 0:
             data_generator.load_data()
         fold_name = data_generator.fold_list[fold_ix]
@@ -101,8 +105,9 @@ def update_plot2D(samples_per_class, x_select, y_select, active_tab, fold_ix, mo
         X_pca = pca.transform(X_emb)
         print(X_pca.shape)
 
-    figure2D = generate_figure2D(X_pca, Y, data_generator.label_list, pca_components=[
-                                 x_select, y_select], samples_per_class=samples_per_class)
+    figure2D = generate_figure2D(X_pca, Y, data_generator.label_list,
+                                 pca_components=[x_select, y_select],
+                                 samples_per_class=samples_per_class)
     return [figure2D]
 
 
@@ -115,7 +120,8 @@ def update_plot2D(samples_per_class, x_select, y_select, active_tab, fold_ix, mo
     [State('status_features', 'children')]
 
 )
-def trigger_feature_extraction(n_clicks, end_features_extraction, status_features):
+def trigger_feature_extraction(n_clicks, end_features_extraction,
+                               status_features):
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print('trigger by ', button_id)
@@ -153,9 +159,11 @@ def trigger_feature_extraction(n_clicks, end_features_extraction, status_feature
      State('features_folder', 'value'),
      State('dataset_name', 'value')]
 )
-def do_features_extraction(status_features, feature_ix, sequence_time, sequence_hop_time, audio_hop,
+def do_features_extraction(status_features, feature_ix, sequence_time,
+                           sequence_hop_time, audio_hop,
                            audio_win, n_fft, sr, specific_parameters,
-                           dataset_path, audio_folder, features_folder, dataset_ix):
+                           dataset_path, audio_folder, features_folder,
+                           dataset_ix):
     if status_features != 'EXTRACTING':
         # return [False, '', 'success', 'True']
         raise dash.exceptions.PreventUpdate
@@ -167,27 +175,33 @@ def do_features_extraction(status_features, feature_ix, sequence_time, sequence_
     features_name = options_features[feature_ix]['label']
     dataset_name = options_datasets[dataset_ix]['label']
 
-    features_class = get_available_features()[features_name]
+    feature_extractor_class = get_available_features()[features_name]
 
     # get dataset class
     data_generator_class = get_available_datasets()[dataset_name]
 
-    data_generator = data_generator_class(dataset_path, features_folder, features_name,
-                                          audio_folder=audio_folder, **kwargs)
+    data_generator = data_generator_class(dataset_path, features_folder,
+                                          features_name,
+                                          audio_folder=audio_folder)
     if not data_generator.check_if_dataset_was_downloaded():
-        return [True, 'Please download the dataset before doing feature extraction', 'danger']
+        return [
+            True,
+            'Please download the dataset before doing feature extraction',
+            'danger'
+        ]
 
     print('parameters', specific_parameters)
     specific_parameters = ast.literal_eval(specific_parameters)
-    feature_extractor = feature_extractor_class(sequence_time=sequence_time,
-                                                sequence_hop_time=sequence_hop_time,
-                                                audio_win=audio_win,
-                                                audio_hop=audio_hop,
-                                                n_fft=n_fft,
-                                                sr=sr, **specific_parameters)
+    feature_extractor = feature_extractor_class(
+        sequence_time=sequence_time,
+        sequence_hop_time=sequence_hop_time,
+        audio_win=audio_win,
+        audio_hop=audio_hop,
+        n_fft=n_fft,
+        sr=sr, **specific_parameters
+    )
 
     folders_list = data_generator.get_folder_lists()
-    features_extracted = True
     for audio_features_paths in folders_list:
         print('Extracting features from folder: ',
               audio_features_paths['audio'])
@@ -250,11 +264,16 @@ def select_dataset(dataset_ix):
         # get dataset class
         data_generator_class = get_available_datasets()[dataset_name]
         # init data_generator
-        data_generator = data_generator_class(params_dataset['dataset_path'], params_dataset['feature_folder'],
-                                              "", audio_folder=params_dataset['audio_folder'])
+        data_generator = data_generator_class(
+            params_dataset['dataset_path'],
+            params_dataset['feature_folder'],
+            "", audio_folder=params_dataset['audio_folder']
+        )
 
-        options_folds = [{'label': name, 'value': value}
-                         for value, name in enumerate(data_generator.fold_list)]
+        options_folds = [
+            {'label': name, 'value': value}
+            for value, name in enumerate(data_generator.fold_list)
+        ]
         return [params_dataset['dataset_path'],
                 params_dataset['audio_folder'],
                 params_dataset['feature_folder'],
@@ -286,24 +305,29 @@ def select_dataset(dataset_ix):
 )
 def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                    audio_win, n_fft, sr, specific_parameters,
-                   dataset_path, audio_folder, features_folder, dataset_ix, end_features_extraction, status_features,
+                   dataset_path, audio_folder, features_folder, dataset_ix,
+                   end_features_extraction, status_features,
                    model_parameters, model_path, model_ix):
 
     global model_container
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print('trigger by ', button_id)
-    # if was trigger by end_features_extraction and the feautres were already calculated
-    if (button_id == 'end_features_extraction') & (status_features == 'NOT_EXTRACTING'):
+    # if was trigger by end_features_extraction and
+    # the feautres were already calculated
+    if button_id == 'end_features_extraction' and \
+       status_features == 'NOT_EXTRACTING':
         raise dash.exceptions.PreventUpdate
 
     checks = []
     if dataset_ix is not None:
         dataset_name = options_datasets[dataset_ix]['label']
-        feature_name = options_features[feature_ix]['label'] if feature_ix is not None else ""
+        feature_name = (options_features[feature_ix]['label']
+                        if feature_ix is not None else "")
         # get dataset class
         data_generator_class = get_available_datasets()[dataset_name]
-        data_generator = data_generator_class(dataset_path, features_folder, feature_name,
+        data_generator = data_generator_class(dataset_path, features_folder,
+                                              feature_name,
                                               audio_folder=audio_folder)
         if data_generator.check_if_dataset_was_downloaded():
             checks.append('dataset')
@@ -313,12 +337,14 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
             feature_extractor_class = get_available_features()[feature_name]
             print('parameters', specific_parameters)
             specific_parameters = ast.literal_eval(specific_parameters)
-            feature_extractor = feature_extractor_class(sequence_time=sequence_time,
-                                                        sequence_hop_time=sequence_hop_time,
-                                                        audio_win=audio_win,
-                                                        audio_hop=audio_hop,
-                                                        n_fft=n_fft,
-                                                        sr=sr, **specific_parameters)
+            feature_extractor = feature_extractor_class(
+                sequence_time=sequence_time,
+                sequence_hop_time=sequence_hop_time,
+                audio_win=audio_win,
+                audio_hop=audio_hop,
+                n_fft=n_fft,
+                sr=sr, **specific_parameters
+            )
 
             folders_list = data_generator.get_folder_lists()
             features_extracted = True
@@ -350,13 +376,18 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                 print(model_parameters)
                 with graph.as_default():
                     print(n_classes, n_frames_cnn, n_freq_cnn)
-                    model_container = model_class(model=None, folder=None, n_classes=n_classes, n_frames_cnn=n_frames_cnn,
-                                                  n_freq_cnn=n_freq_cnn, **model_parameters)
+                    model_container = model_class(model=None, folder=None,
+                                                  n_classes=n_classes,
+                                                  n_frames_cnn=n_frames_cnn,
+                                                  n_freq_cnn=n_freq_cnn,
+                                                  **model_parameters)
 
                     if model_name == 'VGGish':
                         model_container.load_pretrained_model_weights()
-                        model_container.fine_tuning(-1, new_number_of_classes=n_classes,
-                                                    new_activation='softmax', freeze_source_model=True)
+                        model_container.fine_tuning(
+                            -1, new_number_of_classes=n_classes,
+                            new_activation='softmax', freeze_source_model=True
+                        )
 
                     if model_container.check_if_model_exists(model_path):
                         checks.append('model')
@@ -409,10 +440,11 @@ def select_model(model_ix):
      State('features_folder', 'value'),
      State('model_path', 'value')]
 )
-def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_ix, dataset_ix, model_parameters,
-                 sequence_time, sequence_hop_time, audio_hop, audio_win, n_fft, sr,
-                 specific_parameters, dataset_path, audio_folder, features_folder,
-                 model_path):
+def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
+                 feature_ix, dataset_ix, model_parameters,
+                 sequence_time, sequence_hop_time, audio_hop,
+                 audio_win, n_fft, sr, specific_parameters, dataset_path,
+                 audio_folder, features_folder, model_path):
     global model_container
     global data_generator
 
@@ -439,12 +471,14 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_i
         print(specific_parameters)
         specific_parameters = ast.literal_eval(specific_parameters)
         print(specific_parameters)
-        feature_extractor = feature_extractor_class(sequence_time=sequence_time,
-                                                    sequence_hop_time=sequence_hop_time,
-                                                    audio_win=audio_win,
-                                                    audio_hop=audio_hop,
-                                                    n_fft=n_fft,
-                                                    sr=sr, **specific_parameters)
+        feature_extractor = feature_extractor_class(
+            sequence_time=sequence_time,
+            sequence_hop_time=sequence_hop_time,
+            audio_win=audio_win,
+            audio_hop=audio_hop,
+            n_fft=n_fft,
+            sr=sr, **specific_parameters
+        )
 
         features_example = feature_extractor.calculate_features(
             '../tests/audio/40722-8-0-7.wav')
@@ -459,8 +493,10 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_i
         kwargs = {}
         if dataset_name == 'URBAN_SED':
             kwargs = {'sequence_hop_time': sequence_hop_time}
-        data_generator = data_generator_class(dataset_path, features_folder, feature_name,
-                                              audio_folder=audio_folder, **kwargs)
+        data_generator = data_generator_class(dataset_path, features_folder,
+                                              feature_name,
+                                              audio_folder=audio_folder,
+                                              **kwargs)
 
         n_classes = len(data_generator.label_list)
 
@@ -471,13 +507,18 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix, feature_i
         print(model_parameters)
         if (button_id == 'create_model'):
             with graph.as_default():
-                model_container = model_class(model=None, folder=None, n_classes=n_classes, n_frames_cnn=n_frames_cnn,
-                                              n_freq_cnn=n_freq_cnn, **model_parameters)
+                model_container = model_class(model=None, folder=None,
+                                              n_classes=n_classes,
+                                              n_frames_cnn=n_frames_cnn,
+                                              n_freq_cnn=n_freq_cnn,
+                                              **model_parameters)
 
                 if model_name == 'VGGish':
                     model_container.load_pretrained_model_weights()
-                    model_container.fine_tuning(-1, new_number_of_classes=n_classes,
-                                                new_activation='softmax', freeze_source_model=True)
+                    model_container.fine_tuning(
+                        -1, new_number_of_classes=n_classes,
+                        new_activation='softmax', freeze_source_model=True
+                    )
 
                 stringlist = []
                 model_container.model.summary(
@@ -558,7 +599,7 @@ def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
     if active_tab == "tab_train":
         if fold_ix is not None:
             fold_name = data_generator.fold_list[fold_ix]
-            #print(model_path, fold_name)
+            # print(model_path, fold_name)
             training_log = load_training_log(
                 os.path.join(model_path, fold_name))
         else:
@@ -571,7 +612,10 @@ def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
                 figure_training = generate_figure_training([], [], [])
             else:
                 figure_training = generate_figure_training(
-                    training_log['epoch'], training_log['Acc'], training_log['loss'])
+                    training_log['epoch'],
+                    training_log['Acc'],
+                    training_log['loss']
+                )
         return figure_training
 
     figure_training = generate_figure_training([], [], [])
@@ -596,8 +640,10 @@ def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
      State('considered_improvement', 'value'),
      State("status", "children")]
 )
-def trigger_training(n_clicks, end_training, fold_ix, normalizer, model_path, epochs, early_stopping,
-                     optimizer_ix, learning_rate, batch_size, considered_improvement, status):
+def trigger_training(n_clicks, end_training, fold_ix, normalizer,
+                     model_path, epochs, early_stopping,
+                     optimizer_ix, learning_rate, batch_size,
+                     considered_improvement, status):
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print('trigger by ', button_id)
@@ -637,8 +683,9 @@ def trigger_training(n_clicks, end_training, fold_ix, normalizer, model_path, ep
      State('considered_improvement', 'value'),
      State("train_model", "n_clicks")]
 )
-def start_training(status, fold_ix, normalizer, model_path, epochs, early_stopping,
-                   optimizer_ix, learning_rate, batch_size, considered_improvement, n_clicks_train):
+def start_training(status, fold_ix, normalizer, model_path,
+                   epochs, early_stopping, optimizer_ix, learning_rate,
+                   batch_size, considered_improvement, n_clicks_train):
     print(status)
     if status == 'TRAINING':
         if fold_ix is None:
@@ -664,12 +711,16 @@ def start_training(status, fold_ix, normalizer, model_path, epochs, early_stoppi
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         save_pickle(scaler, scaler_path)
 
-        train_arguments = {'epochs': epochs, 'early_stopping': early_stopping,
-                           'optimizer': optimizer, 'learning_rate': learning_rate,
-                           'batch_size': batch_size, 'considered_improvement': considered_improvement}
+        train_arguments = {
+            'epochs': epochs, 'early_stopping': early_stopping,
+            'optimizer': optimizer, 'learning_rate': learning_rate,
+            'batch_size': batch_size,
+            'considered_improvement': considered_improvement
+        }
         with graph.as_default():
             model_container.train(X_train, Y_train, X_val, Y_val,
-                                  weights_path=exp_folder_fold,  **train_arguments)
+                                  weights_path=exp_folder_fold,
+                                  **train_arguments)
             model_container.load_model_weights(exp_folder_fold)
         return [True, "Model trained", 'success', 'True']
 
