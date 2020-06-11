@@ -1,36 +1,25 @@
-from figures import *
+from figures import generate_figure2D
+from figures import generate_figure_mel
+from figures import generate_figure_training
 
-from dcase_models.model import models
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
-from dcase_models.model.models import *
-from dcase_models.model.container import DCASEModelContainer
-from dcase_models.data.data_generator import DataGenerator
-from dcase_models.data.feature_extractor import FeatureExtractor
-from dcase_models.utils.files import load_json, mkdir_if_not_exists, load_training_log
+from dcase_models.model.models import get_available_models
+from dcase_models.utils.files import load_json
 
-import sys
-import os
-import glob
 import numpy as np
-import argparse
-import inspect
 
-import dash
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_audio_components
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 
 print(get_available_features())
 
 params = load_json('../tests/parameters.json')
-#params_dataset = params["datasets"][args.dataset]
+# params_dataset = params["datasets"][args.dataset]
 params_features = params["features"]
-#params_model = params['models'][args.model]
+# params_model = params['models'][args.model]
 
 X_pca = []
 Y = []
@@ -45,13 +34,16 @@ plot2D = dcc.Graph(id='plot2D', figure=figure2D,
 # Plot mel-spectrogram
 X = np.zeros((128, 64))
 figure_mel = generate_figure_mel(X)
-plot_mel = dcc.Graph(id="plot_mel",
-                     figure=figure_mel,
-                     style={"width": "90%", "display": "inline-block", 'float': 'left'})
+plot_mel = dcc.Graph(
+    id="plot_mel",
+    figure=figure_mel,
+    style={"width": "90%", "display": "inline-block", 'float': 'left'}
+)
 
 # Audio controls
-audio_player = dash_audio_components.DashAudioComponents(id='audio-player', src="",
-                                                         autoPlay=False, controls=True)
+audio_player = dash_audio_components.DashAudioComponents(
+    id='audio-player', src="", autoPlay=False, controls=True
+)
 
 # Component selector for PCA
 options_pca = [{'label': 'Component '+str(j+1), 'value': j} for j in range(4)]
@@ -61,14 +53,17 @@ y_select = dcc.Dropdown(id='y_select', options=options_pca,
                         value=1, style={'width': '100%'})
 
 # Slider to select number of instances
-slider_samples = html.Div(dcc.Slider(id='samples_per_class', min=1,
-                                     max=500, step=1, value=10, vertical=False), style={'width': '100%'})
+slider_samples = html.Div(
+    dcc.Slider(
+        id='samples_per_class', min=1, max=500,
+        step=1, value=10, vertical=False),
+    style={'width': '100%'}
+)
 
 # Plot Figure training
 figure_training = generate_figure_training([], [], [])
 plot_training_acc = dcc.Graph(id="plot_training",
-                              figure=figure_training,
-                              )  # "display": "inline-block"style={"height": "100%", "width": "100%", 'float':'left'}
+                              figure=figure_training)
 
 # Inputs for features parameters
 
@@ -76,11 +71,19 @@ plot_training_acc = dcc.Graph(id="plot_training",
 sequence_time_input = dbc.FormGroup(
     [
         dbc.Label("sequence time (s)", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="sequence_time", placeholder="sequence_time",
-                          value=params_features['sequence_time']), width=4,),
+        dbc.Col(
+            dbc.Input(type="number", id="sequence_time",
+                      placeholder="sequence_time",
+                      value=params_features['sequence_time']),
+            width=4
+        ),
         dbc.Label("sequence hop time", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="sequence_hop_time", placeholder="sequence_hop_time",
-                          value=params_features['sequence_hop_time']), width=4,),
+        dbc.Col(
+            dbc.Input(type="number", id="sequence_hop_time",
+                      placeholder="sequence_hop_time",
+                      value=params_features['sequence_hop_time']),
+            width=4
+        ),
     ],
     row=True,
 )
@@ -89,10 +92,12 @@ sequence_time_input = dbc.FormGroup(
 audio_win_input = dbc.FormGroup(
     [
         dbc.Label("audio window", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="audio_win", placeholder="audio_win",
+        dbc.Col(dbc.Input(type="number", id="audio_win",
+                          placeholder="audio_win",
                           value=params_features['audio_win']), width=4,),
         dbc.Label("audio hop", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="audio_hop", placeholder="audio_hop",
+        dbc.Col(dbc.Input(type="number", id="audio_hop",
+                          placeholder="audio_hop",
                           value=params_features['audio_hop']), width=4,),
     ],
     row=True,
@@ -127,11 +132,15 @@ feature_selector = dbc.FormGroup(
 
 # Specific parameters of features selected
 specific_parameters = dbc.Textarea(
-    id='specific_parameters', className="mb-3", placeholder="Specific features parameters")
+    id='specific_parameters', className="mb-3",
+    placeholder="Specific features parameters"
+)
 
 # Button to start feature extraction
 btn_extract_features = dbc.Button(
-    "Extract Features", id="extract_features", color="primary", className="mr-1", disabled=False)
+    "Extract Features", id="extract_features",
+    color="primary", className="mr-1", disabled=False
+)
 
 # Feedback message of feature extraction
 msg_features = dbc.Alert(
@@ -182,14 +191,16 @@ dataset_folders_input = dbc.FormGroup(
 # Model parameters
 
 # Model selector
-models_classes = [m[0] for m in inspect.getmembers(
-    models, inspect.isclass) if m[1].__module__ == 'dcase_models.model.models']
+models_classes = get_available_models()
 options_models = [{'label': name, 'value': value}
-                  for value, name in enumerate(models_classes)]
+                  for value, name in enumerate(models_classes.keys())]
 model_selector = dbc.FormGroup(
     [
         dbc.Label("Model", html_for="dropdown", width=2),
-        dbc.Col(dcc.Dropdown(id="model_name", options=options_models), width=10),
+        dbc.Col(
+            dcc.Dropdown(id="model_name", options=options_models),
+            width=10
+        ),
     ],
     row=True,
 )
@@ -201,7 +212,9 @@ normalizer_selector = dbc.FormGroup(
     [
         dbc.Label("Normalizer", html_for="dropdown", width=2),
         dbc.Col(dcc.Dropdown(id="normalizer",
-                             options=options_normalizer, value='minmax'), width=10),
+                             options=options_normalizer,
+                             value='minmax'),
+                width=10),
     ],
     row=True,
 )
@@ -256,8 +269,9 @@ tab_model = html.Div([
             dbc.Card([
                 dbc.CardHeader("Features Parameters"),
                 dbc.CardBody([
-                    dbc.Form([feature_selector, sequence_time_input, audio_win_input,
-                              n_fft_input, specific_parameters, btn_extract_features])
+                    dbc.Form([feature_selector, sequence_time_input,
+                              audio_win_input, n_fft_input,
+                              specific_parameters, btn_extract_features])
                 ]
                 ),
             ]),
@@ -283,7 +297,8 @@ tab_model = html.Div([
                     dbc.Button("Load Model", id="load_model",
                                color="primary", className="mr-1"),
                     dbc.Button("Summary Model", id="summary_model",
-                               color="primary", className="mr-1", disabled=True)
+                               color="primary", className="mr-1",
+                               disabled=True)
                 ]
                 ),
             ]), width=6
@@ -305,7 +320,6 @@ tab_model = html.Div([
 
 # Options of folds, empty to start
 options_folds = []
-#options_folds = [{'label': name, 'value': value} for value, name in enumerate(data_generator.fold_list)]
 fold_selector = dbc.FormGroup(
     [
         dbc.Label("Fold", html_for="dropdown", width=2),
@@ -321,7 +335,8 @@ epochs_input = dbc.FormGroup(
         dbc.Col(dbc.Input(type="number", id="epochs", placeholder="epochs",
                           value=params['train']['epochs']), width=4,),
         dbc.Label("Early stopping", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="early_stopping", placeholder="early_stopping",
+        dbc.Col(dbc.Input(type="number", id="early_stopping",
+                          placeholder="early_stopping",
                           value=params['train']['early_stopping']), width=4,),
     ],
     row=True,
@@ -342,7 +357,8 @@ optimizer_input = dbc.FormGroup(
         dbc.Col(dcc.Dropdown(id="optimizer",
                              options=options_optimizers, value=2), width=4,),
         dbc.Label("Learning rate", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="learning_rate", placeholder="learning_rate",
+        dbc.Col(dbc.Input(type="number", id="learning_rate",
+                          placeholder="learning_rate",
                           value=params['train']['learning_rate']), width=4,),
     ],
     row=True,
@@ -352,12 +368,16 @@ optimizer_input = dbc.FormGroup(
 batch_size_input = dbc.FormGroup(
     [
         dbc.Label("Batch Size", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="text", id="batch_size", placeholder="batch_size",
+        dbc.Col(dbc.Input(type="text", id="batch_size",
+                          placeholder="batch_size",
                           value=params['train']['batch_size']), width=4,),
         dbc.Label("Considered Improvement",
                   html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="considered_improvement", placeholder="considered_improvement",
-                          value=params['train']['considered_improvement']), width=4,),
+        dbc.Col(dbc.Input(type="number", id="considered_improvement",
+                          placeholder="considered_improvement",
+                          value=params['train']['considered_improvement']),
+                width=4
+                ),
     ],
     row=True,
 )
@@ -396,8 +416,6 @@ tab_train = html.Div([
                     ])
                     ], width=6
                     ),
-
-            #dbc.Col(html.Div([plot_mel,html.Br(),audio_player]), width=4),
         ],
         justify="start"
     ),
