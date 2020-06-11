@@ -46,7 +46,7 @@ class DCASEModelContainer():
 
     """
 
-    def __init__(self, model=None, folder=None,
+    def __init__(self, model=None, model_path=None,
                  model_name="DCASEModelContainer",
                  metrics=['accuracy'], **kwargs):
         """
@@ -58,14 +58,19 @@ class DCASEModelContainer():
             if model is None, this path is used to load the model.
             See load_model_from_json()
         """
-        if model is not None:
-            self.model = model
-        elif folder is not None:
-            self.load_model_from_json(folder, **kwargs)
-        else:
-            raise AttributeError("model or folder are both None")
+        self.model = model
+        self.model_path = model_path
         self.model_name = model_name
         self.metrics = metrics
+        self.kwargs = kwargs
+
+        # Build the model
+        self.build()
+
+    def build(self):
+        # Load model from model_path if the model is not defined
+        if (self.model is None) and (self.model_name is not None):
+            self.load_model_from_json(self.model_path, **self.kwargs)
 
     def train(self, X_train, Y_train, X_val, Y_val, weights_path='./',
               optimizer='Adam', learning_rate=0.001, early_stopping=100,

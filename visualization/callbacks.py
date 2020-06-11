@@ -376,7 +376,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                 print(model_parameters)
                 with graph.as_default():
                     print(n_classes, n_frames_cnn, n_freq_cnn)
-                    model_container = model_class(model=None, folder=None,
+                    model_container = model_class(model=None, model_path=None,
                                                   n_classes=n_classes,
                                                   n_frames_cnn=n_frames_cnn,
                                                   n_freq_cnn=n_freq_cnn,
@@ -404,7 +404,7 @@ def select_model(model_ix):
         model_name = options_models[model_ix]['label']
         model_class = get_available_models()[model_name]
         default_arguments = get_default_args_of_function(model_class.__init__)
-        delete = ['model', 'folder', 'n_classes', 'n_frames_cnn', 'n_freq_cnn']
+        delete = ['model', 'model_path', 'n_classes', 'n_frames_cnn', 'n_freq_cnn']
         for key in delete:
             default_arguments.pop(key)
         if model_name in params['models']:
@@ -507,7 +507,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         print(model_parameters)
         if (button_id == 'create_model'):
             with graph.as_default():
-                model_container = model_class(model=None, folder=None,
+                model_container = model_class(model=None, model_path=None,
                                               n_classes=n_classes,
                                               n_frames_cnn=n_frames_cnn,
                                               n_freq_cnn=n_freq_cnn,
@@ -533,7 +533,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
 
         if (button_id == 'load_model'):
             with graph.as_default():
-                model_container = model_class(model=None, folder=model_path)
+                model_container = model_class(model=None, model_path=model_path)
                 model_container.model.summary()
                 stringlist = []
                 model_container.model.summary(
