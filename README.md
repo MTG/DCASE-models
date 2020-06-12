@@ -18,6 +18,8 @@ root/
 ## Installation instructions
 ### conda
 ```
+git clone https://github.com/pzinemanas/DCASE-models.git
+cd DCASE-models
 conda create -n dcase python=3.6
 conda activate dcase
 conda install cudatoolkit=10.0 cudnn
