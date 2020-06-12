@@ -10,7 +10,7 @@ To run the application:
 python index.py
 ````
 
-Open your browser and go to:
+Then, open your browser and navigate to:
 
 ````
 http://localhost:8050/
