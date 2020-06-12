@@ -15,6 +15,15 @@ root/
 |
 ````
 
+## Installation instructions
+### conda
+```
+conda create -n dcase python=3.6
+conda activate dcase
+conda install cudatoolkit=10.0 cudnn
+pip install -r requirements.txt
+```
+
 ## Usage
 There is two different ways for using this library:
 1) Clone the library and change/overwrite whatever you want
