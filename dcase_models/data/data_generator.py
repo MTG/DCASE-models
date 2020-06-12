@@ -91,7 +91,7 @@ class DataGenerator():
         self.features_folder = os.path.join(dataset_path, features_folder)
 
         # Specific attributes
-        self.set_specific_attributes()
+        self.build()
 
         # check if the dataset was download
         # TODO improve this
@@ -112,7 +112,7 @@ class DataGenerator():
         self.data = {}
         self.get_file_lists()
 
-    def set_specific_attributes(self):
+    def build(self):
         self.fold_list = ["fold1", "fold2", "fold3", "fold4",
                           "fold5", "fold6", "fold7", "fold8",
                           "fold9", "fold10"]

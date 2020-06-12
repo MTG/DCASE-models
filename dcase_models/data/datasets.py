@@ -14,7 +14,7 @@ import inspect
 
 
 class UrbanSound8k(DataGenerator):
-    ''' UrbanSound8k class (just a copy of DataGenerator) '''
+    ''' UrbanSound8k class (almost copy of DataGenerator) '''
 
     def __init__(self, dataset_path, features_folder, features,
                  audio_folder=None, use_validate_set=True):
@@ -61,7 +61,7 @@ class ESC50(DataGenerator):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
-    def set_specific_attributes(self):
+    def build(self):
         self.fold_list = ["fold1", "fold2", "fold3", "fold4", "fold5"]
         self.evaluation_mode = 'cross-validation'
 
@@ -150,7 +150,7 @@ class URBAN_SED(DataGenerator):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
-    def set_specific_attributes(self):
+    def build(self):
         self.annotations_folder = os.path.join(
             self.dataset_path, 'annotations')
         self.fold_list = ["train", "validate", "test"]
@@ -270,7 +270,7 @@ class SONYC_UST(DataGenerator):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
-    def set_specific_attributes(self):
+    def build(self):
         self.fold_list = ["train", "validate"]
         self.evaluation_mode = 'train-validate-test'
         self.meta_file = os.path.join(self.dataset_path, 'annotations.csv')
@@ -356,7 +356,7 @@ class TAUUrbanAcousticScenes2019(DataGenerator):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
-    def set_specific_attributes(self):
+    def build(self):
         self.fold_list = ["train", "test"]
         self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
         self.label_list = ['airport', 'shopping_mall', 'metro_station',
@@ -446,7 +446,7 @@ class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
         super().__init__(dataset_path, features_folder,
                          features, audio_folder, use_validate_set)
 
-    def set_specific_attributes(self):
+    def build(self):
         self.fold_list = ["train", "test"]
         self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
         self.label_list = ['airport', 'shopping_mall', 'metro_station',

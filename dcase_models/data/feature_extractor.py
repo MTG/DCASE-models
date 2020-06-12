@@ -12,7 +12,8 @@ from ..utils.files import mkdir_if_not_exists, load_json
 class FeatureExtractor():
     """
     FeatureExtractor includes functions to calculates features.
-    This class can be inherited to customize (i.e. see MelSpectrogram, Openl3)
+    This class can be inherited to customize 
+    (i.e. see features.MelSpectrogram, features.Openl3)
 
     Attributes
     ----------
@@ -27,7 +28,22 @@ class FeatureExtractor():
         """ Initialize the FeatureExtractor
         Parameters
         ----------
-
+        sequence_time : float
+            Duration of the sequence analysis window (in seconds)
+        sequence_hop_time : float
+            Hop time of the sequence analysis windows (in seconds)
+        audio_win : int
+            Number of samples of the audio frames.
+        audio_hop : int
+            Number of samples for the frame hop between adjacent 
+            audio frames   
+        n_fft : int
+            Number of samples used for FFT calculation
+        sr : int
+            Sampling rate of the audio signals
+            If the original audio is not sampled at this rate,
+            it is re-sampled before feature extraction       
+        
         """
         self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
@@ -84,6 +100,8 @@ class FeatureExtractor():
             Path to the audio file
         mono : bool
             if True, only returns left channel
+        change_sampling_rate : bool
+            if True, the audio signal is re-sampled to self.sr
 
         Returns
         -------
@@ -107,7 +125,7 @@ class FeatureExtractor():
         return audio
 
     def calculate_features(self, file_name):
-        """ Calculates features of an audio file
+        """ Load an audio file and calculates features
 
         Parameters
         ----------
@@ -143,7 +161,8 @@ class FeatureExtractor():
         return spectrogram_np
 
     def extract(self, folder_audio, folder_features):
-        """ Extract feauters for all files present in folder_audio
+        """ Extract features for all files present in folder_audio and
+        saved them to the folder_features path.
 
         Parameters
         ----------
@@ -191,8 +210,18 @@ class FeatureExtractor():
             json.dump(self.params, fp)
 
     def check_features_folder(self, features_folder):
+        """ Checks if the features saved in features_folder were
+        calculated with the same parameters of self.params
+
+        Parameters
+        ----------
+        path : str
+            Path to the features folder
+
+        """
+
         json_features_folder = os.path.join(features_folder, "parameters.json")
-        print(json_features_folder)
+        # print(json_features_folder)
         if not os.path.exists(json_features_folder):
             return False
         parameters_features_folder = load_json(json_features_folder)
