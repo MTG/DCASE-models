@@ -22,7 +22,7 @@ git clone https://github.com/pzinemanas/DCASE-models.git
 cd DCASE-models
 conda create -n dcase python=3.6
 conda activate dcase
-conda install cudatoolkit=10.0 cudnn
+conda install cudatoolkit=9.0 cudnn
 pip install -r requirements.txt
 ```
 
