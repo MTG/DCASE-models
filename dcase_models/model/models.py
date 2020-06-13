@@ -120,7 +120,7 @@ class SB_CNN(DCASEModelContainer):
         # creates keras Model
         self.model = Model(inputs=x, outputs=y)
 
-        super().build()
+        
 
     def sub_model(self):
         # example code on how define a new model based on the original

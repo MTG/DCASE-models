@@ -16,10 +16,8 @@ import inspect
 class UrbanSound8k(DataGenerator):
     ''' UrbanSound8k class (almost copy of DataGenerator) '''
 
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True):
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+    def __init__(self, dataset_path, feature_extractor=None, **kwargs):
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
     def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/1203745/files"
@@ -32,8 +30,8 @@ class UrbanSound8k(DataGenerator):
 class ESC50(DataGenerator):
     ''' DataGenerator for ESC50 Dataset '''
 
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True):
+    def __init__(self, dataset_path, feature_extractor=None, **kwargs):
+        
         # load metadata information and create label_list
         meta_file = os.path.join(dataset_path, 'meta/esc50.csv')
 
@@ -58,8 +56,7 @@ class ESC50(DataGenerator):
                 if class_name not in self.label_list:
                     self.label_list[class_ix] = class_name
 
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
     def build(self):
         self.fold_list = ["fold1", "fold2", "fold3", "fold4", "fold5"]
@@ -69,7 +66,7 @@ class ESC50(DataGenerator):
         self.folders_list = [{'audio': os.path.join(self.audio_folder),
                               'features': os.path.join(self.features_folder)}]
 
-    def get_file_lists(self):
+    def generate_file_lists(self):
         self.file_lists = {}
         for fold in self.fold_list:
             self.file_lists[fold] = []
@@ -106,11 +103,8 @@ class ESC50(DataGenerator):
 class ESC10(ESC50):
     ''' DataGenerator for ESC10 Dataset '''
 
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True):
-        # first call init of ESC50 class
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+    def __init__(self, dataset_path, feature_extractor=None, **kwargs):
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
         # then change self.metadata and self.laberl_lsit to keep only ESC-10
         new_metada = {}
@@ -134,21 +128,19 @@ class ESC10(ESC50):
                 self.label_list) if x == self.metadata[j]['class_name']][0]
 
         # regenerate self.file_lists
-        self.get_file_lists()
+        self.generate_file_lists()
 
 
 class URBAN_SED(DataGenerator):
     ''' DataGenerator for URBAN-SED Dataset '''
 
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True,
+    def __init__(self, dataset_path, feature_extractor=None,
                  sequence_time=1.0, sequence_hop_time=0.5,
-                 metric_resolution_sec=1.0):
+                 metric_resolution_sec=1.0, **kwargs):
         self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
         self.metric_resolution_sec = metric_resolution_sec
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
     def build(self):
         self.annotations_folder = os.path.join(
@@ -167,8 +159,8 @@ class URBAN_SED(DataGenerator):
                                    'features': features_path}
             self.folders_list.append(audio_features_path)
 
-    def get_file_lists(self):
-        super().get_file_lists()
+    def generate_file_lists(self):
+        super().generate_file_lists()
         self.features_to_labels = {}
         self.features_to_wav = {}
         for fold in self.fold_list:
@@ -265,10 +257,8 @@ class URBAN_SED(DataGenerator):
 class SONYC_UST(DataGenerator):
     ''' DataGenerator for SONYC-UST Dataset '''
 
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True):
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+    def __init__(self, dataset_path, feature_extractor=None, **kwargs):
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
     def build(self):
         self.fold_list = ["train", "validate"]
@@ -286,7 +276,7 @@ class SONYC_UST(DataGenerator):
         self.folders_list = [{'audio': os.path.join(self.audio_folder),
                               'features': os.path.join(self.features_folder)}]
 
-    def get_file_lists(self):
+    def generate_file_lists(self):
         filename_to_split = self.metadata[[
             'audio_filename', 'split']].drop_duplicates()
         all_files_in_metadata = filename_to_split['audio_filename'].to_list()
@@ -351,10 +341,8 @@ class SONYC_UST(DataGenerator):
 class TAUUrbanAcousticScenes2019(DataGenerator):
     ''' DataGenerator for TAUUrbanAcousticScenes2019 Dataset '''
 
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True):
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+    def __init__(self, dataset_path, feature_extractor=None, **kwargs):
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
     def build(self):
         self.fold_list = ["train", "test"]
@@ -374,7 +362,7 @@ class TAUUrbanAcousticScenes2019(DataGenerator):
         self.folders_list = [{'audio': os.path.join(self.audio_folder),
                               'features': os.path.join(self.features_folder)}]
 
-    def get_file_lists(self):
+    def generate_file_lists(self):
         self.file_lists = {}
         evaluation_files = [self.evaluation_setup_train,
                             self.evaluation_setup_test]
@@ -440,11 +428,9 @@ class TAUUrbanAcousticScenes2019(DataGenerator):
 
 class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
     ''' DataGenerator for TAUUrbanAcousticScenes2020Mobile Dataset '''
-
-    def __init__(self, dataset_path, features_folder, features,
-                 audio_folder=None, use_validate_set=True):
-        super().__init__(dataset_path, features_folder,
-                         features, audio_folder, use_validate_set)
+    
+    def __init__(self, dataset_path, feature_extractor=None, **kwargs):
+        super().__init__(dataset_path, feature_extractor, **kwargs)
 
     def build(self):
         self.fold_list = ["train", "test"]
@@ -464,7 +450,7 @@ class TAUUrbanAcousticScenes2020Mobile(DataGenerator):
         self.folders_list = [{'audio': os.path.join(self.audio_folder),
                               'features': os.path.join(self.features_folder)}]
 
-    def get_file_lists(self):
+    def generate_file_lists(self):
         self.file_lists = {}
         evaluation_files = [self.evaluation_setup_train,
                             self.evaluation_setup_test]

@@ -29,7 +29,7 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
 
-data_generator = DataGenerator('', '', '')
+data_generator = DataGenerator('')
 X_pca = np.zeros((1, 4))
 X = np.zeros((1, 128, 64))
 Y = np.zeros((1, 10))
@@ -201,15 +201,19 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
         sr=sr, **specific_parameters
     )
 
-    folders_list = data_generator.get_folder_lists()
-    for audio_features_paths in folders_list:
-        print('Extracting features from folder: ',
-              audio_features_paths['audio'])
-        response = feature_extractor.extract(
-            audio_features_paths['audio'], audio_features_paths['features'])
-        if response is None:
-            print('Features already were calculated, continue...')
-        print('Done!')
+    print('Extracting features...')
+    data_generator.extract_features(feature_extractor)
+    print('Done!')
+
+ #   folders_list = data_generator.get_folder_lists()
+ #   for audio_features_paths in folders_list:
+ #       print('Extracting features from folder: ',
+ #             audio_features_paths['audio'])
+ #       response = feature_extractor.extract(
+ #           audio_features_paths['audio'], audio_features_paths['features'])
+  #      if response is None:
+  #          print('Features already were calculated, continue...')
+  #      print('Done!')
 
     return [True, 'Features extracted', 'success', 'True']
 
@@ -264,11 +268,7 @@ def select_dataset(dataset_ix):
         # get dataset class
         data_generator_class = get_available_datasets()[dataset_name]
         # init data_generator
-        data_generator = data_generator_class(
-            params_dataset['dataset_path'],
-            params_dataset['feature_folder'],
-            "", audio_folder=params_dataset['audio_folder']
-        )
+        data_generator = data_generator_class(params_dataset['dataset_path'])
 
         options_folds = [
             {'label': name, 'value': value}
@@ -319,42 +319,43 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
        status_features == 'NOT_EXTRACTING':
         raise dash.exceptions.PreventUpdate
 
+    feature_extractor = None
+    if feature_ix is not None:
+        feature_name = (options_features[feature_ix]['label']
+                        if feature_ix is not None else "")
+        feature_extractor_class = get_available_features()[feature_name]
+        print('parameters', specific_parameters)
+        specific_parameters = ast.literal_eval(specific_parameters)
+        feature_extractor = feature_extractor_class(
+            sequence_time=sequence_time,
+            sequence_hop_time=sequence_hop_time,
+            audio_win=audio_win,
+            audio_hop=audio_hop,
+            n_fft=n_fft,
+            sr=sr, **specific_parameters
+        )
     checks = []
     if dataset_ix is not None:
         dataset_name = options_datasets[dataset_ix]['label']
-        feature_name = (options_features[feature_ix]['label']
-                        if feature_ix is not None else "")
+
         # get dataset class
         data_generator_class = get_available_datasets()[dataset_name]
-        data_generator = data_generator_class(dataset_path, features_folder,
-                                              feature_name,
-                                              audio_folder=audio_folder)
+        data_generator = data_generator_class(dataset_path, feature_extractor)
         if data_generator.check_if_dataset_was_downloaded():
             checks.append('dataset')
 
         if feature_ix is not None:
-            feature_name = options_features[feature_ix]['label']
-            feature_extractor_class = get_available_features()[feature_name]
-            print('parameters', specific_parameters)
-            specific_parameters = ast.literal_eval(specific_parameters)
-            feature_extractor = feature_extractor_class(
-                sequence_time=sequence_time,
-                sequence_hop_time=sequence_hop_time,
-                audio_win=audio_win,
-                audio_hop=audio_hop,
-                n_fft=n_fft,
-                sr=sr, **specific_parameters
-            )
+            features_extracted = data_generator.check_if_features_extracted()
 
-            folders_list = data_generator.get_folder_lists()
-            features_extracted = True
-            for audio_features_paths in folders_list:
-                features_path = os.path.join(
-                    audio_features_paths['features'], feature_name)
-                print('Checking features from folder: ', features_path)
-                if not feature_extractor.check_features_folder(features_path):
-                    features_extracted = False
-                    break
+           # folders_list = data_generator.get_folder_lists()
+           # features_extracted = True
+           # for audio_features_paths in folders_list:
+           #     features_path = os.path.join(
+           #         audio_features_paths['features'], feature_name)
+           #     print('Checking features from folder: ', features_path)
+           #     if not feature_extractor.check_features_folder(features_path):
+           #         features_extracted = False
+           #         break
 
             if features_extracted:
                 checks.append('features')
@@ -493,10 +494,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         kwargs = {}
         if dataset_name == 'URBAN_SED':
             kwargs = {'sequence_hop_time': sequence_hop_time}
-        data_generator = data_generator_class(dataset_path, features_folder,
-                                              feature_name,
-                                              audio_folder=audio_folder,
-                                              **kwargs)
+        data_generator = data_generator_class(dataset_path, feature_extractor, **kwargs)
 
         n_classes = len(data_generator.label_list)
 
@@ -512,7 +510,8 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
                                               n_frames_cnn=n_frames_cnn,
                                               n_freq_cnn=n_freq_cnn,
                                               **model_parameters)
-
+                print('create model summary')
+                model_container.model.summary()
                 if model_name == 'VGGish':
                     model_container.load_pretrained_model_weights()
                     model_container.fine_tuning(
@@ -534,6 +533,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         if (button_id == 'load_model'):
             with graph.as_default():
                 model_container = model_class(model=None, model_path=model_path)
+                print('loaded model summary')
                 model_container.model.summary()
                 stringlist = []
                 model_container.model.summary(

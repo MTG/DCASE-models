@@ -32,6 +32,21 @@ def mkdir_if_not_exists(path):
     if not os.path.exists(path):
         os.mkdir(path)
 
+def duplicate_folder_structure(origin_path, destination_path):
+    for dirpath, dirnames, filenames in os.walk(origin_path):
+        structure = os.path.join(destination_path, dirpath[len(origin_path)+1:])
+        mkdir_if_not_exists(structure)
+
+def list_wav_files_in_folder(path):
+    wav_files = []
+    for dirpath, dirnames, filenames in os.walk(path):
+        for file_audio in filenames:
+            path_to_file_audio = os.path.join(dirpath, file_audio)
+            if path_to_file_audio.endswith('wav'):
+                wav_files.append(path_to_file_audio)
+    return wav_files
+
+
 
 def load_training_log(weights_folder):
     log_file = 'training.log'

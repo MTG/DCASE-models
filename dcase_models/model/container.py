@@ -64,13 +64,18 @@ class DCASEModelContainer():
         self.metrics = metrics
         self.kwargs = kwargs
 
-        # Build the model
-        self.build()
+        # Build or load the model
+        if self.model_path is None:
+            self.build()
+        else:
+            self.load_model_from_json(self.model_path, **self.kwargs)
+
 
     def build(self):
         # Load model from model_path if the model is not defined
-        if (self.model is None) and (self.model_name is not None):
+        if (self.model is None) and (self.model_path is not None):
             self.load_model_from_json(self.model_path, **self.kwargs)
+            print('MODEL LOADED')
 
     def train(self, X_train, Y_train, X_val, Y_val, weights_path='./',
               optimizer='Adam', learning_rate=0.001, early_stopping=100,

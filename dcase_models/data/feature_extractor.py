@@ -164,6 +164,9 @@ class FeatureExtractor():
         """ Extract features for all files present in folder_audio and
         saved them to the folder_features path.
 
+        THIS FUNCTION IS DEPRECATED
+        USE DataGenerator.extract_features INSTEAD.
+
         Parameters
         ----------
         folder_audio : str

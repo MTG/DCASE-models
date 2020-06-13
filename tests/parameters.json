@@ -54,7 +54,7 @@
     "datasets" : {
         "UrbanSound8k" : {
             "dataset_path" : "/data/pzinemanas/UrbanSound8K",
-            "audio_folder" : "audio22050",
+            "audio_folder" : "audio",
             "feature_folder" : "features"
         },
         "ESC50" : {
