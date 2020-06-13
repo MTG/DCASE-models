@@ -19,12 +19,14 @@ class DataGenerator():
 
     Attributes
     ----------
-    audio_folder : str
-        Path to the folder with audio files
+    dataset_path : str
+        Path to the dataset folder
     features_folder : str
-        Path to the folder with the features files
-    annotations_folder : str
-        Path to the folder with the annotation files
+        Name of to the folder with the features files,
+        default is 'features'
+    feature_extractor : FeatureExtractor or childs
+        Instance of FeatureExtractor. This is only needed to use
+        functions related to feature extraction
     features : list of str
         Names of features to be loaded
     fold_list : list of str
@@ -42,6 +44,9 @@ class DataGenerator():
 
     Methods
     -------
+    build()
+        Define specific attributes of the dataset:
+        label_list, fold_list, meta_file, etc.
     generate_file_lists()
         Create self.file_lists, a dict thath includes a list of files per fold
     get_annotations(file_name, features):
@@ -66,22 +71,14 @@ class DataGenerator():
     #, features_folder, features,
      #            audio_folder=None, use_validate_set=True):
         """ Initialize the DataGenerator
+        
         Parameters
         ----------
-        audio_folder : str
-            Path to the folder with audio files
-        features_folder : str
-            Path to the folder with the features files
-        annotations_folder : str
-            Path to the folder with the annotation files
-        features : list of str
-            Names of features to be loaded
-        fold_list : list of str
-            List of fold names
-        label_list : list of str
-            List of label names
-        meta_file : str, optional
-            Path to the metadata file of dataset, default None
+        dataset_path : str
+            Path to the dataset fold
+        feature_extractor : FeatureExtractor or childs
+            Instance of FeatureExtractor. This is only needed to use
+            functions related to feature extraction
 
         """
 
@@ -367,7 +364,6 @@ class DataGenerator():
 
     def check_if_dataset_was_downloaded(self):
         log_file = os.path.join(self.dataset_path, 'download.txt')
-        print(log_file)
         return os.path.exists(log_file)
 
     def convert_features_path_to_audio_path(self, features_file):
@@ -452,16 +448,17 @@ class DataGenerator():
             Instance of FeatureExtractor or childs
 
         """
+
         if self.feature_extractor is None:
             raise AttributeError('''Can not load data without a FeatureExtractor. Init
                                  this object with a FeatureExtractor.''')
 
         # Change sampling rate if needed
-        if not self.check_sampling_rate(feature_extractor.sr):
-            self.change_sampling_rate(feature_extractor.sr)
+        if not self.check_sampling_rate(self.feature_extractor.sr):
+            self.change_sampling_rate(self.feature_extractor.sr)
 
         # Define path to audio and features folders
-        audio_folder_sr = self.audio_folder + str(feature_extractor.sr)
+        audio_folder_sr = self.audio_folder + str(self.feature_extractor.sr)
 
         # Check if the features were calculated already
         if not self.feature_extractor.check_features_folder(self.features_path):
