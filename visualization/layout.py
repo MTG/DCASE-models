@@ -1,6 +1,7 @@
 from figures import generate_figure2D
 from figures import generate_figure_mel
 from figures import generate_figure_training
+from figures import generate_figure_features
 
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
@@ -24,6 +25,11 @@ params_features = params["features"]
 X_pca = []
 Y = []
 label_list = []
+predictions = []
+X_test = []
+Y_test = []
+X_pca_test = []
+file_names_test = []
 
 # Plot 2D graph
 figure2D = generate_figure2D(X_pca, Y, label_list, pca_components=[
@@ -454,16 +460,64 @@ tab_visualization = html.Div([
     ),
 ])
 
+# Plot 2D graph
+plot2D_eval = dcc.Graph(id='plot2D_eval', figure=figure2D,
+                   style={"height": "100%", "width": "100%"})
+
+# Plot mel-spectrogram
+plot_mel_eval = dcc.Graph(
+    id="plot_mel_eval",
+    figure=figure_mel,
+    style={"width": "90%", "display": "inline-block", 'float': 'left'}
+)
+
+# Audio controls
+audio_player_eval = dash_audio_components.DashAudioComponents(
+    id='audio-player-eval', src="", autoPlay=False, controls=True
+)
+
 # Define Tab Evaluation (4)
-tab_evaluation = dbc.Card(
-    dbc.CardBody(
+tab_evaluation = html.Div([
+    dbc.Row(
         [
-            html.P("This is tab 2!", className="card-text"),
-            dbc.Button("Don't click here", color="danger"),
+            dbc.Col(html.Div([plot2D_eval]), width=8),
+            dbc.Col([
+                dbc.Row([plot_mel_eval], align='center'), 
+                dbc.Row([audio_player_eval], align='center'),
+                dbc.Row([html.Div("", id="accuracy")], align='center'),
+                dbc.Row([html.Div("", id="predicted")], align='center')
+            ], width=4),
         ]
     ),
-    className="mt-3",
+])
+
+X_feat = np.zeros((10, 128, 64))
+Y_t = np.zeros((10, 10))
+label_list= []*10
+figure_features = generate_figure_features(X_feat, Y_t, label_list)
+plot_features = dcc.Graph(id='plot_features', figure=figure_features,
+                   style={"height": "100%", "width": "100%"})
+# Audio controls
+audio_player_demo = dash_audio_components.DashAudioComponents(
+    id='audio-player-demo', src="", autoPlay=False, controls=True
 )
+btn_run_demo = dbc.Button("Run Demo", id="btn_run_demo", className="ml-auto")
+
+# Define Tab Demo (4)
+tab_demo = html.Div([
+    dbc.Row([
+            dbc.Col(html.Div([btn_run_demo]), width=2),
+            dbc.Col(html.Div([audio_player_demo]), width=3),
+            dbc.Col(html.Div("", id='demo_file_label'), width=3)
+        ]
+    ),
+    dbc.Row(
+        [
+            dbc.Col(html.Div([plot_features]), width=12),
+        ]
+    ),
+])
+
 
 # Define Tabs
 tabs = dbc.Tabs(
@@ -474,6 +528,8 @@ tabs = dbc.Tabs(
                 tab_id='tab_visualization'),
         dbc.Tab(tab_evaluation, label="Evaluate model",
                 tab_id='tab_evaluation'),
+        dbc.Tab(tab_demo, label="Demo",
+                tab_id='tab_demo'),
     ], id='tabs'
 )
 

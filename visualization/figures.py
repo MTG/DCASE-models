@@ -1,6 +1,7 @@
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import numpy as np
 
 colors = ['#1f77b4',
           '#ff7f0e',
@@ -50,6 +51,58 @@ def generate_figure2D(X, Y, label_list, pca_components=[0, 1],
     return fig
 
 
+def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
+                      samples_per_class=1000):
+
+    fig = make_subplots(rows=1, cols=1)  # , column_widths=[0.8, 0.2])
+    size = 6
+
+    Y_pred = np.argmax(Y_pred, axis=1)
+    Y = np.argmax(Y, axis=1)
+    print('pred_shape', Y_pred.shape, Y.shape)
+
+    n_classes = len(label_list)
+    for j in range(n_classes):
+        X_class_correct = X[(Y==j) & (Y_pred==j)] 
+        X_class_incorrect = X[(Y==j) & (Y_pred!=j)]
+        #s = min(samples_per_class, len(X_class_j))
+        x_coord = X_class_correct[:, pca_components[0]]
+        y_coord = X_class_correct[:, pca_components[1]]
+
+        fig.add_trace(
+            go.Scatter(
+                x=x_coord, y=y_coord, name=label_list[j], mode='markers',
+                marker={'size': size, 'symbol': 'circle', 'color': colors[j]}
+            ), row=1, col=1
+        )
+        x_coord = X_class_incorrect[:, pca_components[0]]
+        y_coord = X_class_incorrect[:, pca_components[1]]
+
+        fig.add_trace(
+            go.Scatter(
+                x=x_coord, y=y_coord, name=label_list[j], mode='markers',
+                marker={'size': size, 'symbol': 'x', 'color': colors[j]}
+            ), row=1, col=1
+        )
+
+
+    components_dict = {0: 'First', 1: 'Second', 2: 'Third', 3: 'Fourth'}
+
+    fig.update_layout(
+        title="2D space (PCA)",
+        xaxis_title=components_dict[pca_components[0]
+                                    ] + " principal component (x)",
+        yaxis_title=components_dict[pca_components[1]
+                                    ] + " principal component (y)",
+        clickmode='event+select', uirevision=True,
+        margin={'l': 100, 'b': 0, 't': 40, 'r': 10},
+        width=800,
+        height=600,
+    )
+    return fig
+    
+
+
 def generate_figure_mel(mel_spec):
     figure = go.Figure(px.imshow(mel_spec.T, origin='lower'), layout=go.Layout(
         title=go.layout.Title(text="A Bar Chart")))
@@ -95,3 +148,54 @@ def generate_figure_training(epochs, val, loss):
         height=600,
     )
     return figure_training
+
+
+def generate_figure_features(X_features, Y_pred, label_list):
+    # X_features shape : (Nseqs, Nhops, Nfreqs)
+    fig = make_subplots(
+        rows=2, cols=len(X_features),
+        specs=[[{}]*len(X_features),
+           [{"colspan": len(X_features)}] + [None]*(len(X_features)-1)]
+        ) 
+    fig.add_trace(go.Heatmap(z=Y_pred.T, colorbar=dict(len=0.4, y=0.2)), row=2, col=1) 
+    fig.update_yaxes(dict(
+            tickmode = 'array',
+            tickvals = np.arange(0, len(label_list)),
+            ticktext = label_list
+        ),
+        title_text="yaxis 3 title", row=2, col=1
+    )
+
+    # print(fig['layout']) 
+    #fig['layout']['yaxis11'].update(dict(
+    #        tickmode = 'array',
+    #        tickvals = np.arange(0, len(label_list)),
+    #        ticktext = label_list
+    #    )
+    #)
+
+    fig.update_layout(
+        # title="2D space (PCA)",
+        # xaxis_title=components_dict[pca_components[0]
+        #                             ] + " principal component (x)",
+        # yaxis_title=components_dict[pca_components[1]
+        #                             ] + " principal component (y)",
+        # clickmode='event+select', uirevision=True,
+        # margin={'l': 100, 'b': 0, 't': 40, 'r': 10},
+        width=1000,
+        height=600,
+    )
+    for j in range(len(X_features)):
+        fig_mel = generate_figure_mel(X_features[j])
+
+        fig.add_trace(go.Heatmap(z=X_features[j].T, 
+                                 colorbar=dict(len=0.4, y=0.8),
+                                 zmin=np.amin(X_features),
+                                 zmax=np.amax(X_features),
+                                 ), row=1, col=j+1)
+        
+        #fig.update_traces(dict(showscale=False, 
+         #              coloraxis=None), selector={'type':'heatmap'}, row=1, col=j+1)     #colorscale='gray'
+       # fig.add_trace(go.Bar(x=label_list, y=Y_pred[j]), row=2, col=j+1)
+    print(Y_pred.shape)
+    return fig

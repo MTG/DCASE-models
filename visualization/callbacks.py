@@ -16,6 +16,8 @@ from layout import options_models, options_optimizers
 from app import app
 from figures import generate_figure2D, generate_figure_mel
 from figures import generate_figure_training
+from figures import generate_figure2D_eval
+from figures import generate_figure_features
 
 import os
 import numpy as np
@@ -177,19 +179,6 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
 
     feature_extractor_class = get_available_features()[features_name]
 
-    # get dataset class
-    data_generator_class = get_available_datasets()[dataset_name]
-
-    data_generator = data_generator_class(dataset_path, features_folder,
-                                          features_name,
-                                          audio_folder=audio_folder)
-    if not data_generator.check_if_dataset_was_downloaded():
-        return [
-            True,
-            'Please download the dataset before doing feature extraction',
-            'danger'
-        ]
-
     print('parameters', specific_parameters)
     specific_parameters = ast.literal_eval(specific_parameters)
     feature_extractor = feature_extractor_class(
@@ -201,8 +190,19 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
         sr=sr, **specific_parameters
     )
 
+    # get dataset class
+    data_generator_class = get_available_datasets()[dataset_name]
+
+    data_generator = data_generator_class(dataset_path, feature_extractor)
+    if not data_generator.check_if_dataset_was_downloaded():
+        return [
+            True,
+            'Please download the dataset before doing feature extraction',
+            'danger'
+        ]
+
     print('Extracting features...')
-    data_generator.extract_features(feature_extractor)
+    data_generator.extract_features()
     print('Done!')
 
  #   folders_list = data_generator.get_folder_lists()
@@ -301,13 +301,14 @@ def select_dataset(dataset_ix):
      Input('model_parameters', 'value'),
      Input('model_path', 'value'),
      Input('model_name', 'value'),
+     Input('create_model', 'n_clicks')
      ]
 )
 def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                    audio_win, n_fft, sr, specific_parameters,
                    dataset_path, audio_folder, features_folder, dataset_ix,
                    end_features_extraction, status_features,
-                   model_parameters, model_path, model_ix):
+                   model_parameters, model_path, model_ix, create_model):
 
     global model_container
     ctx = dash.callback_context
@@ -740,3 +741,140 @@ def manage_button_train(n_intervals, status):
     else:
         button_train = "Train model"
     return button_train
+
+
+
+@app.callback(
+    [Output("plot2D_eval", "figure"),
+    Output("accuracy", "children")],
+    [Input("tabs", "active_tab")],
+    [State('fold_name', 'value'),
+    State('model_path', 'value')]
+)
+def evaluate_model(active_tab, fold_ix, model_path):
+    global X_test
+    global X_pca_test
+    global file_names_test
+    global Y_test
+    global predictions
+    if (active_tab == "tab_evaluation") and (fold_ix is not None):
+        # load data if needed
+        if len(data_generator.data) == 0:
+            data_generator.load_data()
+        fold_name = data_generator.fold_list[fold_ix]
+        X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
+
+        exp_folder_fold = os.path.join(model_path, fold_name)
+        scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+        scaler = load_pickle(scaler_path)
+        X = scaler.transform(X)
+
+        with graph.as_default():
+            model_container.load_model_weights(exp_folder_fold)
+            model_embeddings = model_container.cut_network(-2)
+            X_emb = model_embeddings.predict(X)
+
+        pca = PCA(n_components=4)
+        pca.fit(X_emb)
+
+        X_test, Y_test = data_generator.get_data_for_testing(fold_name)
+        print(np.amin(X_test[0]), np.amax(X_test[0]))
+        print(np.amin(data_generator.data[fold_name]['X'][0]), np.amax(data_generator.data[fold_name]['X'][0]))
+        X_test = scaler.transform(X_test)
+        print(np.amin(X_test[0]), np.amax(X_test[0]))
+        print(np.amin(data_generator.data[fold_name]['X'][0]), np.amax(data_generator.data[fold_name]['X'][0]))
+        with graph.as_default():
+            results = model_container.evaluate(X_test, Y_test)
+
+        X_test, Y_test, file_names_test = data_generator.get_one_example_per_file(fold_name, train=False)
+        X_test = scaler.transform(X_test)
+
+        with graph.as_default():
+            X_emb = model_embeddings.predict(X_test)
+        #   predictions = model_container.model.predict(X_test)
+
+        predictions = np.zeros_like(Y_test)
+        for j in range(len(predictions)):
+            predictions[j] = results['predictions'][j][0]
+            Y_test[j] = results['annotations'][j][0]
+
+        X_pca_test = pca.transform(X_emb)
+        print(X_emb.shape)
+        print(X_pca.shape)
+        figure2d = generate_figure2D_eval(X_pca_test, predictions, Y_test, data_generator.label_list)
+        return [figure2d , "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
+
+    raise dash.exceptions.PreventUpdate
+
+
+@app.callback(
+    [Output('plot_mel_eval', 'figure'),
+    Output('audio-player-eval', 'overrideProps'),
+    Output('predicted', 'children')],
+    [Input('plot2D_eval', 'selectedData')])
+def click_on_plot2d_eval(clickData):
+    if clickData is None:
+        figure_mel = generate_figure_mel(X_test[0])
+        return [figure_mel, {'autoPlay': False, 'src': ''}, ""]
+    else:
+        point = np.array([clickData['points'][0]['x'],
+                          clickData['points'][0]['y']])
+        distances_to_data = np.sum(
+            np.power(X_pca_test[:, [0, 1]] - point, 2), axis=-1)
+        min_distance_index = np.argmin(distances_to_data)
+        audio_file = data_generator.convert_features_path_to_audio_path(
+            file_names_test[min_distance_index])
+        audio_data, sr = sf.read(audio_file)
+        figure_mel = generate_figure_mel(X_test[min_distance_index])
+
+
+        class_ix = np.argmax(Y_test[min_distance_index])
+        pred_ix = np.argmax(predictions[min_distance_index])
+        predicted_text = "%s predicted as %s" % (data_generator.label_list[class_ix],
+                                                 data_generator.label_list[pred_ix])
+        return [
+            figure_mel, 
+            {'autoPlay': True, 'src': encode_audio(audio_data, sr)},
+            predicted_text
+        ]
+
+
+@app.callback(
+    [Output('plot_features', 'figure'),
+    Output('audio-player-demo', 'overrideProps'),
+    Output('demo_file_label', 'children')],
+    [Input("tabs", "active_tab"),
+    Input("btn_run_demo", "n_clicks")],
+    [State('fold_name', 'value'),
+    State('model_path', 'value')])
+def generate_demo(active_tab, n_clicks, fold_ix, model_path):
+    if active_tab == 'tab_demo':
+
+        fold_name = data_generator.fold_list[fold_ix]
+        exp_folder_fold = os.path.join(model_path, fold_name)
+        scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+        scaler = load_pickle(scaler_path)
+
+        ix = np.random.randint(len(data_generator.data[fold_name]['X']))
+        X_features = data_generator.data[fold_name]['X'][ix]
+        
+
+        X_features = scaler.transform(X_features)
+
+        with graph.as_default():
+            model_container.load_model_weights(exp_folder_fold)
+            Y_features = model_container.model.predict(X_features)
+
+        print('X', X_features.shape)
+        fig_demo =  generate_figure_features(X_features, Y_features, data_generator.label_list)
+
+        features_file = data_generator.file_lists[fold_name][ix]
+        audio_file = data_generator.convert_features_path_to_audio_path(features_file)
+        audio_data, sr = sf.read(audio_file)
+
+        Y_file = data_generator.data[fold_name]['Y'][ix][0]
+        class_ix = np.argmax(Y_file)
+        file_label = data_generator.label_list[class_ix]
+        return [fig_demo, {'autoPlay': False, 'src': encode_audio(audio_data, sr)}, file_label]
+
+    raise dash.exceptions.PreventUpdate

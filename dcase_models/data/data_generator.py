@@ -305,42 +305,80 @@ class DataGenerator():
 
         """
         # cross-validation mode
-        X_test = self.data[fold_test]['X']
-        Y_test = self.data[fold_test]['Y']
+        X_test = self.data[fold_test]['X'].copy()
+        Y_test = self.data[fold_test]['Y'].copy()
 
         return X_test, Y_test
 
-    def get_one_example_per_file(self, fold_test):
+    def get_one_example_per_file(self, fold_test, train=True):
         # cross-validation mode
-        fold_val = get_fold_val(fold_test, self.fold_list)
-        folds_train = self.fold_list.copy()
-        folds_train.remove(fold_test)
-        folds_train.remove(fold_val)
 
-        # X_val = self.data[fold_val]['X']
-        # Y_val = self.data[fold_val]['Y']
+        if train:
+            fold_val = get_fold_val(fold_test, self.fold_list)
+            folds_train = self.fold_list.copy()
+            folds_train.remove(fold_test)
+            folds_train.remove(fold_val)
 
-        X_train = []
-        Y_train = []
-        Files_names_train = []
-        for fold_train in folds_train:
-            for file in range(len(self.data[fold_train]['X'])):
-                X = self.data[fold_train]['X'][file]
-                if len(X) <= 1:
+            # X_val = self.data[fold_val]['X']
+            # Y_val = self.data[fold_val]['Y']
+
+            X_train = []
+            Y_train = []
+            Files_names_train = []
+            for fold_train in folds_train:
+                for file in range(len(self.data[fold_train]['X'])):
+                    X = self.data[fold_train]['X'][file]
+                    if len(X) == 0:
+                        continue
+                    #ix = int(len(X)/2)
+                    ix = int(len(X)/2) if len(X) > 1 else 0
+                    X = np.expand_dims(
+                        self.data[fold_train]['X'][file][ix], axis=0)
+                    X_train.append(X)
+                    Y = np.expand_dims(
+                        self.data[fold_train]['Y'][file][ix], axis=0)
+                    Y_train.append(Y)
+                    if self.file_lists is not None:
+                        Files_names_train.append(self.file_lists[fold_train][file])
+            X_train = np.concatenate(X_train, axis=0)
+            Y_train = np.concatenate(Y_train, axis=0)
+
+            return X_train, Y_train, Files_names_train
+        
+        else:
+            X_test = []
+            Y_test = []
+            Files_names_test = []
+
+            for file in range(len(self.data[fold_test]['X'])):
+                X = self.data[fold_test]['X'][file]
+                if len(X) == 0:
                     continue
-                ix = int(len(X)/2)
+                ix = int(len(X)/2) if len(X) > 1 else 0
                 X = np.expand_dims(
-                    self.data[fold_train]['X'][file][ix], axis=0)
-                X_train.append(X)
+                    self.data[fold_test]['X'][file][ix], axis=0)
+                X_test.append(X)
                 Y = np.expand_dims(
-                    self.data[fold_train]['Y'][file][ix], axis=0)
-                Y_train.append(Y)
+                    self.data[fold_test]['Y'][file][ix], axis=0)
+                Y_test.append(Y)
                 if self.file_lists is not None:
-                    Files_names_train.append(self.file_lists[fold_train][file])
-        X_train = np.concatenate(X_train, axis=0)
-        Y_train = np.concatenate(Y_train, axis=0)
+                    Files_names_test.append(self.file_lists[fold_test][file])
+            X_test = np.concatenate(X_test, axis=0)
+            Y_test = np.concatenate(Y_test, axis=0)
 
-        return X_train, Y_train, Files_names_train
+            return X_test, Y_test, Files_names_test
+        
+
+
+
+            # # take first sequence of each file
+            # X_test_np = np.zeros((len(X_test), X_test[0].shape[1], X_test[0].shape[2]))
+            # Y_test_np = np.zeros((len(X_test), Y_test[0].shape[1]))
+            # for j in range(len(X_test)):
+            #     ix = int(len(X)/2)
+            #     X_test_np[j] = X_test[j][0]
+            #     Y_test_np[j] = Y_test[j][0]
+
 
     def return_file_list(self, fold_test):
         return self.file_lists[fold_test]
