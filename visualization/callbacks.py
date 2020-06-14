@@ -795,7 +795,8 @@ def evaluate_model(active_tab, fold_ix, model_path):
 
         predictions = np.zeros_like(Y_test)
         for j in range(len(predictions)):
-            predictions[j] = results['predictions'][j][0]
+            #print('results', results['predictions'][j].shape)
+            predictions[j] = np.mean(results['predictions'][j], axis=0)
             Y_test[j] = results['annotations'][j][0]
 
         X_pca_test = pca.transform(X_emb)
@@ -846,19 +847,27 @@ def click_on_plot2d_eval(clickData):
     [Input("tabs", "active_tab"),
     Input("btn_run_demo", "n_clicks")],
     [State('fold_name', 'value'),
-    State('model_path', 'value')])
-def generate_demo(active_tab, n_clicks, fold_ix, model_path):
+    State('model_path', 'value'),
+    State('plot2D_eval', 'selectedData')])
+def generate_demo(active_tab, n_clicks, fold_ix, model_path, selectedData):
+    ctx = dash.callback_context
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if active_tab == 'tab_demo':
+        if (button_id == 'tabs') and (len(selectedData)>0):
+            point = np.array([selectedData['points'][0]['x'],
+                            selectedData['points'][0]['y']])
+            distances_to_data = np.sum(
+                np.power(X_pca_test[:, [0, 1]] - point, 2), axis=-1)
+            ix = np.argmin(distances_to_data)
+        else:
+            ix = np.random.randint(len(data_generator.data[fold_name]['X']))
 
         fold_name = data_generator.fold_list[fold_ix]
         exp_folder_fold = os.path.join(model_path, fold_name)
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
 
-        ix = np.random.randint(len(data_generator.data[fold_name]['X']))
         X_features = data_generator.data[fold_name]['X'][ix]
-        
-
         X_features = scaler.transform(X_features)
 
         with graph.as_default():

@@ -56,7 +56,7 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
 
     fig = make_subplots(rows=1, cols=1)  # , column_widths=[0.8, 0.2])
     size = 6
-
+    print(Y_pred.shape)
     Y_pred = np.argmax(Y_pred, axis=1)
     Y = np.argmax(Y, axis=1)
     print('pred_shape', Y_pred.shape, Y.shape)
