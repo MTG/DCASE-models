@@ -180,7 +180,7 @@ class SB_CNN_SED(KerasModelContainer):
         """
 
         self.n_classes = n_classes
-        self.n_frames_cnn = n_classes
+        self.n_frames_cnn = n_frames_cnn
         self.n_freq_cnn = n_freq_cnn
         self.filter_size_cnn = filter_size_cnn
         self.pool_size_cnn = pool_size_cnn
@@ -200,8 +200,9 @@ class SB_CNN_SED(KerasModelContainer):
 
         # INPUT
         x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn), dtype='float32')
-
+        
         y = Lambda(lambda x: K.expand_dims(x, -1))(x)
+
         # CONV 1
         y = Conv2D(self.n_filters_cnn, self.filter_size_cnn, padding='valid',
                     activation='relu')(y)

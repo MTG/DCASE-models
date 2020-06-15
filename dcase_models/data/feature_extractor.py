@@ -138,27 +138,7 @@ class FeatureExtractor():
             feature representation of the audio signal
 
         """
-
-        audio = self.load_audio(file_name)
-
-        # spectrogram
-        stft = librosa.core.stft(audio, n_fft=self.n_fft,
-                                 hop_length=self.audio_hop,
-                                 win_length=self.audio_win, center=True)
-
-        # power
-        spectrogram = np.abs(stft)**2
-
-        # convert to sequences (windowing)
-        spectrogram_seqs = self.get_sequences(spectrogram, pad=True)
-
-        # convert to numpy
-        spectrogram_np = np.asarray(spectrogram_seqs)
-
-        # transpose time and freq dims
-        spectrogram_np = np.transpose(spectrogram_np, (0, 2, 1))
-
-        return spectrogram_np
+        pass
 
     def extract(self, folder_audio, folder_features):
         """ Extract features for all files present in folder_audio and
@@ -234,3 +214,11 @@ class FeatureExtractor():
                 return False
 
         return True
+
+    def get_features_shape(self, length_sec=10.0):
+        audio_sample = np.zeros(int(length_sec*self.sr))
+        audio_file = 'zeros.wav'
+        sf.write('zeros.wav', audio_sample, self.sr)
+        features_sample = self.calculate_features(audio_file)
+        os.remove(audio_file)
+        return features_sample.shape

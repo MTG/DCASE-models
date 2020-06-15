@@ -9,7 +9,7 @@ from .feature_extractor import FeatureExtractor
 
 class Spectrogram(FeatureExtractor):
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, n_fft=1024, sr=44100):
+                 audio_win=1024, audio_hop=512, sr=44100, n_fft=1024):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -18,6 +18,27 @@ class Spectrogram(FeatureExtractor):
 
         self.params['name'] = 'Spectrogram'
 
+    def calculate_features(self, file_name):
+        audio = self.load_audio(file_name)
+
+        # spectrogram
+        stft = librosa.core.stft(audio, n_fft=self.n_fft,
+                                 hop_length=self.audio_hop,
+                                 win_length=self.audio_win, center=True)
+
+        # power
+        spectrogram = np.abs(stft)**2
+
+        # convert to sequences (windowing)
+        spectrogram_seqs = self.get_sequences(spectrogram, pad=True)
+
+        # convert to numpy
+        spectrogram_np = np.asarray(spectrogram_seqs)
+
+        # transpose time and freq dims
+        spectrogram_np = np.transpose(spectrogram_np, (0, 2, 1))
+
+        return spectrogram_np
 
 class MelSpectrogram(FeatureExtractor):
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
@@ -35,6 +56,7 @@ class MelSpectrogram(FeatureExtractor):
 
         self.mel_basis = librosa.filters.mel(
             sr, n_fft, mel_bands, htk=True, fmax=fmax)
+
 
     def calculate_features(self, file_name):
         # get spectrograms
