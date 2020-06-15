@@ -164,7 +164,6 @@ def trigger_feature_extraction(n_clicks, end_features_extraction,
      State('sequence_hop_time', 'value'),
      State('audio_hop', 'value'),
      State('audio_win', 'value'),
-     State('n_fft', 'value'),
      State('sr', 'value'),
      State('specific_parameters', 'value'),
      State('dataset_path', 'value'),
@@ -174,7 +173,7 @@ def trigger_feature_extraction(n_clicks, end_features_extraction,
 )
 def do_features_extraction(status_features, feature_ix, sequence_time,
                            sequence_hop_time, audio_hop,
-                           audio_win, n_fft, sr, specific_parameters,
+                           audio_win, sr, specific_parameters,
                            dataset_path, audio_folder, features_folder,
                            dataset_ix):
     global feature_extractor
@@ -198,7 +197,6 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
         sequence_hop_time=sequence_hop_time,
         audio_win=audio_win,
         audio_hop=audio_hop,
-        n_fft=n_fft,
         sr=sr, **specific_parameters
     )
 
@@ -255,7 +253,7 @@ def select_feature(feature_ix):
         default_arguments = get_default_args_of_function(
             features_class.__init__)
         delete = ['sequence_time', 'sequence_hop_time',
-                  'audio_win', 'audio_hop', 'n_fft', 'sr']
+                  'audio_win', 'audio_hop', 'sr']
         for key in delete:
             default_arguments.pop(key)
         if features_name in params['features']:
@@ -302,7 +300,6 @@ def select_dataset(dataset_ix):
      Input('sequence_hop_time', 'value'),
      Input('audio_hop', 'value'),
      Input('audio_win', 'value'),
-     Input('n_fft', 'value'),
      Input('sr', 'value'),
      Input('specific_parameters', 'value'),
      Input('dataset_path', 'value'),
@@ -318,7 +315,7 @@ def select_dataset(dataset_ix):
      ]
 )
 def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
-                   audio_win, n_fft, sr, specific_parameters,
+                   audio_win, sr, specific_parameters,
                    dataset_path, audio_folder, features_folder, dataset_ix,
                    end_features_extraction, status_features,
                    model_parameters, model_path, model_ix, create_model):
@@ -347,7 +344,6 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
             sequence_hop_time=sequence_hop_time,
             audio_win=audio_win,
             audio_hop=audio_hop,
-            n_fft=n_fft,
             sr=sr, **specific_parameters
         )
     checks = []
@@ -449,7 +445,6 @@ def select_model(model_ix):
      State('sequence_hop_time', 'value'),
      State('audio_hop', 'value'),
      State('audio_win', 'value'),
-     State('n_fft', 'value'),
      State('sr', 'value'),
      State('specific_parameters', 'value'),
      State('dataset_path', 'value'),
@@ -460,7 +455,7 @@ def select_model(model_ix):
 def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
                  feature_ix, dataset_ix, model_parameters,
                  sequence_time, sequence_hop_time, audio_hop,
-                 audio_win, n_fft, sr, specific_parameters, dataset_path,
+                 audio_win, sr, specific_parameters, dataset_path,
                  audio_folder, features_folder, model_path):
     global model_container
     global data_generator
@@ -494,7 +489,6 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
             sequence_hop_time=sequence_hop_time,
             audio_win=audio_win,
             audio_hop=audio_hop,
-            n_fft=n_fft,
             sr=sr, **specific_parameters
         )
 

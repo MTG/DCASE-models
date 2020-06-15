@@ -110,11 +110,11 @@ audio_win_input = dbc.FormGroup(
 )
 
 # FFT number of samples and sampling rate inputs
-n_fft_input = dbc.FormGroup(
+sr_input = dbc.FormGroup(
     [
-        dbc.Label("N FFT", html_for="example-email-row", width=2),
-        dbc.Col(dbc.Input(type="number", id="n_fft", placeholder="n_fft",
-                          value=params_features['n_fft']), width=4,),
+        #dbc.Label("N FFT", html_for="example-email-row", width=2),
+        #dbc.Col(dbc.Input(type="number", id="n_fft", placeholder="n_fft",
+        #                  value=params_features['n_fft']), width=4,),
         dbc.Label("sampling rate", html_for="example-email-row", width=2),
         dbc.Col(dbc.Input(type="number", id="sr", placeholder="sr",
                           value=params_features['sr']), width=4,),
@@ -276,7 +276,7 @@ tab_model = html.Div([
                 dbc.CardHeader("Features Parameters"),
                 dbc.CardBody([
                     dbc.Form([feature_selector, sequence_time_input,
-                              audio_win_input, n_fft_input,
+                              audio_win_input, sr_input,
                               specific_parameters, btn_extract_features])
                 ]
                 ),

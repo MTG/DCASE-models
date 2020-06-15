@@ -132,14 +132,14 @@ def generate_figure_training(epochs, val, loss):
     )
     figure_training.add_trace(
         go.Scatter(
-            x=epochs, y=loss, name='loss', mode='markers',
+            x=epochs, y=loss, name='loss', mode='markers', 
             marker={'size': size, 'symbol': 'circle', 'color': colors[1]}
         ), row=2, col=1
     )
-
+    
     figure_training.update_xaxes(title_text="epochs", row=2, col=1)
     figure_training.update_yaxes(title_text="Accuracy (%)", row=1, col=1)
-    figure_training.update_yaxes(title_text="Loss", row=2, col=1)
+    figure_training.update_yaxes(title_text="Loss", row=2, col=1, type='log')
 
     figure_training.update_layout(
         clickmode='event+select', uirevision=True,
