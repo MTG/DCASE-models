@@ -4,6 +4,7 @@ from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
+from dcase_models.data.feature_extractor import FeatureExtractor
 from dcase_models.utils.gui import encode_audio
 from dcase_models.utils.misc import get_default_args_of_function
 from dcase_models.data.scaler import Scaler
@@ -32,6 +33,7 @@ from dash.dependencies import Input, Output, State
 
 
 data_generator = DataGenerator('')
+feature_extractor = FeatureExtractor()
 X_pca = np.zeros((1, 4))
 X = np.zeros((1, 128, 64))
 Y = np.zeros((1, 10))
@@ -166,6 +168,7 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
                            audio_win, n_fft, sr, specific_parameters,
                            dataset_path, audio_folder, features_folder,
                            dataset_ix):
+    global feature_extractor
     if status_features != 'EXTRACTING':
         # return [False, '', 'success', 'True']
         raise dash.exceptions.PreventUpdate
@@ -311,6 +314,8 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                    model_parameters, model_path, model_ix, create_model):
 
     global model_container
+    global feature_extractor
+
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print('trigger by ', button_id)
@@ -839,21 +844,47 @@ def click_on_plot2d_eval(clickData):
             predicted_text
         ]
 
-
+import base64
 @app.callback(
     [Output('plot_features', 'figure'),
     Output('audio-player-demo', 'overrideProps'),
     Output('demo_file_label', 'children')],
     [Input("tabs", "active_tab"),
-    Input("btn_run_demo", "n_clicks")],
+    Input("btn_run_demo", "n_clicks"),
+    Input('upload-data', 'contents')],
     [State('fold_name', 'value'),
     State('model_path', 'value'),
-    State('plot2D_eval', 'selectedData')])
-def generate_demo(active_tab, n_clicks, fold_ix, model_path, selectedData):
+    State('plot2D_eval', 'selectedData'),
+    State('upload-data', 'filename'),
+    State('upload-data', 'last_modified')])
+def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, selectedData,
+                 list_of_names, list_of_dates):
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if button_id == 'upload-data':
+        fold_name = data_generator.fold_list[fold_ix]
+        exp_folder_fold = os.path.join(model_path, fold_name)
+        scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+        scaler = load_pickle(scaler_path)
+
+        filename = os.path.join('./', 'upload.wav')
+        data = list_of_contents.encode("utf8").split(b";base64,")[1]
+        with open(filename, "wb") as fp:
+            fp.write(base64.decodebytes(data))
+
+        X_feat = feature_extractor.calculate_features(filename)
+        X_feat = scaler.transform(X_feat)
+        with graph.as_default():
+            Y_t = model_container.model.predict(X_feat)
+
+        label_list= data_generator.label_list
+        figure_features = generate_figure_features(X_feat, Y_t, label_list)
+        return [figure_features, {'autoPlay': False, 'src': list_of_contents}, ""]
+
     if active_tab == 'tab_demo':
-        if (button_id == 'tabs') and (len(selectedData)>0):
+        fold_name = data_generator.fold_list[fold_ix]
+        if (button_id == 'tabs') and (selectedData is not None):
             point = np.array([selectedData['points'][0]['x'],
                             selectedData['points'][0]['y']])
             distances_to_data = np.sum(
@@ -862,7 +893,7 @@ def generate_demo(active_tab, n_clicks, fold_ix, model_path, selectedData):
         else:
             ix = np.random.randint(len(data_generator.data[fold_name]['X']))
 
-        fold_name = data_generator.fold_list[fold_ix]
+        
         exp_folder_fold = os.path.join(model_path, fold_name)
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)

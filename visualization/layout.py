@@ -503,8 +503,26 @@ audio_player_demo = dash_audio_components.DashAudioComponents(
 )
 btn_run_demo = dbc.Button("Run Demo", id="btn_run_demo", className="ml-auto")
 
+upload_file = dcc.Upload([
+        'Drag and Drop or ',
+        html.A('Select a File')
+    ], style={
+        'width': '100%',
+        'height': '60px',
+        'lineHeight': '60px',
+        'borderWidth': '1px',
+        'borderStyle': 'dashed',
+        'borderRadius': '5px',
+        'textAlign': 'center'
+    }, id='upload-data')
+
 # Define Tab Demo (4)
 tab_demo = html.Div([
+    dbc.Row([
+            dbc.Col(html.Div([upload_file]), width=5),
+            dbc.Col(html.Div([""], id='demo_output'), width=5),
+        ]
+    ),
     dbc.Row([
             dbc.Col(html.Div([btn_run_demo]), width=2),
             dbc.Col(html.Div([audio_player_demo]), width=3),
