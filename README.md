@@ -38,6 +38,11 @@ The folder /notebooks includes a list of notebooks that replicate experiments us
 ### Web applications
 The folder /visualization includes a user interface to define, train and visualize the models defined in this library.
 
+Go to DCASE-models folder and run:
+```
+python -m visualization.index
+```
+
 
 ## Expand DCASE-models
 This library is devised to be easy to expand in order to be fitted to your specific application. You can defined custom feature extractors, datasets, models, etc. 
