@@ -1,7 +1,7 @@
-from figures import generate_figure2D
-from figures import generate_figure_mel
-from figures import generate_figure_training
-from figures import generate_figure_features
+from .figures import generate_figure2D
+from .figures import generate_figure_mel
+from .figures import generate_figure_training
+from .figures import generate_figure_features
 
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
@@ -9,15 +9,15 @@ from dcase_models.model.models import get_available_models
 from dcase_models.utils.files import load_json
 
 import numpy as np
+import json
+import os 
 
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_audio_components
 
-print(get_available_features())
-
-params = load_json('../tests/parameters.json')
+params = load_json(os.path.join(os.path.dirname(__file__), 'parameters.json'))
 # params_dataset = params["datasets"][args.dataset]
 params_features = params["features"]
 # params_model = params['models'][args.model]

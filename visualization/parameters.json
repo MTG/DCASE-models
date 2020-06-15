@@ -1,0 +1,91 @@
+{
+    "features" : {
+        "sequence_time": 2.0, 
+        "sequence_hop_time":0.5,
+        "audio_hop":670,
+        "audio_win":1024,
+        "n_fft":1024, 
+        "sr": 22050,
+        "Spectrogram" : {},
+        "MelSpectrogram" : {
+            "mel_bands": 40
+        },
+        "Openl3" : {
+            "content_type" : "env",
+            "input_repr" : "mel256", 
+            "embedding_size" : 512
+        }
+    },
+
+    "train" : {
+        "early_stopping" : 30,
+        "epochs" : 50,
+        "considered_improvement" : 0,
+        "learning_rate" : 0.001,
+        "batch_size" : 256,
+        "verbose" : 1,
+        "optimizer" : "Adam"
+    },
+
+    "models" : {
+        "SB_CNN" : {
+            "normalizer" : "minmax",     
+            "model_arguments" : {
+                "large_cnn" : 0,
+                "n_dense_cnn" : 64,
+                "n_channels" : 0,
+                "filter_size_cnn" : [5, 5], 
+                "pool_size_cnn" : [2,2]
+            },
+            "train_arguments": {}
+        },
+        "A_CRNN" : {
+            "normalizer" : "minmax",     
+            "model_arguments" : {},
+            "train_arguments": {}
+        },     
+        "VGGish" : {
+            "normalizer" : "minmax",     
+            "model_arguments" : {},
+            "train_arguments": {}
+        } 
+    },
+
+    "datasets" : {
+        "UrbanSound8k" : {
+            "dataset_path" : "/data/pzinemanas/UrbanSound8K",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"
+        },
+        "ESC50" : {
+            "dataset_path" : "/data/pzinemanas/ESC50",
+            "audio_folder" : "audio22050",
+            "feature_folder" : "features"
+        },
+        "ESC10" : {
+            "dataset_path" : "/data/pzinemanas/ESC50",
+            "audio_folder" : "audio22050",
+            "feature_folder" : "features"
+        },
+        "URBAN_SED" : {
+            "dataset_path" : "/data/pzinemanas/URBAN-SED_v2.0.0",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"
+        },
+        "SONYC_UST" : {
+            "dataset_path" : "/data/pzinemanas/SONYC_UST",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"
+        },
+        "TAUUrbanAcousticScenes2020Mobile" : {
+            "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"           
+        },
+        "TAUUrbanAcousticScenes2019" : {
+            "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2019",
+            "audio_folder" : "audio",
+            "feature_folder" : "features"           
+        }
+    }
+}

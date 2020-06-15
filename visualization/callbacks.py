@@ -11,14 +11,14 @@ from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import save_pickle, load_pickle
 from dcase_models.utils.files import mkdir_if_not_exists, load_training_log
 
-from layout import params
-from layout import options_datasets, options_features
-from layout import options_models, options_optimizers
-from app import app
-from figures import generate_figure2D, generate_figure_mel
-from figures import generate_figure_training
-from figures import generate_figure2D_eval
-from figures import generate_figure_features
+from .layout import params
+from .layout import options_datasets, options_features
+from .layout import options_models, options_optimizers
+from .app import app
+from .figures import generate_figure2D, generate_figure_mel
+from .figures import generate_figure_training
+from .figures import generate_figure2D_eval
+from .figures import generate_figure_features
 
 import os
 import numpy as np
@@ -41,7 +41,13 @@ file_names = []
 
 graph = get_default_graph()
 
+
 # VIS TAB
+
+def conv_path(file_or_folder):
+    return os.path.join(os.path.dirname(__file__), file_or_folder)
+
+mkdir_if_not_exists(conv_path('models'))
 
 
 @app.callback(
@@ -94,7 +100,7 @@ def update_plot2D(samples_per_class, x_select, y_select,
         fold_name = data_generator.fold_list[fold_ix]
         X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
 
-        exp_folder_fold = os.path.join(model_path, fold_name)
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
         X = scaler.transform(X)
@@ -369,8 +375,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
             if model_ix is not None:
                 model_name = options_models[model_ix]['label']
 
-                features_example = feature_extractor.calculate_features(
-                    '../tests/audio/40722-8-0-7.wav')
+                features_example = feature_extractor.calculate_features(conv_path('test.wav'))
                 n_frames_cnn = features_example.shape[1]
                 n_freq_cnn = features_example.shape[2]
 
@@ -396,7 +401,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                             new_activation='softmax', freeze_source_model=True
                         )
 
-                    if model_container.check_if_model_exists(model_path):
+                    if model_container.check_if_model_exists(conv_path(model_path)):
                         checks.append('model')
 
     return [checks]
@@ -488,7 +493,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         )
 
         features_example = feature_extractor.calculate_features(
-            '../tests/audio/40722-8-0-7.wav')
+            os.path.join(os.path.dirname(__file__), 'test.wav'))
         n_frames_cnn = features_example.shape[1]
         n_freq_cnn = features_example.shape[2]
         print(features_example.shape)
@@ -530,15 +535,15 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
                     print_fn=lambda x: stringlist.append(x))
                 summary = "\n".join(stringlist)
 
-                mkdir_if_not_exists(os.path.dirname(model_path))
-                mkdir_if_not_exists(model_path)
-                model_container.save_model_json(model_path)
+                mkdir_if_not_exists(conv_path(os.path.dirname(model_path)))
+                mkdir_if_not_exists(conv_path(model_path))
+                model_container.save_model_json(conv_path(model_path))
 
                 return [True, 'Model created', 'success', summary]
 
         if (button_id == 'load_model'):
             with graph.as_default():
-                model_container = model_class(model=None, model_path=model_path)
+                model_container = model_class(model=None, model_path=conv_path(model_path))
                 print('loaded model summary')
                 model_container.model.summary()
                 stringlist = []
@@ -589,7 +594,7 @@ def create_model_path(dataset_ix, model_ix):
     if dataset_ix is not None:
         dataset_name = options_datasets[dataset_ix]['label']
 
-    model_path = os.path.join('../tests', model_name, dataset_name)
+    model_path = os.path.join('models', model_name, dataset_name)
     return model_path
 
 
@@ -607,9 +612,9 @@ def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
             fold_name = data_generator.fold_list[fold_ix]
             # print(model_path, fold_name)
             training_log = load_training_log(
-                os.path.join(model_path, fold_name))
+                conv_path(os.path.join(model_path, fold_name)))
         else:
-            training_log = load_training_log(model_path)
+            training_log = load_training_log(conv_path(model_path))
         # print(training_log)
         if (training_log is None):
             figure_training = generate_figure_training([], [], [])
@@ -711,7 +716,7 @@ def start_training(status, fold_ix, normalizer, model_path,
         scaler.fit(X_train)
         X_train = scaler.transform(X_train)
         X_val = scaler.transform(X_val)
-        exp_folder_fold = os.path.join(model_path, fold_name)
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         mkdir_if_not_exists(exp_folder_fold)
 
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
@@ -769,7 +774,7 @@ def evaluate_model(active_tab, fold_ix, model_path):
         fold_name = data_generator.fold_list[fold_ix]
         X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
 
-        exp_folder_fold = os.path.join(model_path, fold_name)
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
         X = scaler.transform(X)
@@ -864,11 +869,11 @@ def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, s
 
     if button_id == 'upload-data':
         fold_name = data_generator.fold_list[fold_ix]
-        exp_folder_fold = os.path.join(model_path, fold_name)
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
 
-        filename = os.path.join('./', 'upload.wav')
+        filename = conv_path('upload.wav')
         data = list_of_contents.encode("utf8").split(b";base64,")[1]
         with open(filename, "wb") as fp:
             fp.write(base64.decodebytes(data))
@@ -894,7 +899,7 @@ def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, s
             ix = np.random.randint(len(data_generator.data[fold_name]['X']))
 
         
-        exp_folder_fold = os.path.join(model_path, fold_name)
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
 
