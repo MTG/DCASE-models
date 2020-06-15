@@ -24,7 +24,7 @@ class FeatureExtractor():
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, n_fft=1024, sr=44100):
+                 audio_win=1024, audio_hop=512, sr=44100):
         """ Initialize the FeatureExtractor
         Parameters
         ----------
@@ -49,7 +49,6 @@ class FeatureExtractor():
         self.sequence_hop_time = sequence_hop_time
         self.audio_hop = audio_hop
         self.audio_win = audio_win
-        self.n_fft = n_fft
         self.sr = sr
 
         self.sequence_frames = int(
@@ -61,7 +60,7 @@ class FeatureExtractor():
                        'sequence_hop_time': self.sequence_hop_time,
                        'audio_hop': self.audio_hop,
                        'audio_win': self.audio_win,
-                       'n_fft': self.n_fft, 'features': 'FeatureExtractor'}
+                       'features': 'FeatureExtractor'}
 
     def get_sequences(self, x, pad=True):
         """ Extract sequences (windows) of a 2D representation
