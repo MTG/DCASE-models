@@ -20,7 +20,7 @@ class Dataset():
     def build(self):
         self.audio_path = os.path.join(self.dataset_path, 'audio')
         self.fold_list = ['fold1', 'fold2', 'fold3']
-        self.label_list ['class1', 'class2', 'class3']
+        self.label_list = ['class1', 'class2', 'class3']
 
     def generate_file_lists(self):
         """ Create self.file_lists, a dict thath includes a list of files per fold

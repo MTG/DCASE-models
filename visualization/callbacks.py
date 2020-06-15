@@ -3,6 +3,7 @@
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
+from dcase_models.data.dataset_base import Dataset
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.data.feature_extractor import FeatureExtractor
 from dcase_models.utils.gui import encode_audio
@@ -32,8 +33,10 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
 
-data_generator = DataGenerator('')
+dataset = Dataset("")
 feature_extractor = FeatureExtractor()
+data_generator = DataGenerator(dataset, feature_extractor)
+
 X_pca = np.zeros((1, 4))
 X = np.zeros((1, 128, 64))
 Y = np.zeros((1, 10))
@@ -97,7 +100,7 @@ def update_plot2D(samples_per_class, x_select, y_select,
     if (button_id == 'tabs') & (active_tab == 'tab_visualization'):
         if len(data_generator.data) == 0:
             data_generator.load_data()
-        fold_name = data_generator.fold_list[fold_ix]
+        fold_name = dataset.fold_list[fold_ix]
         X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
 
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
@@ -115,7 +118,7 @@ def update_plot2D(samples_per_class, x_select, y_select,
         X_pca = pca.transform(X_emb)
         print(X_pca.shape)
 
-    figure2D = generate_figure2D(X_pca, Y, data_generator.label_list,
+    figure2D = generate_figure2D(X_pca, Y, dataset.label_list,
                                  pca_components=[x_select, y_select],
                                  samples_per_class=samples_per_class)
     return [figure2D]
@@ -200,16 +203,17 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
     )
 
     # get dataset class
-    data_generator_class = get_available_datasets()[dataset_name]
+    dataset_class = get_available_datasets()[dataset_name]
 
-    data_generator = data_generator_class(dataset_path, feature_extractor)
-    if not data_generator.check_if_dataset_was_downloaded():
+    dataset = dataset_class(dataset_path)
+    if not dataset.check_if_dataset_was_downloaded():
         return [
             True,
             'Please download the dataset before doing feature extraction',
             'danger'
         ]
 
+    data_generator = DataGenerator(dataset, feature_extractor)
     print('Extracting features...')
     data_generator.extract_features()
     print('Done!')
@@ -275,13 +279,13 @@ def select_dataset(dataset_ix):
         dataset_name = options_datasets[dataset_ix]['label']
         params_dataset = params['datasets'][dataset_name]
         # get dataset class
-        data_generator_class = get_available_datasets()[dataset_name]
+        dataset_class = get_available_datasets()[dataset_name]
         # init data_generator
-        data_generator = data_generator_class(params_dataset['dataset_path'])
+        dataset = dataset_class(params_dataset['dataset_path'])
 
         options_folds = [
             {'label': name, 'value': value}
-            for value, name in enumerate(data_generator.fold_list)
+            for value, name in enumerate(dataset.fold_list)
         ]
         return [params_dataset['dataset_path'],
                 params_dataset['audio_folder'],
@@ -351,12 +355,13 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
         dataset_name = options_datasets[dataset_ix]['label']
 
         # get dataset class
-        data_generator_class = get_available_datasets()[dataset_name]
-        data_generator = data_generator_class(dataset_path, feature_extractor)
-        if data_generator.check_if_dataset_was_downloaded():
+        dataset_class = get_available_datasets()[dataset_name]
+        dataset = dataset_class(dataset_path)
+        if dataset.check_if_dataset_was_downloaded():
             checks.append('dataset')
 
         if feature_ix is not None:
+            data_generator = DataGenerator(dataset, feature_extractor)
             features_extracted = data_generator.check_if_features_extracted()
 
            # folders_list = data_generator.get_folder_lists()
@@ -379,7 +384,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                 n_frames_cnn = features_example.shape[1]
                 n_freq_cnn = features_example.shape[2]
 
-                n_classes = len(data_generator.label_list)
+                n_classes = len(dataset.label_list)
 
                 model_class = get_available_models()[model_name]
                 print(model_class, model_name)
@@ -459,6 +464,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
                  audio_folder, features_folder, model_path):
     global model_container
     global data_generator
+    global dataset
 
     ctx = dash.callback_context
     if (n_clicks_create_model is None) & (n_clicks_load_model is None):
@@ -499,15 +505,17 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         print(features_example.shape)
 
         # get dataset class
-        data_generator_class = get_available_datasets()[dataset_name]
-        print(data_generator_class)
+        dataset_class = get_available_datasets()[dataset_name]
+        print(dataset_class)
         # init data_generator
         kwargs = {}
         if dataset_name == 'URBAN_SED':
             kwargs = {'sequence_hop_time': sequence_hop_time}
-        data_generator = data_generator_class(dataset_path, feature_extractor, **kwargs)
+        dataset = dataset_class(dataset_path, **kwargs)
 
-        n_classes = len(data_generator.label_list)
+        data_generator = DataGenerator(dataset, feature_extractor)
+
+        n_classes = len(dataset.label_list)
 
         model_class = get_available_models()[model_name]
         print(model_class, model_name)
@@ -609,7 +617,7 @@ def create_model_path(dataset_ix, model_ix):
 def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
     if active_tab == "tab_train":
         if fold_ix is not None:
-            fold_name = data_generator.fold_list[fold_ix]
+            fold_name = dataset.fold_list[fold_ix]
             # print(model_path, fold_name)
             training_log = load_training_log(
                 conv_path(os.path.join(model_path, fold_name)))
@@ -704,7 +712,7 @@ def start_training(status, fold_ix, normalizer, model_path,
         if optimizer_ix is None:
             return [True, 'Please select an Optimizer', 'danger', ""]
 
-        fold_name = data_generator.fold_list[fold_ix]
+        fold_name = dataset.fold_list[fold_ix]
         optimizer = options_optimizers[optimizer_ix]['label']
 
         print('Loading data... ')
@@ -771,7 +779,7 @@ def evaluate_model(active_tab, fold_ix, model_path):
         # load data if needed
         if len(data_generator.data) == 0:
             data_generator.load_data()
-        fold_name = data_generator.fold_list[fold_ix]
+        fold_name = dataset.fold_list[fold_ix]
         X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
 
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
@@ -812,7 +820,7 @@ def evaluate_model(active_tab, fold_ix, model_path):
         X_pca_test = pca.transform(X_emb)
         print(X_emb.shape)
         print(X_pca.shape)
-        figure2d = generate_figure2D_eval(X_pca_test, predictions, Y_test, data_generator.label_list)
+        figure2d = generate_figure2D_eval(X_pca_test, predictions, Y_test, dataset.label_list)
         return [figure2d , "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
 
     raise dash.exceptions.PreventUpdate
@@ -841,8 +849,8 @@ def click_on_plot2d_eval(clickData):
 
         class_ix = np.argmax(Y_test[min_distance_index])
         pred_ix = np.argmax(predictions[min_distance_index])
-        predicted_text = "%s predicted as %s" % (data_generator.label_list[class_ix],
-                                                 data_generator.label_list[pred_ix])
+        predicted_text = "%s predicted as %s" % (dataset.label_list[class_ix],
+                                                 dataset.label_list[pred_ix])
         return [
             figure_mel, 
             {'autoPlay': True, 'src': encode_audio(audio_data, sr)},
@@ -868,7 +876,7 @@ def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, s
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'upload-data':
-        fold_name = data_generator.fold_list[fold_ix]
+        fold_name = dataset.fold_list[fold_ix]
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
@@ -883,12 +891,12 @@ def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, s
         with graph.as_default():
             Y_t = model_container.model.predict(X_feat)
 
-        label_list= data_generator.label_list
+        label_list= dataset.label_list
         figure_features = generate_figure_features(X_feat, Y_t, label_list)
         return [figure_features, {'autoPlay': False, 'src': list_of_contents}, ""]
 
     if active_tab == 'tab_demo':
-        fold_name = data_generator.fold_list[fold_ix]
+        fold_name = dataset.fold_list[fold_ix]
         if (button_id == 'tabs') and (selectedData is not None):
             point = np.array([selectedData['points'][0]['x'],
                             selectedData['points'][0]['y']])
@@ -911,15 +919,15 @@ def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, s
             Y_features = model_container.model.predict(X_features)
 
         print('X', X_features.shape)
-        fig_demo =  generate_figure_features(X_features, Y_features, data_generator.label_list)
+        fig_demo =  generate_figure_features(X_features, Y_features, dataset.label_list)
 
-        features_file = data_generator.file_lists[fold_name][ix]
+        features_file = dataset.file_lists[fold_name][ix]
         audio_file = data_generator.convert_features_path_to_audio_path(features_file)
         audio_data, sr = sf.read(audio_file)
 
         Y_file = data_generator.data[fold_name]['Y'][ix][0]
         class_ix = np.argmax(Y_file)
-        file_label = data_generator.label_list[class_ix]
+        file_label = dataset.label_list[class_ix]
         return [fig_demo, {'autoPlay': False, 'src': encode_audio(audio_data, sr)}, file_label]
 
     raise dash.exceptions.PreventUpdate
