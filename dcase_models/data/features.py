@@ -16,6 +16,7 @@ class Spectrogram(FeatureExtractor):
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
+        self.n_fft = n_fft
         self.params['name'] = 'Spectrogram'
         self.params['n_fft'] = 'n_fft'
 
@@ -49,13 +50,14 @@ class MelSpectrogram(FeatureExtractor):
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
-                         n_fft=n_fft, sr=sr)
+                         sr=sr)
 
         self.params['name'] = 'MelSpectrogram'
         self.params['mel_bands'] = mel_bands
         self.params['fmax'] = fmax
         self.params['n_fft'] = 'n_fft'
 
+        self.n_fft = n_fft
         self.mel_basis = librosa.filters.mel(
             sr, n_fft, mel_bands, htk=True, fmax=fmax)
 
@@ -100,7 +102,7 @@ class Openl3(FeatureExtractor):
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
-                         n_fft=n_fft, sr=sr)
+                         sr=sr)
 
         self.params['name'] = 'Openl3'
         self.params['content_type'] = content_type
