@@ -71,15 +71,11 @@ class DataGenerator():
             functions related to feature extraction
 
         """
-
-        kwargs.setdefault('use_validate_set', True)
-        kwargs.setdefault('features_folder', 'features')
-
         # General attributes
         self.dataset = dataset
         self.feature_extractor = feature_extractor
-        self.features_folder = kwargs['features_folder']
-        self.use_validate_set = kwargs['use_validate_set']
+        self.features_folder = kwargs.get('features_folder', 'features')
+        self.use_validate_set = kwargs.get('use_validate_set', True)
 
         if (feature_extractor.__class__.__bases__[0] is not FeatureExtractor) and \
             (feature_extractor.__class__ is not FeatureExtractor):
@@ -119,7 +115,7 @@ class DataGenerator():
         features_list = []
         annotations = []
 
-        for file_name in list_files_temp:
+        for file_name in list_files:
             features = np.load(file_name)
             features_list.append(features)
             file_audio = self.convert_features_path_to_audio_path(file_name)
@@ -302,23 +298,6 @@ class DataGenerator():
 
             return X_test, Y_test, Files_names_test
         
-
-
-
-            # # take first sequence of each file
-            # X_test_np = np.zeros((len(X_test), X_test[0].shape[1], X_test[0].shape[2]))
-            # Y_test_np = np.zeros((len(X_test), Y_test[0].shape[1]))
-            # for j in range(len(X_test)):
-            #     ix = int(len(X)/2)
-            #     X_test_np[j] = X_test[j][0]
-            #     Y_test_np[j] = Y_test[j][0]
-
-        
-        
-    extract_features()
-        Calculate features for each file in the dataset.
-    check_if_features_extracted()
-        Check if the features were extracted before.
 
     def convert_features_path_to_audio_path(self, features_file):
         """ 
