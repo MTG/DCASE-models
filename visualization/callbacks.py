@@ -84,20 +84,21 @@ def click_on_plot2d(clickData, x_select, y_select):
     [Input('samples_per_class', 'value'),
      Input('x_select', 'value'),
      Input('y_select', 'value'),
-     Input("tabs", "active_tab")],
+     Input("tabs", "active_tab"),
+     Input('output_select', 'value')],
     [State('fold_name', 'value'),
      State('model_path', 'value')]
 )
 def update_plot2D(samples_per_class, x_select, y_select,
-                  active_tab, fold_ix, model_path):
+                  active_tab, output_select, fold_ix, model_path):
     global X
     global X_pca
     global Y
     global file_names
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    if (button_id == 'tabs') & (active_tab == 'tab_visualization'):
+    print('out', output_select)
+    if (active_tab == 'tab_visualization') & (output_select is not None): #(button_id == 'tabs') & 
         if len(data_generator.data) == 0:
             data_generator.load_data()
         fold_name = dataset.fold_list[fold_ix]
@@ -110,9 +111,10 @@ def update_plot2D(samples_per_class, x_select, y_select,
 
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold)
-            model_embeddings = model_container.cut_network(-2)
-            X_emb = model_embeddings.predict(X)
-
+            
+            X_emb = model_container.get_intermediate_output(output_select, X) #model_container.cut_network(-2)
+            #X_emb = model_embeddings.predict(X)
+            print(X_emb.shape)
         pca = PCA(n_components=4)
         pca.fit(X_emb)
         X_pca = pca.transform(X_emb)
@@ -123,6 +125,17 @@ def update_plot2D(samples_per_class, x_select, y_select,
                                  samples_per_class=samples_per_class)
     return [figure2D]
 
+@app.callback(
+    [Output('output_select', 'options'),
+    Output('output_select', 'value')],
+    [Input("tabs", "active_tab")],
+)
+def update_output_select(active_tab):
+    if (active_tab == 'tab_visualization'):
+        layers = model_container.get_available_intermediate_outputs()
+        options = [{'label': x, 'value':x} for x in layers]
+        return [options ,layers[-1]]
+    return []
 
 # MODEL TAB
 

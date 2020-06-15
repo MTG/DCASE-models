@@ -58,6 +58,9 @@ x_select = dcc.Dropdown(id='x_select', options=options_pca,
 y_select = dcc.Dropdown(id='y_select', options=options_pca,
                         value=1, style={'width': '100%'})
 
+output_select = dcc.Dropdown(id='output_select', options=[],
+                        value=1, style={'width': '100%'})
+
 # Slider to select number of instances
 slider_samples = html.Div(
     dcc.Slider(
@@ -454,6 +457,7 @@ tab_visualization = html.Div([
         [
             dbc.Col(html.Div([x_select]), width=2, align="center"),
             dbc.Col(html.Div([y_select]), width=2, align="center"),
+            dbc.Col(html.Div([output_select]), width=2, align="center"),
             dbc.Col(html.Div([" "]), width=7, align="center"),
         ],
         justify="around"

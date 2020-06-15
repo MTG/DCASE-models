@@ -97,6 +97,12 @@ class ModelContainer():
     def check_if_model_exists(self, folder, **kwargs):
         pass
 
+    def get_available_intermediate_outputs(self):
+        pass
+    
+    def get_intermediate_output(self, output_ix_name):
+        pass
+
 
 
 class KerasModelContainer(ModelContainer):
@@ -435,3 +441,18 @@ class KerasModelContainer(ModelContainer):
         # freeze the source model if freeze_source_model is True
         self.model.get_layer(
             'source_model').trainable = not freeze_source_model
+
+
+    def get_available_intermediate_outputs(self):
+        layer_names = [layer.name for layer in self.model.layers]
+        return layer_names
+
+    def get_intermediate_output(self, output_ix_name, inputs):
+        print('ix', output_ix_name)
+        if output_ix_name in self.get_available_intermediate_outputs():
+            print('cutting model')
+            cut_model = self.cut_network(output_ix_name)
+            output = cut_model.predict(inputs)
+            return output
+
+        return None
