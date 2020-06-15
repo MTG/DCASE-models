@@ -14,10 +14,10 @@ from keras.regularizers import l2
 import keras.backend as K
 from autopool import AutoPool1D
 
-from .container import DCASEModelContainer
+from .container import KerasModelContainer
 
 
-class SB_CNN(DCASEModelContainer):
+class SB_CNN(KerasModelContainer):
     """
     Inherit class of DCASEModelContainer with specific attributs
     and methods for SB_CNN model.
@@ -131,7 +131,7 @@ class SB_CNN(DCASEModelContainer):
     # def train(...):  # i.e if want to redefine train function
 
 
-class SB_CNN_SED(DCASEModelContainer):
+class SB_CNN_SED(KerasModelContainer):
     """
     Inherit class of DCASEModelContainer with specific
     attributs and methods for SB_CNN_SED model.
@@ -237,7 +237,7 @@ class SB_CNN_SED(DCASEModelContainer):
         super().build()
 
 
-class A_CRNN(DCASEModelContainer):
+class A_CRNN(KerasModelContainer):
 
     def __init__(self, model=None, model_path=None, metrics=['accuracy'],
                  n_classes=10, n_frames_cnn=64,
@@ -326,7 +326,7 @@ class A_CRNN(DCASEModelContainer):
 
         super().build()   
 
-class VGGish(DCASEModelContainer):
+class VGGish(KerasModelContainer):
 
     '''
 
@@ -418,7 +418,7 @@ class VGGish(DCASEModelContainer):
         super().build()
 
 
-class DCASE2020Task5Baseline(DCASEModelContainer):
+class DCASE2020Task5Baseline(KerasModelContainer):
     '''
 
     Baseline of Urban Sound Tagging with Spatiotemporal Context

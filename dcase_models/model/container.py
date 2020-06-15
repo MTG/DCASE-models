@@ -12,7 +12,94 @@ from ..utils.metrics import evaluate_metrics
 from ..utils.callbacks import AccuracyCallback, F1ERCallback
 
 
-class DCASEModelContainer():
+class ModelContainer():
+    """
+    Model Container
+
+    Attributes
+    ----------
+    model : keras model or similar
+        Object that defines the model (i.e keras.models.Model)
+    model_path : str
+        Path to the model
+    model_name : str
+        Model name
+    metrics : list of str
+        List of metric used for evaluation
+
+    Methods
+    -------
+    build()
+        Create the model
+    train()
+        Train the model on a train set
+    evaluate()
+        Evaluate the model on a test set
+    save_model_json(folder):
+        Save a json file with the model arquitecture and all information
+        needed for loading the model
+    load_model_json(folder):
+        Create a model based on the json file
+    save_model_weights(weights_folder)
+        Save model weights
+    load_model_weights(weights_folder)
+        Load model weights
+    get_number_of_parameters()
+        Get the number of paramaters of the model
+    check_if_model_exists(self, folder, **kwargs):
+        Check if the model exists in the folder
+    """
+
+    def __init__(self, model=None, model_path=None,
+                 model_name="ModelContainer",
+                 metrics=['accuracy']):
+        """
+        Parameters
+        ----------
+        model : keras model or similar
+            Object that defines the model (i.e keras.models.Model)
+        model_path : str
+            Path to the model
+        model_name : str
+            Model name
+        metrics : list of str
+            List of metric used for evaluation
+        """
+        self.model = model
+        self.model_path = model_path
+        self.model_name = model_name
+        self.metrics = metrics
+
+    def build(self):
+        pass
+
+    def train(self):
+        pass
+
+    def evaluate(self, X_test, Y_test, scaler=None):
+        pass
+
+    def save_model_json(self, folder):
+        pass
+
+    def load_model_from_json(self, folder, **kwargs):
+        pass
+
+    def save_model_weights(self, weights_folder):
+        pass
+
+    def load_model_weights(self, weights_folder):
+        pass
+
+    def get_number_of_parameters(self):
+        pass
+
+    def check_if_model_exists(self, folder, **kwargs):
+        pass
+
+
+
+class KerasModelContainer(ModelContainer):
     """
     A class that contain a keras model, the methods to train, evaluate,
     save and load the model. Child of this class can be created for
@@ -58,24 +145,20 @@ class DCASEModelContainer():
             if model is None, this path is used to load the model.
             See load_model_from_json()
         """
-        self.model = model
-        self.model_path = model_path
-        self.model_name = model_name
-        self.metrics = metrics
-        self.kwargs = kwargs
+        super().__init__(model=model, model_path=model_path,
+                         model_name=model_name,
+                         metrics=metrics)
 
         # Build or load the model
         if self.model_path is None:
             self.build()
         else:
-            self.load_model_from_json(self.model_path, **self.kwargs)
+            self.load_model_from_json(self.model_path, **kwargs)
 
 
     def build(self):
-        # Load model from model_path if the model is not defined
-        if (self.model is None) and (self.model_path is not None):
-            self.load_model_from_json(self.model_path, **self.kwargs)
-            print('MODEL LOADED')
+        # Define your model here
+        pass
 
     def train(self, X_train, Y_train, X_val, Y_val, weights_path='./',
               optimizer='Adam', learning_rate=0.001, early_stopping=100,
