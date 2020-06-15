@@ -8,6 +8,8 @@ from .feature_extractor import FeatureExtractor
 
 
 class Spectrogram(FeatureExtractor):
+    ''' Spectrogram feature class '''
+
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100, n_fft=1024):
 
@@ -43,6 +45,8 @@ class Spectrogram(FeatureExtractor):
         return spectrogram_np
 
 class MelSpectrogram(FeatureExtractor):
+    ''' MelSpectrogram feature class '''
+
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100,
                  n_fft=1024, mel_bands=128, fmax=None):
@@ -95,6 +99,8 @@ class MelSpectrogram(FeatureExtractor):
 
 
 class Openl3(FeatureExtractor):
+    ''' Openl3 feature class '''
+
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100,
                  content_type="env", input_repr="mel256", embedding_size=512):

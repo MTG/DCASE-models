@@ -14,7 +14,7 @@ from ..utils.callbacks import AccuracyCallback, F1ERCallback
 
 class ModelContainer():
     """
-    Model Container
+    Base abstract class to store and manage models.
 
     Attributes
     ----------

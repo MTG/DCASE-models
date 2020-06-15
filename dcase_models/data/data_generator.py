@@ -14,62 +14,52 @@ from ..utils.files import list_wav_files_in_folder
 
 class DataGenerator():
     """
-    DataGenerator includes functions to load and manage DCASE datasets.
-    This class can be redefined by child classes (see UrbanSound8k, ESC50)
+    DataGenerator inlcudes methods to load features files from DCASE datasets.
 
+    It's also used to calculate features in each file in the dataset.
+    
     Attributes
     ----------
-    dataset_path : str
-        Path to the dataset folder
-    features_folder : str
-        Name of to the folder with the features files,
-        default is 'features'
+    dataset : Dataset or childs
+        Instance of Dataset.
     feature_extractor : FeatureExtractor or childs
         Instance of FeatureExtractor. This is only needed to use
         functions related to feature extraction
-    features : list of str
-        Names of features to be loaded
-    fold_list : list of str
-        List of fold names
-    label_list : list of str
-        List of label names
-    meta_file : str, optional
-        Path to the metadata file of dataset, default None
-    file_lists : dict
-        Dict of form {'fold1' : [file1, file2 ...], ...}
-    data : dict
-        Dict that contains the data.
-        Form: {'fold1' : {'X' : [features1, features2, ...],
-                          'Y': [ann1, ann2, ...]}, ...}
+    features_folder : str
+        Name of to the folder with the features files,
+        default is 'features'.
+    use_validate_set : bool
+        If True, use validate set.
+    features_path : str
+        Path to features folder.
+    audio_path : str
+        Path to the audio folder.
 
     Methods
     -------
-    build()
-        Define specific attributes of the dataset:
-        label_list, fold_list, meta_file, etc.
-    generate_file_lists()
-        Create self.file_lists, a dict thath includes a list of files per fold
-    get_annotations(file_name, features):
-        Returns the annotations of file in file_name path
-    data_generation(list_files_temp):
-        Returns features and annotations for all files in list_files_temp
+    data_generation(list_files):
+        Returns features and annotations for all files in list_files.
     load_data():
         Creates self.data that contains features and annotations for all files
-        in all folds
-    get_data_for_training(fold_test, upsampling=False):
+        in all folds.
+    get_data_for_training(fold_test, upsampling=False, evaluation_mode='cross-validation'):
         Returns arrays and lists for use in training process
     get_data_for_testing(fold_test):
         Returns lists to use to evaluate a model
     get_one_example_per_file(fold_test)
         Similar to get_data_for_training, but returns only one
         example (sequence) for each file
-    return_file_list()
-        Returns self.file_lists
+    convert_features_path_to_audio_path(features_file)
+        Convert the path to a feature file (or list of files) to the path to the audio file.
+    convert_audio_path_to_features_path(audio_file)
+        Convert the path to an audio file (or list of files) to the path to the feature file.
+    extract_features()
+        Calculate features for each file in the dataset.
+    check_if_features_extracted()
+        Check if the features were extracted before.
     """
 
     def __init__(self, dataset, feature_extractor, **kwargs):
-    #, features_folder, features,
-     #            audio_folder=None, use_validate_set=True):
         """ Initialize the DataGenerator
         
         Parameters
@@ -110,8 +100,8 @@ class DataGenerator():
         self.data = {}
         
 
-    def data_generation(self, list_files_temp):
-        """ Returns features and annotations for all files in list_files_temp
+    def data_generation(self, list_files):
+        """ Returns features and annotations for all files in list_files
 
         Parameters
         ----------
@@ -323,11 +313,29 @@ class DataGenerator():
             #     X_test_np[j] = X_test[j][0]
             #     Y_test_np[j] = Y_test[j][0]
 
-
+        
+        
+    extract_features()
+        Calculate features for each file in the dataset.
+    check_if_features_extracted()
+        Check if the features were extracted before.
 
     def convert_features_path_to_audio_path(self, features_file):
-        ''' convert ../features/foldX/MelSpectrogram/x.npy
-            to ../audio/foldX/x.wav '''
+        """ 
+        Convert the path to a feature file (or list of files) to the path to the audio file.
+
+        Parameters
+        ----------
+        features_file : str or list of str
+            Path to the features file or files.
+
+        Return
+        ----------
+        audio_file : str or list of str
+            Path to the audio file or files.
+
+        """
+
         #print(features_file)
         if type(features_file) is str:
             audio_file = features_file.replace(self.features_path, self.dataset.audio_path)
@@ -342,8 +350,20 @@ class DataGenerator():
         return audio_file
 
     def convert_audio_path_to_features_path(self, audio_file):
-        ''' convert ../features/foldX/MelSpectrogram/x.npy
-            to ../audio/foldX/x.wav '''
+        """ 
+        Convert the path to an audio file (or list of files) to the path to the feature file.
+
+        Parameters
+        ----------
+        audio_file : str or list of str
+            Path to the audio file or files.
+
+        Return
+        ----------
+        audio_file : str or list of str
+            Path to the features file or files.
+
+        """
         #print(audio_file)
         if type(audio_file) is str:
             features_file = audio_file.replace(self.dataset.audio_path, self.features_path)
@@ -361,14 +381,11 @@ class DataGenerator():
         return features_file
 
     def extract_features(self):
-        """ Extracts features of each wav file present in self.audio_folder.
+        """ 
+        Extracts features of each wav file present in self.audio_path.
+
         If the dataset is nos sampled at  the sampling rate set in
         feature_extractor.sr, the dataset is resampled before feature extraction.
-
-        Parameters
-        ----------
-        feature_extractor : FeatureExtractor
-            Instance of FeatureExtractor or childs
 
         """
 
@@ -404,10 +421,8 @@ class DataGenerator():
 
 
     def check_if_features_extracted(self):
-        # Check argument type
+        """ 
+        Check if the features were extracted before.
 
-        if self.feature_extractor is None:
-            raise AttributeError('''Can not load data without a FeatureExtractor. Init
-                                 this object with a FeatureExtractor.''')    
-
+        """
         return self.feature_extractor.check_features_folder(self.features_path)

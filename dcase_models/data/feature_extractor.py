@@ -11,15 +11,52 @@ from ..utils.files import mkdir_if_not_exists, load_json
 
 class FeatureExtractor():
     """
-    FeatureExtractor includes functions to calculates features.
-    This class can be inherited to customize 
-    (i.e. see features.MelSpectrogram, features.Openl3)
+    Abstract base class for feature extraction. 
+    
+    Includes methods to load audio files, calculates features and
+    prepare sequences. 
+
+    Inherit this class to define custom features 
+    (e.g. features.MelSpectrogram, features.Openl3).
 
     Attributes
     ----------
+    sequence_time : float
+        Duration of the sequence analysis window (in seconds).
+    sequence_hop_time : float
+        Hop time of the sequence analysis windows (in seconds).
+    audio_win : int
+        Number of samples of the audio frames.
+    audio_hop : int
+        Number of samples for the frame hop between adjacent 
+        audio frames. 
+    sr : int
+        Sampling rate of the audio signals
+        If the original audio is not sampled at this rate,
+        it is re-sampled before feature extraction   
+    sequence_frames : int
+        Number of frames equivalent to the sequence_time.
+    sequence_hop : int
+        Number of frames equivalent to the sequence_hop_time.
+    params : dict
+        Dictionary that stores important parameters.
+        This is used to check if the features were extracted before.
 
     Methods
     -------
+    get_sequences(x, pad=True)
+        Extract sequences (windows) of a the feature representation.
+    load_audio(file_name, mono=True, change_sampling_rate=True)
+        Load an audio signal and convert to mono if needed.
+    calculate_features(file_name)
+        Load an audio file and calculate features.
+    save_parameters_json(path)
+        Save a json file with the params.
+    check_features_folder(features_folder)
+        Checks if the features were calculated before.
+    get_features_shape(length_sec=10.0)
+        Run calculate_features with a dummy signal of length length_sec
+        and returns the shape of the feature representation.
 
     """
 
@@ -37,8 +74,6 @@ class FeatureExtractor():
         audio_hop : int
             Number of samples for the frame hop between adjacent 
             audio frames   
-        n_fft : int
-            Number of samples used for FFT calculation
         sr : int
             Sampling rate of the audio signals
             If the original audio is not sampled at this rate,
@@ -124,7 +159,8 @@ class FeatureExtractor():
         return audio
 
     def calculate_features(self, file_name):
-        """ Load an audio file and calculates features
+        """ 
+        Load an audio file and calculates features
 
         Parameters
         ----------
@@ -139,47 +175,13 @@ class FeatureExtractor():
         """
         pass
 
-    def extract(self, folder_audio, folder_features):
-        """ Extract features for all files present in folder_audio and
-        saved them to the folder_features path.
-
-        THIS FUNCTION IS DEPRECATED
-        USE DataGenerator.extract_features INSTEAD.
-
-        Parameters
-        ----------
-        folder_audio : str
-            Path to the audio folder
-        folder_features : str
-            Path to the feature folder.
-
-        """
-        feature_name = self.params['name']
-        feature_path = os.path.join(folder_features, feature_name)
-
-        # if features already were extracted, exit.
-        if self.check_features_folder(feature_path):
-            return None
-
-        mkdir_if_not_exists(folder_features)
-        mkdir_if_not_exists(feature_path)
-
-        files_orig = sorted(glob.glob(os.path.join(folder_audio, '*.wav')))
-
-        for file_audio in progressbar(files_orig, "Computing: ", 40):
-
-            features_array = self.calculate_features(file_audio)
-            # print(spectrograms.shape)
-            file_features = file_audio.split('/')[-1]
-            file_features = file_features.replace('wav', 'npy')
-            np.save(os.path.join(feature_path, file_features), features_array)
-
-        self.save_parameters_json(feature_path)
-        return 1
 
     def save_parameters_json(self, path):
-        """ Save a json file with the self.params. Useful for checking if
-        the features files were calculated with same parameters.
+        """ 
+        Save a json file with the self.params. 
+        
+        Useful for checking if the features files were calculated
+        with same parameters.
 
         Parameters
         ----------
@@ -215,6 +217,21 @@ class FeatureExtractor():
         return True
 
     def get_features_shape(self, length_sec=10.0):
+        """
+        Run calculate_features() with a dummy signal of length length_sec
+        and returns the shape of the feature representation.
+
+        Parameters
+        ----------
+        length_sec : float
+            Duration in seconds of the test signal
+
+        Returns
+        ----------       
+        tuple
+            Shape of the feature representation
+        """
+
         audio_sample = np.zeros(int(length_sec*self.sr))
         audio_file = 'zeros.wav'
         sf.write('zeros.wav', audio_sample, self.sr)

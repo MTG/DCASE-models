@@ -15,7 +15,7 @@ import inspect
 
 
 class UrbanSound8k(Dataset):
-    ''' UrbanSound8k class (almost copy of DataGenerator) '''
+    ''' UrbanSound8k dataset class '''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -40,7 +40,7 @@ class UrbanSound8k(Dataset):
 
 
 class ESC50(Dataset):
-    ''' DataGenerator for ESC50 Dataset '''
+    ''' ESC50 dataset class '''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -112,7 +112,7 @@ class ESC50(Dataset):
 
 
 class ESC10(ESC50):
-    ''' DataGenerator for ESC10 Dataset '''
+    ''' ESC10 dataset class '''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -146,7 +146,7 @@ class ESC10(ESC50):
 
 
 class URBAN_SED(Dataset):
-    ''' DataGenerator for URBAN-SED Dataset '''
+    ''' URBAN-SED dataset class '''
 
     def __init__(self, dataset_path,
                  sequence_time=1.0, sequence_hop_time=0.5,
@@ -248,7 +248,7 @@ class URBAN_SED(Dataset):
 
 
 class SONYC_UST(Dataset):
-    ''' DataGenerator for SONYC-UST Dataset '''
+    ''' SONYC-UST dataset class '''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -320,7 +320,7 @@ class SONYC_UST(Dataset):
 
 
 class TAUUrbanAcousticScenes2019(Dataset):
-    ''' DataGenerator for TAUUrbanAcousticScenes2019 Dataset '''
+    ''' TAUUrbanAcousticScenes2019 dataset class '''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -393,7 +393,7 @@ class TAUUrbanAcousticScenes2019(Dataset):
 
 
 class TAUUrbanAcousticScenes2020Mobile(Dataset):
-    ''' DataGenerator for TAUUrbanAcousticScenes2020Mobile Dataset '''
+    ''' TAUUrbanAcousticScenes2020Mobile dataset class '''
     
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
