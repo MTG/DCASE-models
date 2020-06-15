@@ -33,10 +33,10 @@ There are several ways to use this library.
 See [urban-sound-classification](https://github.com/pzinemanas/urban-sound-classification) repository as a complete example on how to use DCASE-models within a python script.
 
 ### Jupyter notebooks
-The folder /notebooks includes a list of notebooks that replicate experiments using DCASE-models.
+The folder `notebooks` includes a list of notebooks that replicate experiments using DCASE-models.
 
 ### Web applications
-The folder /visualization includes a user interface to define, train and visualize the models defined in this library.
+The folder `visualization` includes a user interface to define, train and visualize the models defined in this library.
 
 Go to DCASE-models folder and run:
 ```
