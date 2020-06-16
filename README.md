@@ -16,14 +16,20 @@ root/
 ````
 
 ## Installation instructions
-### conda
+We recommend to install DCASE-models in a dedicated virtual environment. For instance, using anaconda:
+```
+conda create -n dcase python=3.6
+conda activate dcase
+```
+For GPU support:
+```
+conda install cudatoolkit cudnn
+```
+Then to install the package:
 ```
 git clone https://github.com/pzinemanas/DCASE-models.git
 cd DCASE-models
-conda create -n dcase python=3.6
-conda activate dcase
-conda install cudatoolkit=9.0 cudnn
-pip install -r requirements.txt
+pip install .
 ```
 
 ## Usage
