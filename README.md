@@ -31,6 +31,10 @@ git clone https://github.com/pzinemanas/DCASE-models.git
 cd DCASE-models
 pip install .
 ```
+To include visualization related dependencies, run:
+```
+pip install .[visualization]
+```
 
 ## Usage
 There are several ways to use this library.
