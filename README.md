@@ -36,7 +36,7 @@ pip install .
 There are several ways to use this library.
 
 ### Python script
-See [urban-sound-classification](https://github.com/pzinemanas/urban-sound-classification) repository as a complete example on how to use DCASE-models within a python script.
+The folder `scripts` includes python scripts for data downloading, feature extraction, model training and testing. This examples show how to use DCASE-models within a python script.
 
 ### Jupyter notebooks
 The folder `notebooks` includes a list of notebooks that replicate experiments using DCASE-models.
