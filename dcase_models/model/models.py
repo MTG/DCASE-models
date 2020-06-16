@@ -69,7 +69,7 @@ class SB_CNN(KerasModelContainer):
         self.n_freq_cnn = n_freq_cnn
         self.filter_size_cnn = filter_size_cnn
         self.pool_size_cnn = pool_size_cnn
-        self.large_cnn = large_cnn 
+        self.large_cnn = large_cnn
         self.n_dense_cnn = n_dense_cnn
         self.n_channels = n_channels
 
@@ -82,30 +82,32 @@ class SB_CNN(KerasModelContainer):
         # Here define the keras model
         if self.n_channels == 0:
             x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
-                        dtype='float32', name='input')
+                      dtype='float32', name='input')
             y = Lambda(lambda x: K.expand_dims(x, -1), name='lambda')(x)
         else:
-            x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn, self.n_channels),
-                        dtype='float32', name='input')
+            x = Input(
+                shape=(self.n_frames_cnn, self.n_freq_cnn, self.n_channels),
+                dtype='float32', name='input'
+            )
             y = Lambda(lambda x: x, name='lambda')(x)
 
         # CONV 1
         y = Conv2D(24, self.filter_size_cnn, padding='valid',
-                    activation='relu', name='conv1')(y)
+                   activation='relu', name='conv1')(y)
         y = MaxPooling2D(pool_size=(2, 2), strides=None,
-                            padding='valid', name='maxpool1')(y)
+                         padding='valid', name='maxpool1')(y)
         y = BatchNormalization(name='batchnorm1')(y)
 
         # CONV 2
         y = Conv2D(48, self.filter_size_cnn, padding='valid',
-                    activation='relu', name='conv2')(y)
+                   activation='relu', name='conv2')(y)
         y = MaxPooling2D(pool_size=(4, 2), strides=None,
-                            padding='valid', name='maxpool2')(y)
+                         padding='valid', name='maxpool2')(y)
         y = BatchNormalization(name='batchnorm2')(y)
 
         # CONV 3
         y = Conv2D(48, self.filter_size_cnn, padding='valid',
-                    activation='relu', name='conv3')(y)
+                   activation='relu', name='conv3')(y)
         y = BatchNormalization(name='batchnorm3')(y)
 
         # Flatten and dense layers
@@ -119,8 +121,6 @@ class SB_CNN(KerasModelContainer):
 
         # creates keras Model
         self.model = Model(inputs=x, outputs=y)
-
-        
 
     def sub_model(self):
         # example code on how define a new model based on the original
@@ -200,26 +200,26 @@ class SB_CNN_SED(KerasModelContainer):
 
         # INPUT
         x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn), dtype='float32')
-        
+
         y = Lambda(lambda x: K.expand_dims(x, -1))(x)
 
         # CONV 1
         y = Conv2D(self.n_filters_cnn, self.filter_size_cnn, padding='valid',
-                    activation='relu')(y)
+                   activation='relu')(y)
         y = MaxPooling2D(pool_size=self.pool_size_cnn,
-                            strides=None, padding='valid')(y)
+                         strides=None, padding='valid')(y)
         y = BatchNormalization()(y)
 
         # CONV 2
         y = Conv2D(self.n_filters_cnn, self.filter_size_cnn, padding='valid',
-                    activation='relu')(y)
+                   activation='relu')(y)
         y = MaxPooling2D(pool_size=self.pool_size_cnn,
-                            strides=None, padding='valid')(y)
+                         strides=None, padding='valid')(y)
         y = BatchNormalization()(y)
 
         # CONV 3
         y = Conv2D(self.n_filters_cnn, self.filter_size_cnn, padding='valid',
-                    activation='relu')(y)
+                   activation='relu')(y)
         # y = MaxPooling2D(pool_size=pool_size_cnn,
         #                  strides=None, padding='valid')(y)
         y = BatchNormalization()(y)
@@ -266,7 +266,7 @@ class A_CRNN(KerasModelContainer):
         self.fc_nb = fc_nb
         self.dropout_rate = dropout_rate
         self.n_channels = n_channels
-        self.final_activation =final_activation
+        self.final_activation = final_activation
         self.sed = sed
         self.bidirectional = bidirectional
 
@@ -278,12 +278,14 @@ class A_CRNN(KerasModelContainer):
     def build(self):
         if self.n_channels == 0:
             x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
-                        dtype='float32', name='input')
+                      dtype='float32', name='input')
             spec_start = Lambda(
                 lambda x: K.expand_dims(x, -1), name='lambda')(x)
         else:
-            x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn, self.n_channels),
-                        dtype='float32', name='input')
+            x = Input(
+                shape=(self.n_frames_cnn, self.n_freq_cnn, self.n_channels),
+                dtype='float32', name='input'
+            )
             spec_start = Lambda(lambda x: x, name='lambda')(x)
 
         spec_x = spec_start
@@ -308,8 +310,8 @@ class A_CRNN(KerasModelContainer):
                     merge_mode='mul')(spec_x)
             else:
                 spec_x = GRU(r, activation='tanh', dropout=self.dropout_rate,
-                                recurrent_dropout=self.dropout_rate,
-                                return_sequences=True)(spec_x)
+                             recurrent_dropout=self.dropout_rate,
+                             return_sequences=True)(spec_x)
 
         for f in self.fc_nb:
             spec_x = TimeDistributed(Dense(f))(spec_x)
@@ -325,7 +327,8 @@ class A_CRNN(KerasModelContainer):
 
         self.model = Model(inputs=x, outputs=out)
 
-        super().build()   
+        super().build()
+
 
 class VGGish(KerasModelContainer):
 
@@ -362,19 +365,22 @@ class VGGish(KerasModelContainer):
     def build(self):
         if self.n_channels == 0:
             inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
-                            dtype='float32', name='input')
-            x = Lambda(lambda x: K.expand_dims(
-                x, -1), name='lambda')(inputs)
+                           dtype='float32', name='input')
+            x = Lambda(
+                lambda x: K.expand_dims(x, -1), name='lambda'
+            )(inputs)
         else:
-            inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn, self.n_channels),
-                            dtype='float32', name='input')
+            inputs = Input(
+                shape=(self.n_frames_cnn, self.n_freq_cnn, self.n_channels),
+                dtype='float32', name='input'
+            )
             x = Lambda(lambda x: x, name='lambda')(inputs)
 
         # setup layer params
         conv = partial(Conv2D, kernel_size=(3, 3), strides=(
             1, 1), activation='relu', padding='same')
         maxpool = partial(MaxPooling2D, pool_size=(2, 2),
-                            strides=(2, 2), padding='same')
+                          strides=(2, 2), padding='same')
 
         # Block 1
         x = conv(64, name='conv1')(x)
@@ -448,7 +454,7 @@ class DCASE2020Task5Baseline(KerasModelContainer):
         self.n_classes = n_classes
         self.hidden_layer_size = hidden_layer_size
         self.num_hidden_layers = num_hidden_layers
-        self.l2_reg = l2_reg   
+        self.l2_reg = l2_reg
 
         super().__init__(model=model, model_path=model_path,
                          model_name='DCASE2020Task5Baseline', metrics=metrics)
@@ -456,19 +462,21 @@ class DCASE2020Task5Baseline(KerasModelContainer):
     def build(self):
         # input
         inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
-                        dtype='float32', name='input')
+                       dtype='float32', name='input')
 
         # Hidden layers
         for idx in range(self.num_hidden_layers):
             if idx == 0:
                 y = inputs
-            y = TimeDistributed(Dense(self.hidden_layer_size, activation='relu',
-                                        kernel_regularizer=l2(self.l2_reg)),
-                                name='dense_{}'.format(idx+1))(y)
+            y = TimeDistributed(
+                Dense(self.hidden_layer_size, activation='relu',
+                      kernel_regularizer=l2(self.l2_reg)),
+                name='dense_{}'.format(idx+1)
+                )(y)
 
         # Output layer
         y = TimeDistributed(Dense(self.n_classes, activation='sigmoid',
-                                    kernel_regularizer=l2(self.l2_reg)),
+                                  kernel_regularizer=l2(self.l2_reg)),
                             name='output_t')(y)
 
         # Apply autopool over time dimension

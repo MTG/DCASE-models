@@ -34,7 +34,6 @@ class Scaler():
 
                     self.scaler.append([min_v, max_v])
 
-
     def transform(self, mel):
         if type(mel) == list:
             for j in range(len(mel)):
@@ -47,7 +46,7 @@ class Scaler():
         if self.normalizer == 'standard':
             mel_dims = mel.shape
             mel_bands = mel.shape[-1]
-            #times = mel.shape[0]*mel.shape[1]
+            # times = mel.shape[0]*mel.shape[1]
             mel_temp = np.reshape(mel, (-1, mel_bands))
             mel_temp = self.scaler.transform(mel_temp)
             mel = mel_temp.reshape(mel_dims)
@@ -72,5 +71,3 @@ class Scaler():
         if self.normalizer == 'standard':
             mel = self.scaler.inverse_transform(mel)
         return mel
-
-

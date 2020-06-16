@@ -11,7 +11,6 @@ def get_fold_val(fold_test, fold_list):
     return fold_val
 
 
-
 def get_data_train_list(folds_data, fold_test, evaluation_mode,
                         scaler=None, upsampling=True):
     fold_list = list(folds_data.keys())
@@ -37,6 +36,7 @@ def get_data_train_list(folds_data, fold_test, evaluation_mode,
             Y_train.extend(folds_data[fold]['Y'])
 
     return X_train, Y_train, X_val, Y_val
+
 
 def get_fold_list(folds, evaluation_mode):
     if evaluation_mode == 'cross-validation':

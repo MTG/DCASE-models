@@ -25,7 +25,6 @@ def plot_confusion_matrix(y_true, y_pred, classes, ax,
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-
     # fig, ax = plt.subplots(figsize=(12,12))
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
     if colorbar:

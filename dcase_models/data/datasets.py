@@ -13,7 +13,6 @@ from ..utils.files import move_all_files_to_parent
 import inspect
 
 
-
 class UrbanSound8k(Dataset):
     ''' UrbanSound8k dataset class '''
 
@@ -28,7 +27,7 @@ class UrbanSound8k(Dataset):
                            "dog_bark", "drilling", "engine_idling", "gun_shot",
                            "jackhammer", "siren", "street_music"]
         # self.evaluation_mode = 'cross-validation'
-        self.audio_path = os.path.join(self.dataset_path, 'audio')        
+        self.audio_path = os.path.join(self.dataset_path, 'audio')
 
     def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/1203745/files"
@@ -73,10 +72,6 @@ class ESC50(Dataset):
 
         self.fold_list = ["fold1", "fold2", "fold3", "fold4", "fold5"]
         self.evaluation_mode = 'cross-validation'
-
-        # all wav files are in the same folder
-       # self.folders_list = [{'audio': os.path.join(self.audio_folder),
-       #                       'features': os.path.join(self.features_folder)}]
 
     def generate_file_lists(self):
         self.file_lists = {}
@@ -166,19 +161,14 @@ class URBAN_SED(Dataset):
                            "jackhammer", "siren", "street_music"]
         self.evaluation_mode = 'train-validate-test'
 
-
     def generate_file_lists(self):
         super().generate_file_lists()
         self.wav_to_labels = {}
-        #self.features_to_wav = {}
         for fold in self.fold_list:
             for fil in self.file_lists[fold]:
                 label_file = os.path.basename(fil).split('.')[0] + '.txt'
                 self.wav_to_labels[fil] = os.path.join(
                     self.annotations_folder, fold, label_file)
-                #audio_file = os.path.basename(fil).split('.')[0] + '.wav'
-                #self.features_to_wav[fil] = os.path.join(
-                #    self.audio_folder, fold, audio_file)
 
     # def data_generation(self, list_files_temp):
     #     features_list = []
@@ -200,12 +190,13 @@ class URBAN_SED(Dataset):
     #         # annotations.append({'y_frames': y_frames,
     #         #                     'y_grid_metrics': y_grid_metrics})
 
-    #     return features_list, [annotations_sequences, annotations_grid_metrics]
+    #     return features_list, [annotations_sequences,
+    #                            annotations_grid_metrics]
 
     def get_annotations(self, file_name, features, time_resolution=1.0):
         time_resolution = self.sequence_hop_time
         label_file = self.wav_to_labels[file_name]
-        audio_file = file_name #self.features_to_wav[file_name]
+        audio_file = file_name
         f = sf.SoundFile(audio_file)
         audio_len_sec = len(f) / f.samplerate
         labels = read_csv(label_file, delimiter='\t', header=None)
@@ -260,10 +251,6 @@ class SONYC_UST(Dataset):
         with open(self.taxonomy_file, 'r') as f:
             self.label_list = yaml.load(f, Loader=yaml.Loader)
 
-        # all wav files are in the same folder
-      #  self.folders_list = [{'audio': os.path.join(self.audio_folder),
-      #                        'features': os.path.join(self.features_folder)}]
-
     def generate_file_lists(self):
         filename_to_split = self.metadata[[
             'audio_filename', 'split']].drop_duplicates()
@@ -273,7 +260,6 @@ class SONYC_UST(Dataset):
         self.file_lists = {}
         for fold in self.fold_list:
             self.file_lists[fold] = []
-            features_folder = os.path.join(self.features_folder, self.features)
             all_files = sorted(
                 glob.glob(os.path.join(self.audio_folder, '*.wav')))
             assert len(all_files) != 0
@@ -282,8 +268,6 @@ class SONYC_UST(Dataset):
                 if basename in all_files_in_metadata:
                     j = all_files_in_metadata.index(basename)
                     if splits[j] == fold:
-                        #file_npy = os.path.join(
-                        #    features_folder, basename.split('.')[0] + '.npy')
                         self.file_lists[fold].append(fil)
 
     def get_annotations(self, file_name, features):
@@ -334,10 +318,6 @@ class TAUUrbanAcousticScenes2019(Dataset):
         self.annotations_folder = os.path.join(
             self.dataset_path, 'annotations')
 
-        # all wav files are in the same folder
-       # self.folders_list = [{'audio': os.path.join(self.audio_folder),
-       #                       'features': os.path.join(self.features_folder)}]
-
     def generate_file_lists(self):
         self.file_lists = {}
         evaluation_files = [self.evaluation_setup_train,
@@ -369,7 +349,6 @@ class TAUUrbanAcousticScenes2019(Dataset):
         y[:, class_ix] = 1
         return y
 
-
     def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/2589280/files"
         zenodo_files = [
@@ -388,7 +367,7 @@ class TAUUrbanAcousticScenes2019(Dataset):
 
 class TAUUrbanAcousticScenes2020Mobile(Dataset):
     ''' TAUUrbanAcousticScenes2020Mobile dataset class '''
-    
+
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
 
@@ -442,7 +421,6 @@ class TAUUrbanAcousticScenes2020Mobile(Dataset):
         y[:, class_ix] = 1
         return y
 
-
     def download_dataset(self):
         zenodo_url = "https://zenodo.org/record/3819968/files"
         zenodo_files = [
@@ -465,4 +443,3 @@ def get_available_datasets():
         sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
 
     return availabe_datasets
-

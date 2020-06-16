@@ -1,15 +1,13 @@
-import glob
 import os
 import numpy as np
-import sox
 
 from .feature_extractor import FeatureExtractor
+from .dataset_base import Dataset
 from ..utils.ui import progressbar
 from ..utils.data import get_fold_val
-from ..utils.files import download_files_and_unzip
 from ..utils.files import mkdir_if_not_exists
 from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files_in_folder
+from ..utils.files import list_wav_files
 
 
 class DataGenerator():
@@ -17,7 +15,7 @@ class DataGenerator():
     DataGenerator inlcudes methods to load features files from DCASE datasets.
 
     It's also used to calculate features in each file in the dataset.
-    
+
     Attributes
     ----------
     dataset : Dataset or childs
@@ -42,7 +40,8 @@ class DataGenerator():
     load_data():
         Creates self.data that contains features and annotations for all files
         in all folds.
-    get_data_for_training(fold_test, upsampling=False, evaluation_mode='cross-validation'):
+    get_data_for_training(fold_test, upsampling=False,
+                          evaluation_mode='cross-validation'):
         Returns arrays and lists for use in training process
     get_data_for_testing(fold_test):
         Returns lists to use to evaluate a model
@@ -50,9 +49,11 @@ class DataGenerator():
         Similar to get_data_for_training, but returns only one
         example (sequence) for each file
     convert_features_path_to_audio_path(features_file)
-        Convert the path to a feature file (or list of files) to the path to the audio file.
+        Convert the path to a feature file (or list of files)
+        to the path to the audio file.
     convert_audio_path_to_features_path(audio_file)
-        Convert the path to an audio file (or list of files) to the path to the feature file.
+        Convert the path to an audio file (or list of files)
+        to the path to the feature file.
     extract_features()
         Calculate features for each file in the dataset.
     check_if_features_extracted()
@@ -61,7 +62,7 @@ class DataGenerator():
 
     def __init__(self, dataset, feature_extractor, **kwargs):
         """ Initialize the DataGenerator
-        
+
         Parameters
         ----------
         dataset_path : str
@@ -77,13 +78,23 @@ class DataGenerator():
         self.features_folder = kwargs.get('features_folder', 'features')
         self.use_validate_set = kwargs.get('use_validate_set', True)
 
-        if (feature_extractor.__class__.__bases__[0] is not FeatureExtractor) and \
-            (feature_extractor.__class__ is not FeatureExtractor):
-            raise AttributeError('feature_extractor has to be an instance of FeatureExtractor')
+        if (dataset.__class__.__bases__[0] is not Dataset) and \
+           (dataset.__class__ is not Dataset):
+            raise AttributeError('dataset has to be an instance of Dataset')
+
+        if (feature_extractor.__class__.__bases__[0]
+           is not FeatureExtractor) and \
+           (feature_extractor.__class__ is not FeatureExtractor):
+            raise AttributeError('''feature_extractor has to be an
+                                    instance of FeatureExtractor''')
 
         feature_name = type(feature_extractor).__name__
-        mkdir_if_not_exists(os.path.join(dataset.dataset_path, self.features_folder))
-        self.features_path = os.path.join(dataset.dataset_path, self.features_folder, feature_name)  
+        mkdir_if_not_exists(
+            os.path.join(dataset.dataset_path, self.features_folder)
+        )
+        self.features_path = os.path.join(
+            dataset.dataset_path, self.features_folder, feature_name
+        )
         mkdir_if_not_exists(self.features_path)
 
         if not self.dataset.check_sampling_rate(feature_extractor.sr):
@@ -94,7 +105,6 @@ class DataGenerator():
         self.audio_path = self.dataset.get_audio_path(feature_extractor.sr)
 
         self.data = {}
-        
 
     def data_generation(self, list_files):
         """ Returns features and annotations for all files in list_files
@@ -136,11 +146,14 @@ class DataGenerator():
 
         for fold in progressbar(self.dataset.fold_list, prefix='fold: '):
             file_audio = self.dataset.file_lists[fold]
-            file_features = self.convert_audio_path_to_features_path(file_audio)
+            file_features = self.convert_audio_path_to_features_path(
+                file_audio
+            )
             X, Y = self.data_generation(file_features)
             self.data[fold] = {'X': X, 'Y': Y}
 
-    def get_data_for_training(self, fold_test, upsampling=False, evaluation_mode='cross-validation'):
+    def get_data_for_training(self, fold_test, upsampling=False,
+                              evaluation_mode='cross-validation'):
         """ Returns arrays and lists for use in training process
 
         Parameters
@@ -167,7 +180,7 @@ class DataGenerator():
         if evaluation_mode == 'cross-validation':
             # cross-validation mode
             fold_val = get_fold_val(fold_test, self.dataset.fold_list)
-            folds_train = self.dataset.fold_list.copy()  # list(range(1,N_folds+1))
+            folds_train = self.dataset.fold_list.copy()
             folds_train.remove(fold_test)
             if self.use_validate_set:
                 folds_train.remove(fold_val)
@@ -210,13 +223,13 @@ class DataGenerator():
         if (evaluation_mode == 'train-validate-test'):
             # train-val-test mode
             X_val = self.data['validate']['X']
-            Y_val = self.data['validate']['Y'] #[1]  # grid time of metrics
+            Y_val = self.data['validate']['Y']
 
             X_train = np.concatenate(self.data['train']['X'], axis=0)
             # grid time of instances for training
-            Y_train = np.concatenate(self.data['train']['Y'], axis=0)  #[0]
+            Y_train = np.concatenate(self.data['train']['Y'], axis=0)
 
-            return  X_train, Y_train, X_val, Y_val    
+            return X_train, Y_train, X_val, Y_val
 
     def get_data_for_testing(self, fold_test):
         """ Returns lists to use to evaluate a model
@@ -260,7 +273,6 @@ class DataGenerator():
                     X = self.data[fold_train]['X'][file]
                     if len(X) == 0:
                         continue
-                    #ix = int(len(X)/2)
                     ix = int(len(X)/2) if len(X) > 1 else 0
                     X = np.expand_dims(
                         self.data[fold_train]['X'][file][ix], axis=0)
@@ -269,12 +281,14 @@ class DataGenerator():
                         self.data[fold_train]['Y'][file][ix], axis=0)
                     Y_train.append(Y)
                     if self.dataset.file_lists is not None:
-                        Files_names_train.append(self.dataset.file_lists[fold_train][file])
+                        Files_names_train.append(
+                            self.dataset.file_lists[fold_train][file]
+                        )
             X_train = np.concatenate(X_train, axis=0)
             Y_train = np.concatenate(Y_train, axis=0)
 
             return X_train, Y_train, Files_names_train
-        
+
         else:
             X_test = []
             Y_test = []
@@ -292,16 +306,18 @@ class DataGenerator():
                     self.data[fold_test]['Y'][file][ix], axis=0)
                 Y_test.append(Y)
                 if self.dataset.file_lists is not None:
-                    Files_names_test.append(self.dataset.file_lists[fold_test][file])
+                    Files_names_test.append(
+                        self.dataset.file_lists[fold_test][file]
+                    )
             X_test = np.concatenate(X_test, axis=0)
             Y_test = np.concatenate(Y_test, axis=0)
 
             return X_test, Y_test, Files_names_test
-        
 
     def convert_features_path_to_audio_path(self, features_file):
-        """ 
-        Convert the path to a feature file (or list of files) to the path to the audio file.
+        """
+        Convert the path to a feature file (or list of files)
+        to the path to the audio file.
 
         Parameters
         ----------
@@ -316,19 +332,24 @@ class DataGenerator():
         """
 
         if type(features_file) is str:
-            audio_file = features_file.replace(self.features_path, self.dataset.audio_path)
+            audio_file = features_file.replace(
+                self.features_path, self.dataset.audio_path
+            )
             audio_file = audio_file.replace('.npy', '.wav')
         elif type(features_file) is list:
             audio_file = []
             for j in range(len(features_file)):
-                audio_file_j = features_file[j].replace(self.features_path, self.dataset.audio_path)
-                audio_file_j = audio_file_j.replace('.npy', '.wav')    
+                audio_file_j = features_file[j].replace(
+                    self.features_path, self.dataset.audio_path
+                )
+                audio_file_j = audio_file_j.replace('.npy', '.wav')
                 audio_file.append(audio_file_j)
         return audio_file
 
     def convert_audio_path_to_features_path(self, audio_file):
-        """ 
-        Convert the path to an audio file (or list of files) to the path to the feature file.
+        """
+        Convert the path to an audio file (or list of files)
+        to the path to the feature file.
 
         Parameters
         ----------
@@ -342,23 +363,28 @@ class DataGenerator():
 
         """
         if type(audio_file) is str:
-            features_file = audio_file.replace(self.dataset.audio_path, self.features_path)
+            features_file = audio_file.replace(
+                self.dataset.audio_path, self.features_path
+            )
             features_file = features_file.replace('.wav', '.npy')
         elif type(audio_file) is list:
             features_file = []
-            for j in range(len(audio_file)): 
-                features_file_j = audio_file[j].replace(self.dataset.audio_path, self.features_path)
-                features_file_j = features_file_j.replace('.wav', '.npy')   
+            for j in range(len(audio_file)):
+                features_file_j = audio_file[j].replace(
+                    self.dataset.audio_path, self.features_path
+                )
+                features_file_j = features_file_j.replace('.wav', '.npy')
                 features_file.append(features_file_j)
-                
+
         return features_file
 
     def extract_features(self):
-        """ 
+        """
         Extracts features of each wav file present in self.audio_path.
 
         If the dataset is nos sampled at  the sampling rate set in
-        feature_extractor.sr, the dataset is resampled before feature extraction.
+        feature_extractor.sr, the dataset is resampled before
+        feature extraction.
 
         """
 
@@ -367,17 +393,21 @@ class DataGenerator():
             self.dataset.change_sampling_rate(self.feature_extractor.sr)
 
         # Define path to audio and features folders
-        audio_folder_sr = self.dataset.get_audio_path(self.feature_extractor.sr)
+        audio_folder_sr = self.dataset.get_audio_path(
+            self.feature_extractor.sr
+        )
 
         # Check if the features were calculated already
-        if not self.feature_extractor.check_features_folder(self.features_path):
+        if not self.feature_extractor.check_features_folder(
+            self.features_path
+        ):
 
             # Duplicate folder structure of audio in features folder
             duplicate_folder_structure(audio_folder_sr, self.features_path)
 
-            # Navigate in the sctructure of audio folder and extract features 
+            # Navigate in the sctructure of audio folder and extract features
             # of the each wav file
-            for path_to_file_audio in list_wav_files_in_folder(audio_folder_sr):
+            for path_to_file_audio in list_wav_files(audio_folder_sr):
                 features_array = self.feature_extractor.calculate_features(
                     path_to_file_audio
                 )
@@ -392,9 +422,8 @@ class DataGenerator():
             # Save parameters.json for future checking
             self.feature_extractor.save_parameters_json(self.features_path)
 
-
     def check_if_features_extracted(self):
-        """ 
+        """
         Check if the features were extracted before.
 
         """

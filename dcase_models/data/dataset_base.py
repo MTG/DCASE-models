@@ -3,13 +3,10 @@ import os
 import numpy as np
 import sox
 
-from .feature_extractor import FeatureExtractor
-from ..utils.ui import progressbar
-from ..utils.data import get_fold_val
 from ..utils.files import download_files_and_unzip
-from ..utils.files import mkdir_if_not_exists
 from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files_in_folder
+from ..utils.files import list_wav_files
+
 
 class Dataset():
     """
@@ -50,9 +47,9 @@ class Dataset():
         Save a download.txt file in dataset_path as a downloaded flag
     check_if_dataset_was_downloaded():
         Check if the dataset was downloaded.
-        Just check if exists download.txt file. 
+        Just check if exists download.txt file.
     get_audio_path(sr=None)
-        Return path to the audio folder. 
+        Return path to the audio folder.
         If sr is not None, return {audio_path}{sr}
     change_sampling_rate(new_sr)
         Changes sampling rate of each wav file in audio_path.
@@ -60,8 +57,8 @@ class Dataset():
         Check if the dataset was resampled to new_sr.
     """
     def __init__(self, dataset_path):
-        """ 
-        Init Dataset 
+        """
+        Init Dataset
         """
 
         self.dataset_path = dataset_path
@@ -69,12 +66,12 @@ class Dataset():
         self.build()
 
     def build(self):
-        """ 
+        """
         Build the dataset.
 
         Define specific attributes of the dataset.
         It's mandatory to define audio_path, fold_list and label_list.
-        Other attributes may be defined here (url, authors, etc.). 
+        Other attributes may be defined here (url, authors, etc.).
 
         """
 
@@ -83,7 +80,7 @@ class Dataset():
         self.label_list = ['class1', 'class2', 'class3']
 
     def generate_file_lists(self):
-        """ 
+        """
         Create self.file_lists, a dict thath includes a list of files per fold.
 
         Each dataset has a different way of organizing the files. This
@@ -97,7 +94,7 @@ class Dataset():
             )
 
     def get_annotations(self, file_path, features):
-        """ 
+        """
         Return the annotations of the file in file_path.
 
         Parameters
@@ -118,9 +115,8 @@ class Dataset():
         y[:, class_ix] = 1
         return y
 
-
     def download_dataset(self, zenodo_url, zenodo_files, force_download=False):
-        """ 
+        """
         Download and uncompress the dataset from zenodo.
 
         Parameters
@@ -147,7 +143,7 @@ class Dataset():
         return True
 
     def set_dataset_download_finish(self):
-        """ 
+        """
         Save a download.txt file in dataset_path as a downloaded flag.
         """
         log_file = os.path.join(self.dataset_path, 'download.txt')
@@ -155,7 +151,7 @@ class Dataset():
             txt_file.write('The dataset was download ...\n')
 
     def check_if_dataset_was_downloaded(self):
-        """ 
+        """
         Check if the dataset was downloaded.
 
         Just check if exists download.txt file.
@@ -167,8 +163,8 @@ class Dataset():
         return os.path.exists(log_file)
 
     def get_audio_path(self, sr=None):
-        """ 
-        Return path to the audio folder. 
+        """
+        Return path to the audio folder.
 
         If sr is None, return audio_path. Else, return {audio_path}{sr}.
 
@@ -186,16 +182,16 @@ class Dataset():
         if sr is None:
             audio_path = self.audio_path
         else:
-            audio_path = self.audio_path + str(sr) 
+            audio_path = self.audio_path + str(sr)
         return audio_path
 
     def change_sampling_rate(self, new_sr):
-        """ 
+        """
         Change sampling rate of each wav file in audio_path.
-        
+
         Creates a new folder named audio_path{new_sr} (i.e audio22050)
-        and converts each wav file in audio_path and save the result in 
-        the new folder. 
+        and converts each wav file in audio_path and save the result in
+        the new folder.
 
         Parameters
         ----------
@@ -210,19 +206,21 @@ class Dataset():
         tfm = sox.Transformer()
         tfm.convert(samplerate=new_sr)
 
-        for path_to_file in list_wav_files_in_folder(self.audio_path):
-            path_to_destination = path_to_file.replace(self.audio_path, new_audio_folder)
+        for path_to_file in list_wav_files(self.audio_path):
+            path_to_destination = path_to_file.replace(
+                self.audio_path, new_audio_folder
+            )
             if os.path.exists(path_to_destination):
                 continue
             tfm.build(path_to_file, path_to_destination)
 
     def check_sampling_rate(self, sr):
-        """ 
-        Checks if dataset was resampled before. 
+        """
+        Check if dataset was resampled before.
 
         For now, only check if the folder {audio_path}{sr} exists and
-        each wav file present in audio_path is also present in 
-        {audio_path}{sr}. 
+        each wav file present in audio_path is also present in
+        {audio_path}{sr}.
 
         Parameters
         ----------
@@ -240,10 +238,12 @@ class Dataset():
         if not os.path.exists(audio_folder_sr):
             return False
 
-        for path_to_file in list_wav_files_in_folder(self.audio_path):
-            path_to_destination = path_to_file.replace(self.audio_path, audio_folder_sr)
-            # TODO: check if the audio file was resampled correctly, not only if exits.
+        for path_to_file in list_wav_files(self.audio_path):
+            path_to_destination = path_to_file.replace(
+                self.audio_path, audio_folder_sr
+            )
+            # TODO: check if the audio file was resampled correctly,
+            # not only if exits.
             if not os.path.exists(path_to_destination):
                 return False
-            
         return True

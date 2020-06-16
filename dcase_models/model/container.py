@@ -99,10 +99,9 @@ class ModelContainer():
 
     def get_available_intermediate_outputs(self):
         pass
-    
+
     def get_intermediate_output(self, output_ix_name):
         pass
-
 
 
 class KerasModelContainer(ModelContainer):
@@ -160,7 +159,6 @@ class KerasModelContainer(ModelContainer):
             self.build()
         else:
             self.load_model_from_json(self.model_path, **kwargs)
-
 
     def build(self):
         # Define your model here
@@ -435,7 +433,6 @@ class KerasModelContainer(ModelContainer):
         # freeze the source model if freeze_source_model is True
         self.model.get_layer(
             'source_model').trainable = not freeze_source_model
-
 
     def get_available_intermediate_outputs(self):
         layer_names = [layer.name for layer in self.model.layers]

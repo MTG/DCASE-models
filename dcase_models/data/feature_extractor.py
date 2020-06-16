@@ -1,22 +1,20 @@
 import os
 import numpy as np
 import librosa
-import glob
 import soundfile as sf
 import json
 
-from ..utils.ui import progressbar
-from ..utils.files import mkdir_if_not_exists, load_json
+from ..utils.files import load_json
 
 
 class FeatureExtractor():
     """
-    Abstract base class for feature extraction. 
-    
-    Includes methods to load audio files, calculates features and
-    prepare sequences. 
+    Abstract base class for feature extraction.
 
-    Inherit this class to define custom features 
+    Includes methods to load audio files, calculates features and
+    prepare sequences.
+
+    Inherit this class to define custom features
     (e.g. features.MelSpectrogram, features.Openl3).
 
     Attributes
@@ -28,12 +26,12 @@ class FeatureExtractor():
     audio_win : int
         Number of samples of the audio frames.
     audio_hop : int
-        Number of samples for the frame hop between adjacent 
-        audio frames. 
+        Number of samples for the frame hop between adjacent
+        audio frames.
     sr : int
         Sampling rate of the audio signals
         If the original audio is not sampled at this rate,
-        it is re-sampled before feature extraction   
+        it is re-sampled before feature extraction
     sequence_frames : int
         Number of frames equivalent to the sequence_time.
     sequence_hop : int
@@ -62,7 +60,9 @@ class FeatureExtractor():
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100):
-        """ Initialize the FeatureExtractor
+        """
+        Initialize the FeatureExtractor
+
         Parameters
         ----------
         sequence_time : float
@@ -72,13 +72,13 @@ class FeatureExtractor():
         audio_win : int
             Number of samples of the audio frames.
         audio_hop : int
-            Number of samples for the frame hop between adjacent 
-            audio frames   
+            Number of samples for the frame hop between adjacent
+            audio frames
         sr : int
             Sampling rate of the audio signals
             If the original audio is not sampled at this rate,
-            it is re-sampled before feature extraction       
-        
+            it is re-sampled before feature extraction
+
         """
         self.sequence_time = sequence_time
         self.sequence_hop_time = sequence_hop_time
@@ -98,7 +98,9 @@ class FeatureExtractor():
                        'features': 'FeatureExtractor'}
 
     def get_sequences(self, x, pad=True):
-        """ Extract sequences (windows) of a 2D representation
+        """
+        Extract sequences (windows) of a 2D representation
+
         Parameters
         ----------
         x : ndarray
@@ -159,7 +161,7 @@ class FeatureExtractor():
         return audio
 
     def calculate_features(self, file_name):
-        """ 
+        """
         Load an audio file and calculates features
 
         Parameters
@@ -175,11 +177,10 @@ class FeatureExtractor():
         """
         pass
 
-
     def save_parameters_json(self, path):
-        """ 
-        Save a json file with the self.params. 
-        
+        """
+        Save a json file with the self.params.
+
         Useful for checking if the features files were calculated
         with same parameters.
 
@@ -194,7 +195,8 @@ class FeatureExtractor():
             json.dump(self.params, fp)
 
     def check_features_folder(self, features_folder):
-        """ Checks if the features saved in features_folder were
+        """
+        Checks if the features saved in features_folder were
         calculated with the same parameters of self.params
 
         Parameters
@@ -226,7 +228,7 @@ class FeatureExtractor():
             Duration in seconds of the test signal
 
         Returns
-        ----------       
+        ----------
         tuple
             Shape of the feature representation
         """

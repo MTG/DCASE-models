@@ -44,6 +44,7 @@ class Spectrogram(FeatureExtractor):
 
         return spectrogram_np
 
+
 class MelSpectrogram(FeatureExtractor):
     ''' MelSpectrogram feature class '''
 
@@ -64,7 +65,6 @@ class MelSpectrogram(FeatureExtractor):
         self.n_fft = n_fft
         self.mel_basis = librosa.filters.mel(
             sr, n_fft, mel_bands, htk=True, fmax=fmax)
-
 
     def calculate_features(self, file_name):
         # get spectrograms
