@@ -25,6 +25,7 @@ setuptools.setup(
         'scikit-learn==0.22.1',
         'keras==2.2.4',
         'tensorflow-gpu==1.12.0',
+        #'tensorflow==2.2.0',
         'autopool==0.1.0',
         'plotly==4.5.0',
         'dash==1.8.0',

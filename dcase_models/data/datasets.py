@@ -29,10 +29,12 @@ class UrbanSound8k(Dataset):
         # self.evaluation_mode = 'cross-validation'
         self.audio_path = os.path.join(self.dataset_path, 'audio')
 
-    def download_dataset(self):
+    def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1203745/files"
         zenodo_files = ["UrbanSound8K.tar.gz"]
-        resp = super().download_dataset(zenodo_url, zenodo_files)
+        resp = super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
         if resp is not None:
             move_all_files_to_parent(self.dataset_path, "UrbanSound8K")
             self.set_dataset_download_finish()
@@ -98,10 +100,12 @@ class ESC50(Dataset):
         # convert ..../xxxx.npy in xxxx.wav
         return os.path.basename(filename).split('.')[0] + '.wav'
 
-    def download_dataset(self):
+    def download_dataset(self, force_download=False):
         github_url = "https://github.com/karoldvl/ESC-50/archive/"
         github_files = ["master.zip"]
-        super().download_dataset(github_url, github_files)
+        super().download_dataset(
+            github_url, github_files, force_download
+        )
         move_all_files_to_parent(self.dataset_path, "ESC-50-master")
         self.set_dataset_download_finish()
 
@@ -223,11 +227,13 @@ class URBAN_SED(Dataset):
             event_roll[onset:offset, pos] = 1
         return event_roll
 
-    def download_dataset(self):
+    def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1324404/files"
         zenodo_files = ["URBAN-SED_v2.0.0.tar.gz"]
 
-        super().download_dataset(zenodo_url, zenodo_files)
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
         move_all_files_to_parent(self.dataset_path, "URBAN-SED_v2.0.0")
         self.set_dataset_download_finish()
 
@@ -289,11 +295,13 @@ class SONYC_UST(Dataset):
         y = np.repeat(y, len(features), 0)
         return y
 
-    def download_dataset(self):
+    def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/3693077/files"
         zenodo_files = ["annotations.csv", "audio.tar.gz",
                         "dcase-ust-taxonomy.yaml", "README.md"]
-        super().download_dataset(zenodo_url, zenodo_files)
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
         self.set_dataset_download_finish()
 
 
@@ -349,7 +357,7 @@ class TAUUrbanAcousticScenes2019(Dataset):
         y[:, class_ix] = 1
         return y
 
-    def download_dataset(self):
+    def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/2589280/files"
         zenodo_files = [
             "TAU-urban-acoustic-scenes-2019-development.audio.%d.zip" %
@@ -359,7 +367,9 @@ class TAUUrbanAcousticScenes2019(Dataset):
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2019-development.meta.zip')
 
-        super().download_dataset(zenodo_url, zenodo_files)
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
         move_all_files_to_parent(
             self.dataset_path, "TAU-urban-acoustic-scenes-2019-development")
         self.set_dataset_download_finish()
@@ -421,7 +431,7 @@ class TAUUrbanAcousticScenes2020Mobile(Dataset):
         y[:, class_ix] = 1
         return y
 
-    def download_dataset(self):
+    def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/3819968/files"
         zenodo_files = [
             "TAU-urban-acoustic-scenes-2020-mobile-development.audio.%d.zip" %
@@ -431,7 +441,9 @@ class TAUUrbanAcousticScenes2020Mobile(Dataset):
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2020-mobile-development.meta.zip')
 
-        super().download_dataset(zenodo_url, zenodo_files)
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
         move_all_files_to_parent(
             self.dataset_path,
             "TAU-urban-acoustic-scenes-2020-mobile-development")

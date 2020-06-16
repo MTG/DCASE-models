@@ -8,7 +8,7 @@ from keras.layers import GlobalAveragePooling2D
 from keras.layers import GlobalMaxPooling2D
 from keras.layers import Input, Lambda, Conv2D, MaxPooling2D
 from keras.layers import Dropout, Dense, Flatten
-from keras.layers.normalization import BatchNormalization
+from keras.layers import BatchNormalization
 from keras.models import Model
 from keras.regularizers import l2
 import keras.backend as K
