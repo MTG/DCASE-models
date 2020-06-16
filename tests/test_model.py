@@ -67,15 +67,12 @@ def test_train_model(model_class, feature_extractor_class):
 
     data_generator = DataGenerator(dataset, feature_extractor)
     data_generator.load_data()
-    #print(data_generator.data)
 
     X_train = np.concatenate(data_generator.data['all']['X'], axis=0)
     Y_train = np.concatenate(data_generator.data['all']['Y'], axis=0)
 
     X_val = data_generator.data['all']['X']
     Y_val = data_generator.data['all']['Y']
-
-    print(Y_val)
 
     n_classes = Y_train.shape[-1]
     n_frames_cnn = X_train.shape[1]

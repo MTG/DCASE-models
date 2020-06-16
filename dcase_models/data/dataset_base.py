@@ -142,7 +142,7 @@ class Dataset():
         """
         if self.check_if_dataset_was_downloaded() and not force_download:
             return False
-            
+
         download_files_and_unzip(self.dataset_path, zenodo_url, zenodo_files)
         return True
 
@@ -212,7 +212,6 @@ class Dataset():
 
         for path_to_file in list_wav_files_in_folder(self.audio_path):
             path_to_destination = path_to_file.replace(self.audio_path, new_audio_folder)
-            #print(path_to_destination)
             if os.path.exists(path_to_destination):
                 continue
             tfm.build(path_to_file, path_to_destination)

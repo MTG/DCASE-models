@@ -132,7 +132,6 @@ class ESC10(ESC50):
         new_label_list_ids.sort()
         new_label_list = []
         new_label_list = [self.label_list[i] for i in new_label_list_ids]
-        print('label_list', new_label_list)
 
         self.metadata = new_metada.copy()
         self.label_list = new_label_list.copy()
@@ -194,11 +193,8 @@ class URBAN_SED(Dataset):
     #         y_grid_metrics = self.get_annotations(
     #             file_name, features,
     #             time_resolution=self.metric_resolution_sec)
-    #         # print(y_sequences.shape,y_grid_metrics.shape,features.shape)
     #         y_sequences = y_sequences[:len(features)]
-    #         # print(y_sequences.shape, features.shape)
     #         assert y_sequences.shape[0] == features.shape[0]
-    #         # print('seq', y_sequences.shape, 'grid', y_grid_metrics.shape)
     #         annotations_sequences.append(y_sequences)
     #         annotations_grid_metrics.append(y_grid_metrics)
     #         # annotations.append({'y_frames': y_frames,
@@ -208,7 +204,6 @@ class URBAN_SED(Dataset):
 
     def get_annotations(self, file_name, features, time_resolution=1.0):
         time_resolution = self.sequence_hop_time
-       # print(file_name)
         label_file = self.wav_to_labels[file_name]
         audio_file = file_name #self.features_to_wav[file_name]
         f = sf.SoundFile(audio_file)
@@ -216,11 +211,10 @@ class URBAN_SED(Dataset):
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
 
-        # print(features.shape[0], self.sequence_hop_time, time_resolution)
         N_seqs = int(
             np.floor((audio_len_sec + self.sequence_time) / time_resolution))
         event_roll = np.zeros((N_seqs, len(self.label_list)))
-        # print(event_roll.shape)
+
         for event in labels.to_dict('records'):
             pos = self.label_list.index(event['event_label'])
 
@@ -234,7 +228,7 @@ class URBAN_SED(Dataset):
             onset = int(np.round(event_onset * 1 / float(time_resolution)))
             offset = int(np.round(event_offset * 1 /
                                   float(time_resolution))) + 1  # math.ceil
-            # print(event_onset,event_offset,onset,offset)
+
             event_roll[onset:offset, pos] = 1
         return event_roll
 

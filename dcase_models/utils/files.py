@@ -78,7 +78,6 @@ def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
 
     mkdir_if_not_exists(dataset_folder)
 
-    print('Audio files download ... ')
     for zip_file in zenodo_files:
         zip_file_path = os.path.join(dataset_folder, zip_file)
         if os.path.exists(zip_file_path):
@@ -87,10 +86,8 @@ def download_files_and_unzip(dataset_folder, zenodo_url, zenodo_files):
         print('Downloading file: ', zip_file)
         www_path = os.path.join(zenodo_url, zip_file)
         wget.download(www_path, dataset_folder)
-        print()
     print('Done!')
 
-    print('Audio files extraction ... ')
     # extract each zip file
     for zip_file in zenodo_files:
         zip_file_path = os.path.join(dataset_folder, zip_file)

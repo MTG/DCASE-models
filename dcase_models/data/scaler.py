@@ -28,14 +28,12 @@ class Scaler():
                 for i in range(1, len(self.bands)):
                     min_band = self.bands[i-1]
                     max_band = self.bands[i]
-                    print(min_band, max_band)
                     mel_i = mel[:, :, min_band:max_band]
-
                     min_v = np.amin(mel_i)
                     max_v = np.amax(mel_i)
 
                     self.scaler.append([min_v, max_v])
-                    print(i, mel_i.shape)
+
 
     def transform(self, mel):
         if type(mel) == list:

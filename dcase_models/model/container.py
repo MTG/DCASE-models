@@ -367,16 +367,10 @@ class KerasModelContainer(ModelContainer):
         model_saved.summary()
 
         for l1, l2 in zip(self.model.layers, model_saved.layers):
-            print(l1.get_config() == l2.get_config())
             if l1.get_config() != l2.get_config():
-
                 models_are_same = False
                 break
 
-        # print(type(json_model))
-        # print(type(json_saved))
-        # print(json_model==json_saved)
-        print(models_are_same)
         return models_are_same
 
     def cut_network(self, layer_where_to_cut):
@@ -448,9 +442,7 @@ class KerasModelContainer(ModelContainer):
         return layer_names
 
     def get_intermediate_output(self, output_ix_name, inputs):
-        print('ix', output_ix_name)
         if output_ix_name in self.get_available_intermediate_outputs():
-            print('cutting model')
             cut_model = self.cut_network(output_ix_name)
             output = cut_model.predict(inputs)
             return output

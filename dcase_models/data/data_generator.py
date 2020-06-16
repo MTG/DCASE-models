@@ -315,7 +315,6 @@ class DataGenerator():
 
         """
 
-        #print(features_file)
         if type(features_file) is str:
             audio_file = features_file.replace(self.features_path, self.dataset.audio_path)
             audio_file = audio_file.replace('.npy', '.wav')
@@ -324,8 +323,7 @@ class DataGenerator():
             for j in range(len(features_file)):
                 audio_file_j = features_file[j].replace(self.features_path, self.dataset.audio_path)
                 audio_file_j = audio_file_j.replace('.npy', '.wav')    
-                audio_file.append(audio_file_j)           
-        #print(audio_file)
+                audio_file.append(audio_file_j)
         return audio_file
 
     def convert_audio_path_to_features_path(self, audio_file):
@@ -343,20 +341,16 @@ class DataGenerator():
             Path to the features file or files.
 
         """
-        #print(audio_file)
         if type(audio_file) is str:
             features_file = audio_file.replace(self.dataset.audio_path, self.features_path)
             features_file = features_file.replace('.wav', '.npy')
         elif type(audio_file) is list:
             features_file = []
             for j in range(len(audio_file)): 
-           #     print(audio_file[j])
-            #    print(self.audio_path, self.features_path)
                 features_file_j = audio_file[j].replace(self.dataset.audio_path, self.features_path)
                 features_file_j = features_file_j.replace('.wav', '.npy')   
-            #    print(features_file_j)
-                features_file.append(features_file_j)                        
-        #print(features_file)
+                features_file.append(features_file_j)
+                
         return features_file
 
     def extract_features(self):
