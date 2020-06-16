@@ -1,21 +1,25 @@
 import setuptools
+from importlib.machinery import SourceFileLoader
+
+version = SourceFileLoader('dcase_models.version',
+                           'dcase_models/version.py').load_module()
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="dcase-models",
-    version="0.0.1",
+    version=version.version,
     author="Pablo Zinemanas",
     author_email="pablo.zinemanas@upf.edu",
     description="General structure to define, train and evaluate models for DCASE related problems",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pzinemanas/DCASE-models",
+    download_url='http://github.com/pzinemanas/DCASE-models/releases',
     packages=setuptools.find_packages(),
     install_requires=[
         'numpy==1.17.4',
-        'matplotlib==3.2.1',
         'pandas==0.25.3',
         'SoundFile==0.10.3.post1',
         'PyYAML==5.2',
@@ -25,15 +29,19 @@ setuptools.setup(
         'scikit-learn==0.22.1',
         'keras==2.2.4',
         'tensorflow-gpu==1.12.0',
-        #'tensorflow==2.2.0',
         'autopool==0.1.0',
-        'plotly==4.5.0',
-        'dash==1.8.0',
-        'dash_bootstrap_components==0.8.1',
-        'dash_audio_components==1.2.0',
         'wget==3.2',
         'sox==1.3.7',
     ],
+    extras_require={
+        'tests': ['pytest >= 5.4.3'],
+        'visualization': [
+            'plotly==4.5.0',
+            'dash==1.8.0',
+            'dash_bootstrap_components==0.8.1',
+            'dash_audio_components==1.2.0',
+        ]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
