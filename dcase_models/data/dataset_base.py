@@ -119,7 +119,7 @@ class Dataset():
         return y
 
 
-    def download_dataset(self, zenodo_url, zenodo_files):
+    def download_dataset(self, zenodo_url, zenodo_files, force_download=False):
         """ 
         Download and uncompress the dataset from zenodo.
 
@@ -131,6 +131,8 @@ class Dataset():
         zenodo_files : list of str
             List of files.
             e.g. ['file1.tar.gz', 'file2.tar.gz', 'file3.tar.gz']
+        force_download : bool
+            If True, download the dataset even if was downloaded before.
 
         Returns
         -------
@@ -138,12 +140,9 @@ class Dataset():
             True if the downloading process was successful.
 
         """
-        if self.check_if_dataset_was_downloaded():
-            response = input(
-                'The dataset was downloaded already: download again [y]' +
-                ' or continue [n] : ')
-            if response == 'n':
-                return None
+        if self.check_if_dataset_was_downloaded() and not force_download:
+            return False
+            
         download_files_and_unzip(self.dataset_path, zenodo_url, zenodo_files)
         return True
 
