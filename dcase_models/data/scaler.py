@@ -49,8 +49,8 @@ class Scaler():
         if self.normalizer == 'standard':
             mel_dims = mel.shape
             mel_bands = mel.shape[-1]
-            times = mel.shape[0]*mel.shape[1]
-            mel_temp = mel.reshape(times, mel_bands)
+            #times = mel.shape[0]*mel.shape[1]
+            mel_temp = np.reshape(mel, (-1, mel_bands))
             mel_temp = self.scaler.transform(mel_temp)
             mel = mel_temp.reshape(mel_dims)
         if self.normalizer == 'minmax':
@@ -67,9 +67,12 @@ class Scaler():
                          (scaler[1]-scaler[0])-0.5)
         return mel
 
-    def antitransform(self, mel):
+    def inverse_transform(self, mel):
         if self.normalizer == 'minmax':
             mel = (self.scaler[1]-self.scaler[0]) * \
                 (mel/2. + 0.5) + self.scaler[0]
-
+        if self.normalizer == 'standard':
+            mel = self.scaler.inverse_transform(mel)
         return mel
+
+
