@@ -97,7 +97,6 @@ def update_plot2D(samples_per_class, x_select, y_select,
     global file_names
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print('out', output_select)
     if (active_tab == 'tab_visualization') & (output_select is not None): #(button_id == 'tabs') & 
         if len(data_generator.data) == 0:
             data_generator.load_data()
@@ -110,15 +109,12 @@ def update_plot2D(samples_per_class, x_select, y_select,
         X = scaler.transform(X)
 
         with graph.as_default():
-            model_container.load_model_weights(exp_folder_fold)
-            
+            model_container.load_model_weights(exp_folder_fold) 
             X_emb = model_container.get_intermediate_output(output_select, X) #model_container.cut_network(-2)
-            #X_emb = model_embeddings.predict(X)
-            print(X_emb.shape)
+
         pca = PCA(n_components=4)
         pca.fit(X_emb)
         X_pca = pca.transform(X_emb)
-        print(X_pca.shape)
 
     figure2D = generate_figure2D(X_pca, Y, dataset.label_list,
                                  pca_components=[x_select, y_select],
@@ -150,17 +146,12 @@ def trigger_feature_extraction(n_clicks, end_features_extraction,
                                status_features):
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print('trigger by ', button_id)
-    print(n_clicks)
     if button_id == 'end_features_extraction':
-        print('change status to NOT_EXTRACTING')
         return 'NOT_EXTRACTING'
 
     if n_clicks is not None:
         if status_features == 'EXTRACTING':
-            print('change status to NOT_EXTRACTING')
             return 'NOT_EXTRACTING'
-        print('change status to EXTRACTING')
         return 'EXTRACTING'
     else:
         return ''
@@ -203,7 +194,6 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
 
     feature_extractor_class = get_available_features()[features_name]
 
-    print('parameters', specific_parameters)
     specific_parameters = ast.literal_eval(specific_parameters)
     feature_extractor = feature_extractor_class(
         sequence_time=sequence_time,
@@ -228,16 +218,6 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
     print('Extracting features...')
     data_generator.extract_features()
     print('Done!')
-
- #   folders_list = data_generator.get_folder_lists()
- #   for audio_features_paths in folders_list:
- #       print('Extracting features from folder: ',
- #             audio_features_paths['audio'])
- #       response = feature_extractor.extract(
- #           audio_features_paths['audio'], audio_features_paths['features'])
-  #      if response is None:
-  #          print('Features already were calculated, continue...')
-  #      print('Done!')
 
     return [True, 'Features extracted', 'success', 'True']
 
@@ -338,7 +318,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
 
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print('trigger by ', button_id)
+
     # if was trigger by end_features_extraction and
     # the feautres were already calculated
     if button_id == 'end_features_extraction' and \
@@ -350,7 +330,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
         feature_name = (options_features[feature_ix]['label']
                         if feature_ix is not None else "")
         feature_extractor_class = get_available_features()[feature_name]
-        print('parameters', specific_parameters)
+
         specific_parameters = ast.literal_eval(specific_parameters)
         feature_extractor = feature_extractor_class(
             sequence_time=sequence_time,
@@ -373,16 +353,6 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
             data_generator = DataGenerator(dataset, feature_extractor)
             features_extracted = data_generator.check_if_features_extracted()
 
-           # folders_list = data_generator.get_folder_lists()
-           # features_extracted = True
-           # for audio_features_paths in folders_list:
-           #     features_path = os.path.join(
-           #         audio_features_paths['features'], feature_name)
-           #     print('Checking features from folder: ', features_path)
-           #     if not feature_extractor.check_features_folder(features_path):
-           #         features_extracted = False
-           #         break
-
             if features_extracted:
                 checks.append('features')
 
@@ -396,12 +366,10 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                 n_classes = len(dataset.label_list)
 
                 model_class = get_available_models()[model_name]
-                print(model_class, model_name)
 
                 model_parameters = ast.literal_eval(model_parameters)
-                print(model_parameters)
+
                 with graph.as_default():
-                    print(n_classes, n_frames_cnn, n_freq_cnn)
                     model_container = model_class(model=None, model_path=None,
                                                   n_classes=n_classes,
                                                   n_frames_cnn=n_frames_cnn,
@@ -479,7 +447,6 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         return [False, "", 'success', '']
     else:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        print(button_id)
 
     if (button_id == 'create_model') | (button_id == 'load_model'):
         if model_ix is None:
@@ -494,9 +461,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         dataset_name = options_datasets[dataset_ix]['label']
 
         feature_extractor_class = get_available_features()[feature_name]
-        print(specific_parameters)
         specific_parameters = ast.literal_eval(specific_parameters)
-        print(specific_parameters)
         feature_extractor = feature_extractor_class(
             sequence_time=sequence_time,
             sequence_hop_time=sequence_hop_time,
@@ -509,11 +474,9 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
             os.path.join(os.path.dirname(__file__), 'test.wav'))
         n_frames_cnn = features_example.shape[1]
         n_freq_cnn = features_example.shape[2]
-        print(features_example.shape)
 
         # get dataset class
         dataset_class = get_available_datasets()[dataset_name]
-        print(dataset_class)
         # init data_generator
         kwargs = {}
         if dataset_name == 'URBAN_SED':
@@ -525,10 +488,8 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         n_classes = len(dataset.label_list)
 
         model_class = get_available_models()[model_name]
-        print(model_class, model_name)
 
         model_parameters = ast.literal_eval(model_parameters)
-        print(model_parameters)
         if (button_id == 'create_model'):
             with graph.as_default():
                 model_container = model_class(model=None, model_path=None,
@@ -536,7 +497,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
                                               n_frames_cnn=n_frames_cnn,
                                               n_freq_cnn=n_freq_cnn,
                                               **model_parameters)
-                print('create model summary')
+
                 model_container.model.summary()
                 if model_name == 'VGGish':
                     model_container.load_pretrained_model_weights()
@@ -559,7 +520,6 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         if (button_id == 'load_model'):
             with graph.as_default():
                 model_container = model_class(model=None, model_path=conv_path(model_path))
-                print('loaded model summary')
                 model_container.model.summary()
                 stringlist = []
                 model_container.model.summary(
@@ -625,12 +585,10 @@ def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
     if active_tab == "tab_train":
         if fold_ix is not None:
             fold_name = dataset.fold_list[fold_ix]
-            # print(model_path, fold_name)
             training_log = load_training_log(
                 conv_path(os.path.join(model_path, fold_name)))
         else:
             training_log = load_training_log(conv_path(model_path))
-        # print(training_log)
         if (training_log is None):
             figure_training = generate_figure_training([], [], [])
         else:
@@ -672,21 +630,17 @@ def trigger_training(n_clicks, end_training, fold_ix, normalizer,
                      considered_improvement, status):
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print('trigger by ', button_id)
-    print(n_clicks)
+
     if button_id == 'end_training':
-        print('change status to NOT_TRAINING')
         return [False, "", 'success', 'NOT_TRAINING']
 
     if n_clicks is not None:
         if status == 'TRAINING':
-            print('change status to NOT_TRAINING')
             return [False, "", 'success', 'NOT_TRAINING']
         if fold_ix is None:
             return [True, 'Please select a Fold', 'danger', '']
         if optimizer_ix is None:
             return [True, 'Please select an Optimizer', 'danger', '']
-        print('change status to TRAINING')
         return [False, "", 'success', 'TRAINING']
     else:
         return [False, "", 'success', '']
@@ -712,7 +666,6 @@ def trigger_training(n_clicks, end_training, fold_ix, normalizer,
 def start_training(status, fold_ix, normalizer, model_path,
                    epochs, early_stopping, optimizer_ix, learning_rate,
                    batch_size, considered_improvement, n_clicks_train):
-    print(status)
     if status == 'TRAINING':
         if fold_ix is None:
             return [True, 'Please select a Fold', 'danger', ""]
@@ -722,7 +675,6 @@ def start_training(status, fold_ix, normalizer, model_path,
         fold_name = dataset.fold_list[fold_ix]
         optimizer = options_optimizers[optimizer_ix]['label']
 
-        print('Loading data... ')
         data_generator.load_data()
         X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(
             fold_name)
@@ -803,11 +755,7 @@ def evaluate_model(active_tab, fold_ix, model_path):
         pca.fit(X_emb)
 
         X_test, Y_test = data_generator.get_data_for_testing(fold_name)
-        print(np.amin(X_test[0]), np.amax(X_test[0]))
-        print(np.amin(data_generator.data[fold_name]['X'][0]), np.amax(data_generator.data[fold_name]['X'][0]))
         X_test = scaler.transform(X_test)
-        print(np.amin(X_test[0]), np.amax(X_test[0]))
-        print(np.amin(data_generator.data[fold_name]['X'][0]), np.amax(data_generator.data[fold_name]['X'][0]))
         with graph.as_default():
             results = model_container.evaluate(X_test, Y_test)
 
@@ -816,17 +764,14 @@ def evaluate_model(active_tab, fold_ix, model_path):
 
         with graph.as_default():
             X_emb = model_embeddings.predict(X_test)
-        #   predictions = model_container.model.predict(X_test)
 
         predictions = np.zeros_like(Y_test)
         for j in range(len(predictions)):
-            #print('results', results['predictions'][j].shape)
             predictions[j] = np.mean(results['predictions'][j], axis=0)
             Y_test[j] = results['annotations'][j][0]
 
         X_pca_test = pca.transform(X_emb)
-        print(X_emb.shape)
-        print(X_pca.shape)
+
         figure2d = generate_figure2D_eval(X_pca_test, predictions, Y_test, dataset.label_list)
         return [figure2d , "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
 
@@ -925,7 +870,6 @@ def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix, model_path, s
             model_container.load_model_weights(exp_folder_fold)
             Y_features = model_container.model.predict(X_features)
 
-        print('X', X_features.shape)
         fig_demo =  generate_figure_features(X_features, Y_features, dataset.label_list)
 
         features_file = dataset.file_lists[fold_name][ix]

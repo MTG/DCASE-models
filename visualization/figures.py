@@ -56,10 +56,9 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
 
     fig = make_subplots(rows=1, cols=1)  # , column_widths=[0.8, 0.2])
     size = 6
-    print(Y_pred.shape)
+
     Y_pred = np.argmax(Y_pred, axis=1)
     Y = np.argmax(Y, axis=1)
-    print('pred_shape', Y_pred.shape, Y.shape)
 
     n_classes = len(label_list)
     for j in range(n_classes):
@@ -166,13 +165,6 @@ def generate_figure_features(X_features, Y_pred, label_list):
         title_text="yaxis 3 title", row=2, col=1
     )
 
-    # print(fig['layout']) 
-    #fig['layout']['yaxis11'].update(dict(
-    #        tickmode = 'array',
-    #        tickvals = np.arange(0, len(label_list)),
-    #        ticktext = label_list
-    #    )
-    #)
 
     fig.update_layout(
         # title="2D space (PCA)",
@@ -197,5 +189,5 @@ def generate_figure_features(X_features, Y_pred, label_list):
         #fig.update_traces(dict(showscale=False, 
          #              coloraxis=None), selector={'type':'heatmap'}, row=1, col=j+1)     #colorscale='gray'
        # fig.add_trace(go.Bar(x=label_list, y=Y_pred[j]), row=2, col=j+1)
-    print(Y_pred.shape)
+
     return fig

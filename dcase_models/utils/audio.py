@@ -28,7 +28,6 @@ def mel_spec_to_audio(melspec_db, mel_basis, audio_hop, audio_win):
 
 def encode_audio(data, sr):
     import base64
-    # print(data.shape,len(data.shape))
     if len(data.shape) == 1:
         n_channels = 1
         data_audio = data
@@ -38,7 +37,6 @@ def encode_audio(data, sr):
 
     data_audio = data_audio/np.amax(data_audio)
     data_audio = np.int16(data_audio * 32767).tolist()
-    # print(len(data_audio))
 
     fp = BytesIO()
     waveobj = wave.open(fp, mode='wb')

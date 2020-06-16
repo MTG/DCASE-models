@@ -153,7 +153,7 @@ class FeatureExtractor():
         audio = np.asfortranarray(audio)
 
         if (self.sr != sr_old) & (change_sampling_rate):
-            print('changing sampling rate', sr_old, self.sr)
+            print('Changing sampling rate from %d to %d' % (sr_old, self.sr))
             audio = librosa.resample(audio, sr_old, self.sr)
 
         return audio
@@ -205,7 +205,6 @@ class FeatureExtractor():
         """
 
         json_features_folder = os.path.join(features_folder, "parameters.json")
-        # print(json_features_folder)
         if not os.path.exists(json_features_folder):
             return False
         parameters_features_folder = load_json(json_features_folder)
