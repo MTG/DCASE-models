@@ -1,66 +1,96 @@
 import sys
 import os
 import numpy as np
-import argparse
+import pytest
+import shutil
+import glob
 
 sys.path.append('../')
 from dcase_models.utils.files import load_json
+from dcase_models.data.features import MelSpectrogram, Spectrogram
+from dcase_models.data.dataset_base import Dataset
 from dcase_models.data.data_generator import DataGenerator
-from dcase_models.data.datasets import get_available_datasets
-from dcase_models.data.features import get_available_features
 from dcase_models.data.scaler import Scaler
 
-
-parser = argparse.ArgumentParser(description='Test DataGenerator')
-parser.add_argument('-d', '--dataset', type=str, help='dataset to use for the test', default='UrbanSound8k')
-parser.add_argument('-f', '--fold', type=str, help='fold of the dataset', default='fold1')
-parser.add_argument('-feat', '--features', type=str, help='features to use for the test', default='MelSpectrogram')
-args = parser.parse_args()
-
 params = load_json('parameters.json')
-params_dataset = params["datasets"][args.dataset]
-params_features = params["features"]
+params_features = params['features']
 
-# get feature extractor class
-feature_extractor_class = get_available_features()[args.features]
-# init feature extractor
-feature_extractor = feature_extractor_class(sequence_time=params_features['sequence_time'], 
-                                            sequence_hop_time=params_features['sequence_hop_time'], 
-                                            audio_win=params_features['audio_win'], 
-                                            audio_hop=params_features['audio_hop'], 
-                                            n_fft=params_features['n_fft'], 
-                                            sr=params_features['sr'], **params_features[args.features])
-# get dataset class
-dataset_class = get_available_datasets()[args.dataset]
+dataset_path = 'data'
 
-# init dataset
-dataset = dataset_class(params_dataset['dataset_path'])
+class TestDataset(Dataset):
+    def __init__(self, dataset_path):
+        super().__init__(dataset_path)
 
-# init data_generator
-kwargs = {}
-if args.dataset == 'URBAN_SED':
-    kwargs = {'sequence_hop_time': params['features']['sequence_hop_time']}
-data_generator = DataGenerator(dataset, feature_extractor, **kwargs)
+    def build(self):
+        self.fold_list = ["all"]
+        self.label_list = ["air_conditioner", "car_horn", "children_playing",
+                           "dog_bark", "drilling", "engine_idling", "gun_shot",
+                           "jackhammer", "siren", "street_music"]
+        self.audio_path = os.path.join(self.dataset_path, 'audio')      
 
-# extract features if needed
-data_generator.extract_features()
+    def generate_file_lists(self):
+        """ 
+        Create self.file_lists, a dict thath includes a list of files per fold.
 
-# load data
-print('Loading data... ')
-data_generator.load_data()
-X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(args.fold)
-print('Done!')
+        Each dataset has a different way of organizing the files. This
+        function defines the dataset structure.
 
-# print shapes
-print(X_train.shape, Y_train.shape, len(X_val), len(Y_val))
-print(X_val[0].shape, Y_val[0].shape)
+        """
+        self.file_lists['all'] = sorted(
+            glob.glob(os.path.join(self.audio_path, '*.wav'))
+        )
 
-# test scaler
-print('Fitting scaler... ')
-scaler = Scaler(normalizer='minmax')
-scaler.fit(X_train)
+            
+dataset = TestDataset(dataset_path)
+audio_files = ['40722-8-0-7.wav', '147764-4-7-0.wav', '176787-5-0-0.wav']
 
-print('min and max of train set before the scaler is applied', np.amin(X_train), np.amax(X_train))
-X_train = scaler.transform(X_train)
-print('min and max of train set after the scaler is applied', np.amin(X_train), np.amax(X_train))
-print('Done!')
+@pytest.mark.parametrize("feature_extractor_class", [Spectrogram, MelSpectrogram])
+def test_feature_extractor(feature_extractor_class):
+    feature_extractor = feature_extractor_class(
+        sequence_time=params_features['sequence_time'], 
+        sequence_hop_time=params_features['sequence_hop_time'], 
+        audio_win=params_features['audio_win'], 
+        audio_hop=params_features['audio_hop'], 
+        n_fft=params_features['n_fft'], 
+        sr=params_features['sr'], 
+        **params_features[feature_extractor_class.__name__]
+    )
+
+    feature_shape = feature_extractor.get_features_shape()
+
+    data_generator = DataGenerator(dataset, feature_extractor)
+    data_generator.load_data()
+
+    assert len(data_generator.data) > 0
+
+    X_test, Y_test = data_generator.get_data_for_testing('all')
+
+    assert len(X_test) == len(audio_files)
+    assert len(Y_test) == len(audio_files)
+
+    assert X_test[0].shape[1:] == feature_shape[1:]
+
+@pytest.mark.parametrize("normalizer", ['minmax', 'standard'])
+def test_scaler(normalizer):
+    X = np.random.randn(100, 32, 128)
+    min_X, max_X = np.amin(X), np.amax(X)
+
+    scaler = Scaler(normalizer=normalizer)
+    scaler.fit(X)
+    X_scaled = scaler.transform(X)
+    
+    if normalizer == 'minmax':
+        assert (np.amin(X_scaled) == -1.0) & (np.amax(X_scaled) == 1.0)
+    elif normalizer == 'standard':
+        X_scaled_flat = np.reshape(X, (-1, X.shape[-1]))
+        assert X_scaled_flat.shape[1] == X.shape[-1]
+
+        mean = np.mean(X_scaled_flat, axis=0)
+        std = np.std(X_scaled_flat, axis=0)
+        
+        assert np.allclose(mean, np.zeros(128), rtol=0.1, atol=0.1)
+        assert np.allclose(std, np.ones(128), rtol=0.1, atol=0.1)
+
+    X_rec = scaler.inverse_transform(X_scaled)
+
+    assert np.allclose(X_rec, X)
