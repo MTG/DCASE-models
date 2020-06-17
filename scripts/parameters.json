@@ -86,6 +86,10 @@
         "TAUUrbanAcousticScenes2019" : {
             "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2019",
             "evaluation_mode" : "train-validate-test"          
+        },
+        "TUTSoundEvents2017" : {
+            "dataset_path" : "/data/pzinemanas/TUTSoundEvents2017",
+            "evaluation_mode" : "cross-validation"          
         }
     }
 }

@@ -357,10 +357,6 @@ class TAUUrbanAcousticScenes2020Mobile(Dataset):
         self.annotations_folder = os.path.join(
             self.dataset_path, 'annotations')
 
-        # all wav files are in the same folder
-        self.folders_list = [{'audio': os.path.join(self.audio_folder),
-                              'features': os.path.join(self.features_folder)}]
-
     def generate_file_lists(self):
         self.file_lists = {}
         evaluation_files = [self.evaluation_setup_train,
@@ -411,8 +407,84 @@ class TAUUrbanAcousticScenes2020Mobile(Dataset):
         self.set_dataset_download_finish()
 
 
+class TUTSoundEvents2017(Dataset):
+    ''' TUTSoundEvents2017 dataset class '''
+
+    def __init__(self, dataset_path,
+                 sequence_time=1.0, sequence_hop_time=0.5,
+                 metric_resolution_sec=1.0):
+        self.sequence_time = sequence_time
+        self.sequence_hop_time = sequence_hop_time
+        self.metric_resolution_sec = metric_resolution_sec
+
+        super().__init__(dataset_path)
+
+    def build(self):
+        self.audio_path = os.path.join(self.dataset_path, 'audio')
+        self.fold_list = ["fold1", "fold2", "fold3", "fold4"]
+        self.meta_path = os.path.join(self.dataset_path, 'meta')
+        self.label_list = ['brakes squeaking', 'car', 'children', 
+                           'large vehicle', 'people speaking', 
+                           'people walking']
+
+        self.evaluation_setup_path = os.path.join(self.dataset_path, 'evaluation_setup')
+
+    def generate_file_lists(self):
+        self.file_lists = {}
+        self.wav_to_labels = {}
+        for j, fold in enumerate(self.fold_list):
+            self.file_lists[fold] = []
+            evaluation_setup_file = os.path.join(
+                self.evaluation_setup_path, 'street_%s_test.txt' % fold
+            )
+            with open(evaluation_setup_file) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter='\t')
+                for row in csv_reader:
+                    file_name = row[0].split('/')[-1]
+                    file_path = os.path.join(self.audio_path, 'street', file_name)
+                    self.file_lists[fold].append(file_path)
+
+                    file_ann = file_path.replace(self.audio_path, self.meta_path)
+                    file_ann = file_ann.replace('.wav', '.ann')
+                    self.wav_to_labels[file_path] = file_ann
+
+
+    def get_annotations(self, file_name, features):
+        label_file = self.wav_to_labels[file_name]
+        labels = read_csv(label_file, delimiter='\t', header=None)
+        labels.columns = ['file_path', 'scene', 'event_onset', 'event_offset', 'event_label', 'mixture', 'file_name']
+        event_roll = event_list_to_event_roll(labels.to_dict('records'), self.label_list, self.sequence_hop_time)
+        if event_roll.shape[0] > features.shape[0]:
+            event_roll = event_roll[:len(features)]
+        else:
+            event_roll = fix_length(event_roll, features.shape[0], axis=0)
+        assert event_roll.shape[0] == features.shape[0]
+        return event_roll
+
+    def download_dataset(self, force_download=False):
+        zenodo_url = "https://zenodo.org/record/814831/files"
+
+        zenodo_files = [
+            'TUT-sound-events-2017-development.audio.1.zip',
+            'TUT-sound-events-2017-development.audio.2.zip',
+            'TUT-sound-events-2017-development.doc.zip',
+            'TUT-sound-events-2017-development.meta.zip'
+        ]
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
+
+        move_all_files_to_parent(
+            self.dataset_path,
+            "TUT-sound-events-2017-development")
+        self.set_dataset_download_finish()
+
+
+
 def get_available_datasets():
     availabe_datasets = {m[0]: m[1] for m in inspect.getmembers(
         sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
 
     return availabe_datasets
+
+

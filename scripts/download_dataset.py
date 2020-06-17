@@ -29,8 +29,9 @@ def main():
             download it again? [n] : ''' % args.dataset
         )
         if resp == 'y':
-            dataset.download(force_download=True)
-
+            dataset.download_dataset(force_download=True)
+    else:
+        dataset.download_dataset()
     print('Done!')
 
 
