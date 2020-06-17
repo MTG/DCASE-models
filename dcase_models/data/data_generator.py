@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import inspect
 
 from .feature_extractor import FeatureExtractor
 from .dataset_base import Dataset
@@ -78,15 +79,12 @@ class DataGenerator():
         self.features_folder = kwargs.get('features_folder', 'features')
         self.use_validate_set = kwargs.get('use_validate_set', True)
 
-        if (dataset.__class__.__bases__[0] is not Dataset) and \
-           (dataset.__class__ is not Dataset):
-            raise AttributeError('dataset has to be an instance of Dataset')
+        if Dataset not in inspect.getmro(dataset.__class__):
+            raise AttributeError('dataset has to be an instance of Dataset or childs')
 
-        if (feature_extractor.__class__.__bases__[0]
-           is not FeatureExtractor) and \
-           (feature_extractor.__class__ is not FeatureExtractor):
+        if FeatureExtractor not in inspect.getmro(feature_extractor.__class__):
             raise AttributeError('''feature_extractor has to be an
-                                    instance of FeatureExtractor''')
+                                    instance of FeatureExtractor or childs''')
 
         feature_name = type(feature_extractor).__name__
         mkdir_if_not_exists(
@@ -222,11 +220,20 @@ class DataGenerator():
 
         if (evaluation_mode == 'train-validate-test'):
             # train-val-test mode
-            X_val = self.data['validate']['X']
-            Y_val = self.data['validate']['Y']
+            X_val = self.data['validate']['X'].copy()
+            Y_val = self.data['validate']['Y'].copy()
 
             X_train = np.concatenate(self.data['train']['X'], axis=0)
-            # grid time of instances for training
+            Y_train = np.concatenate(self.data['train']['Y'], axis=0)
+
+            return X_train, Y_train, X_val, Y_val
+
+        if (evaluation_mode == 'train-test'):
+            # train-test mode
+            X_val = self.data['train']['X'].copy()
+            Y_val = self.data['train']['Y'].copy()
+
+            X_train = np.concatenate(self.data['train']['X'], axis=0)
             Y_train = np.concatenate(self.data['train']['Y'], axis=0)
 
             return X_train, Y_train, X_val, Y_val

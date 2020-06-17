@@ -22,7 +22,7 @@ def main():
     parser.add_argument('-m', '--model', type=str, help='model name',
                         default='SB_CNN')
     parser.add_argument('-fold', '--fold_name', type=str, help='fold name',
-                        default='fold1')
+                        required='fold1')
     args = parser.parse_args()
 
     if args.dataset not in get_available_datasets():
@@ -41,7 +41,7 @@ def main():
 
     # Get and init dataset class
     kwargs = {}
-    if args.dataset == 'URBAN_SED':
+    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
         kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
     dataset_class = get_available_datasets()[args.dataset]
     dataset = dataset_class(params_dataset['dataset_path'], **kwargs)
@@ -85,13 +85,15 @@ def main():
     # Load model and best weights
     model_class = get_available_models()[args.model]
     metrics = ['accuracy']
-    if args.dataset == 'URBAN_SED':
+    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
         metrics = ['sed']
     model_container = model_class(model=None, model_path=model_folder, metrics=metrics)
     model_container.load_model_weights(exp_folder)
 
-    kwargs = {'sequence_time_sec':params_features['sequence_hop_time'], 
-              'metric_resolution_sec':1.0, 'label_list': dataset.label_list}
+    kwargs = {}
+    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+        kwargs = {'sequence_time_sec':params_features['sequence_hop_time'], 
+                'metric_resolution_sec':1.0, 'label_list': dataset.label_list}
     results = model_container.evaluate(X_test, Y_test, **kwargs)
 
     for metric in metrics:

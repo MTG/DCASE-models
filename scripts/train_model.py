@@ -42,7 +42,7 @@ def main():
     params_model = params['models'][args.model]
 
     kwargs = {}
-    if args.dataset == 'URBAN_SED':
+    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
         kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
 
     # Get and init dataset class
@@ -64,7 +64,11 @@ def main():
     print('Features shape: ', features.get_features_shape())
 
     # Init data generator
-    data_generator = DataGenerator(dataset, features)
+    kwargs = {}
+    if args.dataset in ['TUTSoundEvents2017', 'ESC50', 'ESC10']:
+        # When have less data, don't use validation set.
+        kwargs = {'use_validate_set' : False}
+    data_generator = DataGenerator(dataset, features, **kwargs)
 
     # Check if features were extracted
     if not data_generator.check_if_features_extracted():
@@ -91,7 +95,7 @@ def main():
     n_classes = Y_train.shape[1]
     model_class = get_available_models()[args.model]
     metrics = ['accuracy']
-    if args.dataset == 'URBAN_SED':
+    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
         metrics = ['sed']
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,
@@ -116,7 +120,7 @@ def main():
 
     # Train model
     kwargs = {}
-    if args.dataset == 'URBAN_SED':
+    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
         kwargs['label_list'] = dataset.label_list
     model_container.train(X_train, Y_train, X_val, Y_val,
                           weights_path=exp_folder, **params['train'], **kwargs)

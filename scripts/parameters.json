@@ -81,11 +81,11 @@
         },
         "TAUUrbanAcousticScenes2020Mobile" : {
             "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
-            "evaluation_mode" : "train-validate-test"        
+            "evaluation_mode" : "train-test"        
         },
         "TAUUrbanAcousticScenes2019" : {
             "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2019",
-            "evaluation_mode" : "train-validate-test"          
+            "evaluation_mode" : "train-test"          
         },
         "TUTSoundEvents2017" : {
             "dataset_path" : "/data/pzinemanas/TUTSoundEvents2017",

@@ -85,13 +85,10 @@ class Dataset():
 
         Each dataset has a different way of organizing the files. This
         function defines the dataset structure.
-
         """
-        for fold in self.fold_list:
-            audio_folder = os.path.join(self.audio_path, fold)
-            self.file_lists[fold] = sorted(
-                glob.glob(os.path.join(audio_folder, '*.wav'))
-            )
+
+        # Creates an empty dict
+        self.file_lists = {[] for fold in self.fold_list}
 
     def get_annotations(self, file_path, features):
         """
@@ -107,13 +104,11 @@ class Dataset():
         Returns
         -------
         ndarray
-            annotations of the file file_path
+            Annotations of the file file_path
+            Expected output shape: (features.shape[0], len(self.label_list))
 
         """
-        y = np.zeros((len(features), len(self.label_list)))
-        class_ix = int(os.path.basename(file_path).split('-')[1])
-        y[:, class_ix] = 1
-        return y
+        pass
 
     def download_dataset(self, zenodo_url, zenodo_files, force_download=False):
         """

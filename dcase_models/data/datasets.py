@@ -22,14 +22,27 @@ class UrbanSound8k(Dataset):
         super().__init__(dataset_path)
 
     def build(self):
+        self.audio_path = os.path.join(self.dataset_path, 'audio')
+
         self.fold_list = ["fold1", "fold2", "fold3", "fold4",
                           "fold5", "fold6", "fold7", "fold8",
                           "fold9", "fold10"]
         self.label_list = ["air_conditioner", "car_horn", "children_playing",
                            "dog_bark", "drilling", "engine_idling", "gun_shot",
                            "jackhammer", "siren", "street_music"]
-        # self.evaluation_mode = 'cross-validation'
-        self.audio_path = os.path.join(self.dataset_path, 'audio')
+
+    def generate_file_lists(self):
+        for fold in self.fold_list:
+            audio_folder = os.path.join(self.audio_path, fold)
+            self.file_lists[fold] = sorted(
+                glob.glob(os.path.join(audio_folder, '*.wav'))
+            )
+
+    def get_annotations(self, file_path, features):
+        y = np.zeros((len(features), len(self.label_list)))
+        class_ix = int(os.path.basename(file_path).split('-')[1])
+        y[:, class_ix] = 1
+        return y
 
     def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1203745/files"
@@ -266,8 +279,8 @@ class SONYC_UST(Dataset):
         self.set_dataset_download_finish()
 
 
-class TAUUrbanAcousticScenes2019(Dataset):
-    ''' TAUUrbanAcousticScenes2019 dataset class '''
+class _TAUUrbanAcousticScenes(Dataset):
+    ''' Base class for TAUUrbanAcousticScenes datasets'''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -302,10 +315,9 @@ class TAUUrbanAcousticScenes2019(Dataset):
                         line_count += 1
                         continue
                     file_name = row[0].split('/')[-1]
-                    file_name_npy = os.path.basename(
-                        file_name).split('.')[0] + '.npy'
-                    self.file_lists[fold].append(os.path.join(
-                        self.features_folder, self.features, file_name_npy))
+                    self.file_lists[fold].append(
+                        os.path.join(self.audio_path, file_name)
+                    )
 
     def get_annotations(self, file_name, features):
         y = np.zeros((len(features), len(self.label_list)))
@@ -317,6 +329,16 @@ class TAUUrbanAcousticScenes2019(Dataset):
         class_ix = self.label_list.index(scene_label)
         y[:, class_ix] = 1
         return y
+
+    def download_dataset(self, force_download=False):
+        pass
+
+
+class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
+    ''' TAUUrbanAcousticScenes2019 dataset class '''
+
+    def __init__(self, dataset_path):
+        super().__init__(dataset_path)
 
     def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/2589280/files"
@@ -336,57 +358,11 @@ class TAUUrbanAcousticScenes2019(Dataset):
         self.set_dataset_download_finish()
 
 
-class TAUUrbanAcousticScenes2020Mobile(Dataset):
+class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
     ''' TAUUrbanAcousticScenes2020Mobile dataset class '''
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
-
-    def build(self):
-        self.audio_path = os.path.join(self.dataset_path, 'audio')
-        self.fold_list = ["train", "test"]
-        self.meta_file = os.path.join(self.dataset_path, 'meta.csv')
-        self.label_list = ['airport', 'shopping_mall', 'metro_station',
-                           'street_pedestrian', 'public_square',
-                           'street_traffic', 'tram', 'bus', 'metro', 'park']
-
-        self.evaluation_setup_train = os.path.join(
-            self.dataset_path, 'evaluation_setup', 'fold1_train.csv')
-        self.evaluation_setup_test = os.path.join(
-            self.dataset_path, 'evaluation_setup', 'fold1_test.csv')
-        self.annotations_folder = os.path.join(
-            self.dataset_path, 'annotations')
-
-    def generate_file_lists(self):
-        self.file_lists = {}
-        evaluation_files = [self.evaluation_setup_train,
-                            self.evaluation_setup_test]
-        for j, fold in enumerate(['train', 'test']):
-            self.file_lists[fold] = []
-            csv_filename = evaluation_files[j]
-            with open(csv_filename) as csv_file:
-                csv_reader = csv.reader(csv_file, delimiter='\t')
-                line_count = 0
-                for row in csv_reader:
-                    if line_count == 0:
-                        line_count += 1
-                        continue
-                    file_name = row[0].split('/')[-1]
-                    file_name_npy = os.path.basename(
-                        file_name).split('.')[0] + '.npy'
-                    self.file_lists[fold].append(os.path.join(
-                        self.features_folder, self.features, file_name_npy))
-
-    def get_annotations(self, file_name, features):
-        y = np.zeros((len(features), len(self.label_list)))
-        basename = os.path.basename(file_name)
-        # delete file extension
-        basename = basename.split('.')[0]
-        (scene_label, city, location_id, segment_id, device_id) = basename.split(
-            '-')
-        class_ix = self.label_list.index(scene_label)
-        y[:, class_ix] = 1
-        return y
 
     def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/3819968/files"
@@ -483,8 +459,6 @@ class TUTSoundEvents2017(Dataset):
 
 def get_available_datasets():
     availabe_datasets = {m[0]: m[1] for m in inspect.getmembers(
-        sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
+        sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__ and m[0] != '_'}
 
     return availabe_datasets
-
-
