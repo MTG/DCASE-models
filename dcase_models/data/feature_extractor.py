@@ -86,9 +86,8 @@ class FeatureExtractor():
         self.audio_win = audio_win
         self.sr = sr
 
-        self.sequence_frames = int(
-            (sequence_time * sr - self.audio_win) / float(audio_hop))
-        self.sequence_hop = int(sequence_hop_time * sr / float(audio_hop))
+        self.sequence_frames = int(np.round(sequence_time*sr/float(audio_hop)))
+        self.sequence_hop = int(np.round(sequence_hop_time * sr / float(audio_hop)))
 
         self.params = {'sr': self.sr,
                        'sequence_time': self.sequence_time,
@@ -96,35 +95,6 @@ class FeatureExtractor():
                        'audio_hop': self.audio_hop,
                        'audio_win': self.audio_win,
                        'features': 'FeatureExtractor'}
-
-    def get_sequences(self, x, pad=True):
-        """
-        Extract sequences (windows) of a 2D representation
-
-        Parameters
-        ----------
-        x : ndarray
-            2D representation
-        pad : bool
-            if True, pad x before windowing
-
-        Returns
-        -------
-        list of ndarray
-            list of sequences
-
-        """
-        if pad:
-            x = librosa.util.fix_length(x, x.shape[1]+self.sequence_frames//2, axis=1, mode='reflect')
-        hop_times = np.arange(
-            0, x.shape[1]-self.sequence_frames+1, self.sequence_hop
-        )
-        y = []
-        for i in hop_times:
-            x_seq = x[:, i:i+self.sequence_frames]
-            y.append(x_seq)
-
-        return y
 
     def load_audio(self, file_name, mono=True, change_sampling_rate=True):
         """ Load an audio signal and convert to mono if needed

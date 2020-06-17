@@ -61,7 +61,7 @@ def main():
         audio_hop=params_features['audio_hop'],
         sr=params_features['sr'], **params_features[args.features]
     )
-    print('Features shape: ', features.get_features_shape()[1:])
+    print('Features shape: ', features.get_features_shape())
 
     # Init data generator
     data_generator = DataGenerator(dataset, features)

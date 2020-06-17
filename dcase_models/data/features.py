@@ -25,24 +25,32 @@ class Spectrogram(FeatureExtractor):
     def calculate_features(self, file_name):
         audio = self.load_audio(file_name)
 
-        # spectrogram
+        # Spectrogram, shape (N_frames, N_freqs)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
                                  hop_length=self.audio_hop,
                                  win_length=self.audio_win, center=True)
 
-        # power
+        # Power
         spectrogram = np.abs(stft)**2
 
-        # convert to sequences (windowing)
-        spectrogram_seqs = self.get_sequences(spectrogram, pad=True)
+        # Transpose time and freq dims, shape 
+        spectrogram = spectrogram.T
 
-        # convert to numpy
-        spectrogram_np = np.asarray(spectrogram_seqs)
+        # Pad the spectrogram, shape (N_frames', N_freqs)
+        spectrogram = librosa.util.fix_length(
+            spectrogram,
+            spectrogram.shape[0]+self.sequence_frames, 
+            axis=0, mode='reflect'
+        )
 
-        # transpose time and freq dims
-        spectrogram_np = np.transpose(spectrogram_np, (0, 2, 1))
+        # Convert to sequences (frames),
+        # shape (N_sequences, N_sequence_frames, N_freqs)
+        spectrogram = np.ascontiguousarray(spectrogram)
+        spectrogram = librosa.util.frame(
+            spectrogram, self.sequence_frames, self.sequence_hop, axis=0
+        )
 
-        return spectrogram_np
+        return spectrogram
 
 
 class MelSpectrogram(FeatureExtractor):
@@ -67,35 +75,41 @@ class MelSpectrogram(FeatureExtractor):
             sr, n_fft, mel_bands, htk=True, fmax=fmax)
 
     def calculate_features(self, file_name):
-        # get spectrograms
-        # spectrograms = super().calculate_features(file_name)
-
-        # load audio
+        # Load audio
         audio = self.load_audio(file_name)
-        # spectrogram
+
+        # Get the spectrogram, shape (N_freqs, N_frames)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
                                  hop_length=self.audio_hop,
-                                 win_length=self.audio_win, center=True)
-        # power
+                                 win_length=self.audio_win, center=False)
+        # Convert to power
         spectrogram = np.abs(stft)**2
-        # convert to mel_spectrogram
 
+        # Convert to mel_spectrogram, shape (N_bands, N_frames)
         mel_spectrogram = self.mel_basis.dot(spectrogram)
         assert mel_spectrogram.shape[0] == self.params['mel_bands']
 
-        # convert power to db
+        # Convert to db
         mel_spectrogram = librosa.power_to_db(mel_spectrogram)
 
-        # convert to sequences (windowing)
-        mel_spectrogram_seqs = self.get_sequences(mel_spectrogram, pad=True)
+        # Transpose time and freq dims, shape (N_frames, N_bands)
+        mel_spectrogram = mel_spectrogram.T
 
-        # convert to numpy
-        mel_spectrogram_np = np.asarray(mel_spectrogram_seqs)
+        # Pad the mel_spectrogram, shape (N_frames', N_bands)
+        mel_spectrogram = librosa.util.fix_length(
+            mel_spectrogram,
+            mel_spectrogram.shape[0]+self.sequence_frames, 
+            axis=0, mode='reflect'
+        )
 
-        # transpose time and freq dims
-        mel_spectrogram_np = np.transpose(mel_spectrogram_np, (0, 2, 1))
+        # Convert to sequences (frames),
+        # shape (N_sequences, N_sequence_frames, N_bands)
+        mel_spectrogram = np.ascontiguousarray(mel_spectrogram)
+        mel_spectrogram = librosa.util.frame(
+            mel_spectrogram, self.sequence_frames, self.sequence_hop, axis=0
+        )
 
-        return mel_spectrogram_np
+        return mel_spectrogram
 
 
 class Openl3(FeatureExtractor):

@@ -176,73 +176,17 @@ class URBAN_SED(Dataset):
                 self.wav_to_labels[fil] = os.path.join(
                     self.annotations_folder, fold, label_file)
 
-    # def data_generation(self, list_files_temp):
-    #     features_list = []
-    #     annotations_sequences = []
-    #     annotations_grid_metrics = []
-    #     for file_name in list_files_temp:
-    #         features = np.load(file_name)
-    #         features_list.append(features)
-    #         y_sequences = self.get_annotations(
-    #             file_name, features,
-    #             time_resolution=self.sequence_hop_time)
-    #         y_grid_metrics = self.get_annotations(
-    #             file_name, features,
-    #             time_resolution=self.metric_resolution_sec)
-    #         y_sequences = y_sequences[:len(features)]
-    #         assert y_sequences.shape[0] == features.shape[0]
-    #         annotations_sequences.append(y_sequences)
-    #         annotations_grid_metrics.append(y_grid_metrics)
-    #         # annotations.append({'y_frames': y_frames,
-    #         #                     'y_grid_metrics': y_grid_metrics})
-
-    #     return features_list, [annotations_sequences,
-    #                            annotations_grid_metrics]
-
     def get_annotations(self, file_name, features, time_resolution=1.0):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
         event_roll = event_list_to_event_roll(labels.to_dict('records'), self.label_list, self.sequence_hop_time)
-        #print(labels.to_dict('records'))
-        #print(event_roll.shape)
         if event_roll.shape[0] > features.shape[0]:
             event_roll = event_roll[:len(features)]
         else:
             event_roll = fix_length(event_roll, features.shape[0], axis=0)
-        #print(event_roll.shape)
         assert event_roll.shape[0] == features.shape[0]
         return event_roll
-        # time_resolution = self.sequence_hop_time
-        # label_file = self.wav_to_labels[file_name]
-        # audio_file = file_name
-        # f = sf.SoundFile(audio_file)
-        # audio_len_sec = len(f) / f.samplerate
-        # labels = read_csv(label_file, delimiter='\t', header=None)
-        # labels.columns = ['event_onset', 'event_offset', 'event_label']
-
-        # N_seqs = int(
-        #     np.floor((audio_len_sec + self.sequence_time) / time_resolution)
-        # )
-        # assert N_seqs == len(features)
-        # event_roll = np.zeros((N_seqs, len(self.label_list)))
-
-        # for event in labels.to_dict('records'):
-        #     pos = self.label_list.index(event['event_label'])
-
-        #     event_onset = event['event_onset']
-        #     event_offset = event['event_offset']
-
-        #     # event_offset = 5.0
-        #     # event_onset = 0.0
-
-        #     # math.floor
-        #     onset = int(np.round(event_onset * 1 / float(time_resolution)))
-        #     offset = int(np.round(event_offset * 1 /
-        #                           float(time_resolution))) + 1  # math.ceil
-
-        #     event_roll[onset:offset, pos] = 1
-        # return event_roll
 
     def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1324404/files"
@@ -442,7 +386,7 @@ class TAUUrbanAcousticScenes2020Mobile(Dataset):
         basename = os.path.basename(file_name)
         # delete file extension
         basename = basename.split('.')[0]
-        scene_label, city, location_id, segment_id, device_id = basename.split(
+        (scene_label, city, location_id, segment_id, device_id) = basename.split(
             '-')
         class_ix = self.label_list.index(scene_label)
         y[:, class_ix] = 1
