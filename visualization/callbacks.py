@@ -111,6 +111,7 @@ def update_plot2D(samples_per_class, x_select, y_select,
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold) 
             X_emb = model_container.get_intermediate_output(output_select, X) #model_container.cut_network(-2)
+            print(X.shape, X_emb.shape)
 
         pca = PCA(n_components=4)
         pca.fit(X_emb)
@@ -304,14 +305,14 @@ def select_dataset(dataset_ix):
      Input('model_parameters', 'value'),
      Input('model_path', 'value'),
      Input('model_name', 'value'),
-     Input('create_model', 'n_clicks')
+     #Input('create_model', 'n_clicks')
      ]
 )
 def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
                    audio_win, sr, specific_parameters,
                    dataset_path, audio_folder, features_folder, dataset_ix,
                    end_features_extraction, status_features,
-                   model_parameters, model_path, model_ix, create_model):
+                   model_parameters, model_path, model_ix):
 
     global model_container
     global feature_extractor
@@ -348,9 +349,9 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
         dataset = dataset_class(dataset_path)
         if dataset.check_if_dataset_was_downloaded():
             checks.append('dataset')
-
+        params_dataset = params['datasets'][dataset_name]
         if feature_ix is not None:
-            data_generator = DataGenerator(dataset, feature_extractor)
+            data_generator = DataGenerator(dataset, feature_extractor, evaluation_mode=params_dataset['evaluation_mode'])
             features_extracted = data_generator.check_if_features_extracted()
 
             if features_extracted:
@@ -483,7 +484,8 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
             kwargs = {'sequence_hop_time': sequence_hop_time}
         dataset = dataset_class(dataset_path, **kwargs)
 
-        data_generator = DataGenerator(dataset, feature_extractor)
+        params_dataset = params['datasets'][dataset_name]
+        data_generator = DataGenerator(dataset, feature_extractor, evaluation_mode=params_dataset['evaluation_mode'])
 
         n_classes = len(dataset.label_list)
 
@@ -661,11 +663,12 @@ def trigger_training(n_clicks, end_training, fold_ix, normalizer,
      State('learning_rate', 'value'),
      State('batch_size', 'value'),
      State('considered_improvement', 'value'),
-     State("train_model", "n_clicks")]
+     State("train_model", "n_clicks"),
+     State('dataset_name', 'value')]
 )
 def start_training(status, fold_ix, normalizer, model_path,
                    epochs, early_stopping, optimizer_ix, learning_rate,
-                   batch_size, considered_improvement, n_clicks_train):
+                   batch_size, considered_improvement, n_clicks_train, dataset_ix):
     if status == 'TRAINING':
         if fold_ix is None:
             return [True, 'Please select a Fold', 'danger', ""]
@@ -675,9 +678,12 @@ def start_training(status, fold_ix, normalizer, model_path,
         fold_name = dataset.fold_list[fold_ix]
         optimizer = options_optimizers[optimizer_ix]['label']
 
+        dataset_name = options_datasets[dataset_ix]['label']
+        params_dataset = params['datasets'][dataset_name]
         data_generator.load_data()
         X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(
-            fold_name)
+            fold_name, evaluation_mode=params_dataset['evaluation_mode']
+        )
 
         scaler = Scaler(normalizer=normalizer)
         scaler.fit(X_train)

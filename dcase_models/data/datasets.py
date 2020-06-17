@@ -11,6 +11,7 @@ from librosa.util import fix_length
 
 from .dataset_base import Dataset
 from ..utils.files import move_all_files_to_parent, move_all_files_to
+from ..utils.files import mkdir_if_not_exists
 
 import inspect
 
@@ -490,6 +491,104 @@ class TUTSoundEvents2017(Dataset):
             os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/evaluation_setup"),
             os.path.join(self.dataset_path, "evaluation_setup")
         )
+        self.set_dataset_download_finish()
+
+
+class FSDKaggle2018(Dataset):
+    ''' FSDKaggle2018 dataset class '''
+
+    def __init__(self, dataset_path):
+        super().__init__(dataset_path)
+
+    def build(self):
+        self.audio_path = os.path.join(self.dataset_path, 'audio')
+        self.fold_list = ["train", "test"]
+        self.meta_path = os.path.join(self.dataset_path, 'meta')
+        self.label_list = []
+
+        meta_file_train = os.path.join(self.meta_path, 'train_post_competition.csv')
+        meta_file_test = os.path.join(self.meta_path, 'test_post_competition_scoring_clips.csv')
+
+        listl = ["Acoustic_guitar", "Applause", "Bark", "Bass_drum", "Burping_or_eructation", "Bus", "Cello", "Chime", "Clarinet", "Computer_keyboard", "Cough", "Cowbell", "Double_bass", "Drawer_open_or_close", "Electric_piano", "Fart", "Finger_snapping", "Fireworks", "Flute", "Glockenspiel", "Gong", "Gunshot_or_gunfire", "Harmonica", "Hi-hat", "Keys_jangling", "Knock", "Laughter", "Meow", "Microwave_oven", "Oboe", "Saxophone", "Scissors", "Shatter", "Snare_drum", "Squeak", "Tambourine", "Tearing", "Telephone", "Trumpet", "Violin_or_fiddle", "Writing"]
+
+        self.metadata = {}
+        n_classes = 50
+        for fold_ix, meta_file in enumerate([meta_file_train, meta_file_test]):
+            with open(meta_file) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                line_count = 0
+                for row in csv_reader:
+                    if line_count == 0:
+                        line_count += 1
+                        continue
+                    filename = row[0]
+                    label = row[1]
+                    usage = row[2]
+                    freesound_id = row[3]
+                    license = row[4]
+
+                    self.metadata[filename] = {
+                        'label': label, 'usage': usage,
+                        'freesound_id': freesound_id, 'license': license,
+                        'fold': self.fold_list[fold_ix]}
+                    if label not in self.label_list:
+                        self.label_list.append(label)
+
+        self.label_list.sort()
+
+
+    def generate_file_lists(self):
+        self.file_lists = {fold: [] for fold in self.fold_list}
+        #print(self.file_lists)
+        for filename in self.metadata.keys():
+            fold = self.metadata[filename]['fold']
+            file_path = os.path.join(
+                self.audio_path, fold, filename
+            )
+            #print(self.file_lists)
+            #print(fold)
+            self.file_lists[fold].append(file_path)
+
+    def get_annotations(self, file_name, features):
+        y = np.zeros((len(features), len(self.label_list)))
+        label_name = self.metadata[os.path.basename(file_name)]['label']
+        label_index = self.label_list.index(label_name)
+        y[:, label_index] = 1
+        return y
+
+    def download_dataset(self, force_download=False):
+        zenodo_url = "https://zenodo.org/record/2552860/files"
+
+        zenodo_files = [
+            'FSDKaggle2018.audio_test.zip',
+            'FSDKaggle2018.audio_train.zip',
+            'FSDKaggle2018.doc.zip',
+            'FSDKaggle2018.meta.zip'
+        ]
+  
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
+
+        mkdir_if_not_exists(self.audio_path)
+
+        os.rename(
+            os.path.join(self.dataset_path, 'FSDKaggle2018.audio_train'),
+            os.path.join(self.audio_path, 'train'),
+        )
+        os.rename(
+            os.path.join(self.dataset_path, 'FSDKaggle2018.audio_test'),
+            os.path.join(self.audio_path, 'test'),
+        )
+        os.rename(
+            os.path.join(self.dataset_path, 'FSDKaggle2018.meta'),
+            os.path.join(self.dataset_path, 'meta'),
+        )        
+        os.rename(
+            os.path.join(self.dataset_path, 'FSDKaggle2018.doc'),
+            os.path.join(self.dataset_path, 'doc'),
+        )     
+
         self.set_dataset_download_finish()
 
 

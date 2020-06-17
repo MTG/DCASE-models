@@ -95,6 +95,10 @@
         "TUTSoundEvents2017" : {
             "dataset_path" : "/data/pzinemanas/TUTSoundEvents2017",
             "evaluation_mode" : "cross-validation-with-test"          
+        },
+        "FSDKaggle2018" : {
+            "dataset_path" : "/data/pzinemanas/FSDKaggle2018",
+            "evaluation_mode" : "train-test"          
         }
     }
 }

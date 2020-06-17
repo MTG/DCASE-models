@@ -1,14 +1,16 @@
 {
     "features" : {
         "sequence_time": 2.0, 
-        "sequence_hop_time":0.5,
-        "audio_hop":670,
+        "sequence_hop_time":1.0,
+        "audio_hop":690,
         "audio_win":1024,
-        "n_fft":1024, 
         "sr": 22050,
-        "Spectrogram" : {},
+        "Spectrogram" : {
+            "n_fft":1024
+        },
         "MelSpectrogram" : {
-            "mel_bands": 40
+            "mel_bands": 64,
+            "n_fft":1024
         },
         "Openl3" : {
             "content_type" : "env",
@@ -28,8 +30,13 @@
     },
 
     "models" : {
+        "MLP" : {
+            "normalizer" : "minmax",
+            "model_arguments" : {},
+            "train_arguments": {}
+        },
         "SB_CNN" : {
-            "normalizer" : "minmax",     
+            "normalizer" : "minmax",  
             "model_arguments" : {
                 "large_cnn" : 0,
                 "n_dense_cnn" : 64,
@@ -37,6 +44,11 @@
                 "filter_size_cnn" : [5, 5], 
                 "pool_size_cnn" : [2,2]
             },
+            "train_arguments": {}
+        },
+        "SB_CNN_SED" : {
+            "normalizer" : "minmax",     
+            "model_arguments" : {},
             "train_arguments": {}
         },
         "A_CRNN" : {
@@ -55,37 +67,56 @@
         "UrbanSound8k" : {
             "dataset_path" : "/data/pzinemanas/UrbanSound8K",
             "audio_folder" : "audio",
-            "feature_folder" : "features"
+            "feature_folder" : "features",
+            "evaluation_mode" : "cross-validation"
         },
         "ESC50" : {
             "dataset_path" : "/data/pzinemanas/ESC50",
-            "audio_folder" : "audio22050",
-            "feature_folder" : "features"
+            "audio_folder" : "audio",
+            "feature_folder" : "features",
+            "evaluation_mode" : "cross-validation"
         },
         "ESC10" : {
             "dataset_path" : "/data/pzinemanas/ESC50",
-            "audio_folder" : "audio22050",
-            "feature_folder" : "features"
+            "audio_folder" : "audio",
+            "feature_folder" : "features",
+            "evaluation_mode" : "cross-validation"
         },
         "URBAN_SED" : {
             "dataset_path" : "/data/pzinemanas/URBAN-SED_v2.0.0",
             "audio_folder" : "audio",
-            "feature_folder" : "features"
+            "feature_folder" : "features",
+            "evaluation_mode" : "train-validate-test"
         },
         "SONYC_UST" : {
             "dataset_path" : "/data/pzinemanas/SONYC_UST",
             "audio_folder" : "audio",
-            "feature_folder" : "features"
+            "feature_folder" : "features",
+            "evaluation_mode" : "train-validate-test"
         },
         "TAUUrbanAcousticScenes2020Mobile" : {
             "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2020Mobile",
             "audio_folder" : "audio",
-            "feature_folder" : "features"           
+            "feature_folder" : "features",
+            "evaluation_mode" : "train-test"        
         },
         "TAUUrbanAcousticScenes2019" : {
             "dataset_path" : "/data/pzinemanas/TAUUrbanAcousticScenes2019",
             "audio_folder" : "audio",
-            "feature_folder" : "features"           
+            "feature_folder" : "features",
+            "evaluation_mode" : "train-test"          
+        },
+        "TUTSoundEvents2017" : {
+            "dataset_path" : "/data/pzinemanas/TUTSoundEvents2017",
+            "audio_folder" : "audio",
+            "feature_folder" : "features",
+            "evaluation_mode" : "cross-validation-with-test"          
+        },
+        "FSDKaggle2018" : {
+            "dataset_path" : "/data/pzinemanas/FSDKaggle2018",
+            "audio_folder" : "audio",
+            "feature_folder" : "features",
+            "evaluation_mode" : "train-test"          
         }
     }
 }

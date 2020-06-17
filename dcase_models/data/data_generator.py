@@ -78,7 +78,8 @@ class DataGenerator():
         self.feature_extractor = feature_extractor
         self.features_folder = kwargs.get('features_folder', 'features')
         self.use_validate_set = kwargs.get('use_validate_set', True)
-
+        self.evaluation_mode = kwargs.get('evaluation_mode', 'cross-validation')
+        print('init_eval', self.evaluation_mode)
         if Dataset not in inspect.getmro(dataset.__class__):
             raise AttributeError('dataset has to be an instance of Dataset or childs')
 
@@ -150,8 +151,7 @@ class DataGenerator():
             X, Y = self.data_generation(file_features)
             self.data[fold] = {'X': X, 'Y': Y}
 
-    def get_data_for_training(self, fold_test, upsampling=False,
-                              evaluation_mode='cross-validation'):
+    def get_data_for_training(self, fold_test, upsampling=False):
         """ Returns arrays and lists for use in training process
 
         Parameters
@@ -175,7 +175,7 @@ class DataGenerator():
             List of annotations matrix for each file in validation set
 
         """
-        if evaluation_mode in ['cross-validation', 'cross-validation-with-test']:
+        if self.evaluation_mode in ['cross-validation', 'cross-validation-with-test']:
             # cross-validation mode
             fold_val = get_fold_val(fold_test, self.dataset.fold_list)
             folds_train = self.dataset.fold_list.copy()
@@ -213,7 +213,7 @@ class DataGenerator():
                         Y_train_up = np.concatenate(
                             [Y_train_up]+[Y_j]*int(Ns[j]), axis=0)
 
-            if evaluation_mode == 'cross-validation-with-test':
+            if self.evaluation_mode == 'cross-validation-with-test':
                 return X_train_up, Y_train_up, self.data[fold_test]['X'].copy(), self.data[fold_test]['Y'].copy()
 
             if self.use_validate_set:
@@ -221,7 +221,7 @@ class DataGenerator():
             else:
                 return X_train_up, Y_train_up, X_train_list, Y_train_list
 
-        if (evaluation_mode == 'train-validate-test'):
+        if (self.evaluation_mode == 'train-validate-test'):
             # train-val-test mode
             X_val = self.data['validate']['X'].copy()
             Y_val = self.data['validate']['Y'].copy()
@@ -231,7 +231,7 @@ class DataGenerator():
 
             return X_train, Y_train, X_val, Y_val
 
-        if (evaluation_mode == 'train-test'):
+        if (self.evaluation_mode == 'train-test'):
             # train-test mode
             X_val = self.data['train']['X'].copy()
             Y_val = self.data['train']['Y'].copy()
@@ -267,10 +267,14 @@ class DataGenerator():
         # cross-validation mode
 
         if train:
-            fold_val = get_fold_val(fold_test, self.dataset.fold_list)
-            folds_train = self.dataset.fold_list.copy()
-            folds_train.remove(fold_test)
-            folds_train.remove(fold_val)
+            print('eval', self.evaluation_mode)
+            if self.evaluation_mode == 'cross-validation':
+                fold_val = get_fold_val(fold_test, self.dataset.fold_list)
+                folds_train = self.dataset.fold_list.copy()
+                folds_train.remove(fold_test)
+                folds_train.remove(fold_val)
+            if self.evaluation_mode in ['train-test', 'train-validate-test']:
+                folds_train = ['train']
 
             # X_val = self.data[fold_val]['X']
             # Y_val = self.data[fold_val]['Y']
@@ -294,9 +298,10 @@ class DataGenerator():
                         Files_names_train.append(
                             self.dataset.file_lists[fold_train][file]
                         )
+            
             X_train = np.concatenate(X_train, axis=0)
             Y_train = np.concatenate(Y_train, axis=0)
-
+            print('shapes', X_train.shape, Y_train.shape)
             return X_train, Y_train, Files_names_train
 
         else:

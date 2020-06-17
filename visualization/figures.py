@@ -31,7 +31,7 @@ def generate_figure2D(X, Y, label_list, pca_components=[0, 1],
         fig.add_trace(
             go.Scatter(
                 x=x_coord, y=y_coord, name=label_list[j], mode='markers',
-                marker={'size': size, 'symbol': 'circle', 'color': colors[j]}
+                marker={'size': size, 'symbol': 'circle', 'color': colors[j % len(colors)]}
             ), row=1, col=1
         )
 
@@ -71,7 +71,7 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
         fig.add_trace(
             go.Scatter(
                 x=x_coord, y=y_coord, name=label_list[j], mode='markers',
-                marker={'size': size, 'symbol': 'circle', 'color': colors[j]}
+                marker={'size': size, 'symbol': 'circle', 'color': colors[j% len(colors)]}
             ), row=1, col=1
         )
         x_coord = X_class_incorrect[:, pca_components[0]]
@@ -80,7 +80,7 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
         fig.add_trace(
             go.Scatter(
                 x=x_coord, y=y_coord, name=label_list[j], mode='markers',
-                marker={'size': size, 'symbol': 'x', 'color': colors[j]}
+                marker={'size': size, 'symbol': 'x', 'color': colors[j% len(colors)]}
             ), row=1, col=1
         )
 
