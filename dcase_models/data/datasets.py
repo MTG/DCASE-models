@@ -459,6 +459,6 @@ class TUTSoundEvents2017(Dataset):
 
 def get_available_datasets():
     availabe_datasets = {m[0]: m[1] for m in inspect.getmembers(
-        sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__ and m[0] != '_'}
+        sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__ and m[0][0] != '_'}
 
     return availabe_datasets

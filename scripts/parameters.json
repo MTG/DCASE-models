@@ -30,6 +30,11 @@
     },
 
     "models" : {
+        "MLP" : {
+            "normalizer" : "minmax",
+            "model_arguments" : {},
+            "train_arguments": {}
+        },
         "SB_CNN" : {
             "normalizer" : "minmax",  
             "model_arguments" : {
