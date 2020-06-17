@@ -120,3 +120,9 @@ def move_all_files_to_parent(parent, child):
     for f in files:
         shutil.move(os.path.join(source, f), os.path.join(parent, f))
     shutil.rmtree(source)
+
+def move_all_files_to(source, destination):
+    files = os.listdir(source)
+    for f in files:
+        shutil.move(os.path.join(source, f), os.path.join(destination, f))
+    shutil.rmtree(source)

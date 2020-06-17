@@ -175,7 +175,7 @@ class DataGenerator():
             List of annotations matrix for each file in validation set
 
         """
-        if evaluation_mode == 'cross-validation':
+        if evaluation_mode in ['cross-validation', 'cross-validation-with-test']:
             # cross-validation mode
             fold_val = get_fold_val(fold_test, self.dataset.fold_list)
             folds_train = self.dataset.fold_list.copy()
@@ -212,6 +212,9 @@ class DataGenerator():
                             [X_train_up]+[X_j]*int(Ns[j]), axis=0)
                         Y_train_up = np.concatenate(
                             [Y_train_up]+[Y_j]*int(Ns[j]), axis=0)
+
+            if evaluation_mode == 'cross-validation-with-test':
+                return X_train_up, Y_train_up, self.data[fold_test]['X'].copy(), self.data[fold_test]['Y'].copy()
 
             if self.use_validate_set:
                 return X_train_up, Y_train_up, X_val, Y_val

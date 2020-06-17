@@ -10,7 +10,7 @@ from sed_eval.util.event_roll import event_list_to_event_roll
 from librosa.util import fix_length
 
 from .dataset_base import Dataset
-from ..utils.files import move_all_files_to_parent
+from ..utils.files import move_all_files_to_parent, move_all_files_to
 
 import inspect
 
@@ -424,6 +424,21 @@ class TUTSoundEvents2017(Dataset):
                     file_ann = file_ann.replace('.wav', '.ann')
                     self.wav_to_labels[file_path] = file_ann
 
+        # test folder
+        self.file_lists['test'] = []
+        evaluation_setup_file = os.path.join(
+            self.evaluation_setup_path, 'street_test.txt'
+        )
+        with open(evaluation_setup_file) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter='\t')
+            for row in csv_reader:
+                file_name = row[0].split('/')[-1]
+                file_path = os.path.join(self.audio_path, 'street', file_name)
+                self.file_lists['test'].append(file_path)
+
+                file_ann = file_path.replace(self.audio_path, self.meta_path)
+                file_ann = file_ann.replace('.wav', '.ann')
+                self.wav_to_labels[file_path] = file_ann
 
     def get_annotations(self, file_name, features):
         label_file = self.wav_to_labels[file_name]
@@ -453,8 +468,29 @@ class TUTSoundEvents2017(Dataset):
         move_all_files_to_parent(
             self.dataset_path,
             "TUT-sound-events-2017-development")
-        self.set_dataset_download_finish()
 
+        zenodo_url = "https://zenodo.org/record/1040179/files"
+
+        zenodo_files = [
+            'TUT-sound-events-2017-evaluation.audio.zip',
+            'TUT-sound-events-2017-evaluation.meta.zip',
+        ]
+        super().download_dataset(
+            zenodo_url, zenodo_files, force_download
+        )
+        move_all_files_to(
+            os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/audio/street"),
+            os.path.join(self.dataset_path, "audio/street")
+        )
+        move_all_files_to(
+            os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/meta/street"),
+            os.path.join(self.dataset_path, "meta/street")
+        )
+        move_all_files_to(
+            os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/evaluation_setup"),
+            os.path.join(self.dataset_path, "evaluation_setup")
+        )
+        self.set_dataset_download_finish()
 
 
 def get_available_datasets():

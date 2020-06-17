@@ -70,7 +70,10 @@ def main():
         print('Done!')
 
     # Get data
-    X_test, Y_test = data_generator.get_data_for_testing(args.fold_name)
+    if args.dataset == 'TUTSoundEvents2017':
+        X_test, Y_test = data_generator.get_data_for_testing(args.fold_name)
+    else:
+        X_test, Y_test = data_generator.get_data_for_testing('test')
 
     # Set paths
     model_folder = os.path.join(models_path, args.model, args.dataset)
