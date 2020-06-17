@@ -6,6 +6,8 @@ import csv
 from pandas import read_csv
 import soundfile as sf
 import yaml
+from sed_eval.util.event_roll import event_list_to_event_roll
+from librosa.util import fix_length
 
 from .dataset_base import Dataset
 from ..utils.files import move_all_files_to_parent
@@ -198,34 +200,49 @@ class URBAN_SED(Dataset):
     #                            annotations_grid_metrics]
 
     def get_annotations(self, file_name, features, time_resolution=1.0):
-        time_resolution = self.sequence_hop_time
         label_file = self.wav_to_labels[file_name]
-        audio_file = file_name
-        f = sf.SoundFile(audio_file)
-        audio_len_sec = len(f) / f.samplerate
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
-
-        N_seqs = int(
-            np.floor((audio_len_sec + self.sequence_time) / time_resolution))
-        event_roll = np.zeros((N_seqs, len(self.label_list)))
-
-        for event in labels.to_dict('records'):
-            pos = self.label_list.index(event['event_label'])
-
-            event_onset = event['event_onset']
-            event_offset = event['event_offset']
-
-            # event_offset = 5.0
-            # event_onset = 0.0
-
-            # math.floor
-            onset = int(np.round(event_onset * 1 / float(time_resolution)))
-            offset = int(np.round(event_offset * 1 /
-                                  float(time_resolution))) + 1  # math.ceil
-
-            event_roll[onset:offset, pos] = 1
+        event_roll = event_list_to_event_roll(labels.to_dict('records'), self.label_list, self.sequence_hop_time)
+        #print(labels.to_dict('records'))
+        #print(event_roll.shape)
+        if event_roll.shape[0] > features.shape[0]:
+            event_roll = event_roll[:len(features)]
+        else:
+            event_roll = fix_length(event_roll, features.shape[0], axis=0)
+        #print(event_roll.shape)
+        assert event_roll.shape[0] == features.shape[0]
         return event_roll
+        # time_resolution = self.sequence_hop_time
+        # label_file = self.wav_to_labels[file_name]
+        # audio_file = file_name
+        # f = sf.SoundFile(audio_file)
+        # audio_len_sec = len(f) / f.samplerate
+        # labels = read_csv(label_file, delimiter='\t', header=None)
+        # labels.columns = ['event_onset', 'event_offset', 'event_label']
+
+        # N_seqs = int(
+        #     np.floor((audio_len_sec + self.sequence_time) / time_resolution)
+        # )
+        # assert N_seqs == len(features)
+        # event_roll = np.zeros((N_seqs, len(self.label_list)))
+
+        # for event in labels.to_dict('records'):
+        #     pos = self.label_list.index(event['event_label'])
+
+        #     event_onset = event['event_onset']
+        #     event_offset = event['event_offset']
+
+        #     # event_offset = 5.0
+        #     # event_onset = 0.0
+
+        #     # math.floor
+        #     onset = int(np.round(event_onset * 1 / float(time_resolution)))
+        #     offset = int(np.round(event_offset * 1 /
+        #                           float(time_resolution))) + 1  # math.ceil
+
+        #     event_roll[onset:offset, pos] = 1
+        # return event_roll
 
     def download_dataset(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1324404/files"

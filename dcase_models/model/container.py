@@ -9,7 +9,7 @@ from keras.layers import Dense, Input
 
 from ..utils.files import save_json
 from ..utils.metrics import evaluate_metrics
-from ..utils.callbacks import AccuracyCallback, F1ERCallback
+from ..utils.callbacks import AccuracyCallback, F1ERCallback, SEDCallback
 
 
 class ModelContainer():
@@ -168,7 +168,7 @@ class KerasModelContainer(ModelContainer):
               optimizer='Adam', learning_rate=0.001, early_stopping=100,
               considered_improvement=0.01, losses='categorical_crossentropy',
               loss_weights=[1], sequence_time_sec=0.5,
-              metric_resolution_sec=1.0, **kwargs_keras_fit):
+              metric_resolution_sec=1.0, label_list=[], **kwargs_keras_fit):
         """
         Train the keras model using the data and paramaters of arguments.
 
@@ -229,12 +229,21 @@ class KerasModelContainer(ModelContainer):
                 sequence_time_sec=sequence_time_sec,
                 metric_resolution_sec=metric_resolution_sec
             )
+        if self.metrics[0] == 'sed':
+            metrics_callback = SEDCallback(
+                X_val, Y_val, file_weights=file_weights,
+                early_stopping=early_stopping,
+                considered_improvement=considered_improvement,
+                sequence_time_sec=sequence_time_sec,
+                metric_resolution_sec=metric_resolution_sec,
+                label_list=label_list
+            )
         log = CSVLogger(file_log)
         self.model.fit(x=X_train, y=Y_train, shuffle=True,
                        callbacks=[metrics_callback, log],
                        **kwargs_keras_fit)
 
-    def evaluate(self, X_test, Y_test, scaler=None):
+    def evaluate(self, X_test, Y_test, scaler=None, **kwargs):
         """
         Evaluate the keras model using X_test and Y_test
 
@@ -261,7 +270,7 @@ class KerasModelContainer(ModelContainer):
         """
         if scaler is not None:
             X_test = scaler.transform(X_test)
-        return evaluate_metrics(self.model, X_test, Y_test, self.metrics)
+        return evaluate_metrics(self.model, X_test, Y_test, self.metrics, **kwargs)
 
     def load_model_from_json(self, folder, **kwargs):
         """

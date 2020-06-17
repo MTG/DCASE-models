@@ -115,11 +115,10 @@ class FeatureExtractor():
 
         """
         if pad:
-            x = np.pad(x, ((0, 0), (self.sequence_frames//2,
-                                    self.sequence_frames//2)), 'reflect')
+            x = librosa.util.fix_length(x, x.shape[1]+self.sequence_frames//2, axis=1, mode='reflect')
         hop_times = np.arange(
-            0, x.shape[1]-self.sequence_frames+1, self.sequence_hop)
-
+            0, x.shape[1]-self.sequence_frames+1, self.sequence_hop
+        )
         y = []
         for i in hop_times:
             x_seq = x[:, i:i+self.sequence_frames]

@@ -41,9 +41,13 @@ def main():
     params_features = params['features']
     params_model = params['models'][args.model]
 
+    kwargs = {}
+    if args.dataset == 'URBAN_SED':
+        kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
+
     # Get and init dataset class
     dataset_class = get_available_datasets()[args.dataset]
-    dataset = dataset_class(params_dataset['dataset_path'])
+    dataset = dataset_class(params_dataset['dataset_path'], **kwargs)
 
     if args.fold_name not in dataset.fold_list:
         raise AttributeError('Fold not available')
@@ -57,10 +61,10 @@ def main():
         audio_hop=params_features['audio_hop'],
         sr=params_features['sr'], **params_features[args.features]
     )
+    print('Features shape: ', features.get_features_shape()[1:])
 
     # Init data generator
     data_generator = DataGenerator(dataset, features)
-    data_generator.load_data()
 
     # Check if features were extracted
     if not data_generator.check_if_features_extracted():
@@ -68,27 +72,37 @@ def main():
         data_generator.extract_features()
         print('Done!')
 
+    # Load data
+    data_generator.load_data()
+
     # Get data and fit scaler
     X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(
-        args.fold_name
+        args.fold_name, evaluation_mode=params_dataset['evaluation_mode']
     )
+    print(X_train.shape, Y_train.shape)
     scaler = Scaler(normalizer=params_model['normalizer'])
     scaler.fit(X_train)
     X_train = scaler.transform(X_train)
     X_val = scaler.transform(X_val)
 
+    # Define model
     n_frames_cnn = X_train.shape[1]
     n_freq_cnn = X_train.shape[2]
     n_classes = Y_train.shape[1]
     model_class = get_available_models()[args.model]
+    metrics = ['accuracy']
+    if args.dataset == 'URBAN_SED':
+        metrics = ['sed']
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,
         n_frames_cnn=n_frames_cnn, n_freq_cnn=n_freq_cnn,
+        metrics=metrics,
         **params_model['model_arguments']
     )
 
     model_container.model.summary()
 
+    # Set paths
     model_folder = os.path.join(models_path, args.model)
     mkdir_if_not_exists(model_folder)
     model_folder = os.path.join(model_folder, args.dataset)
@@ -96,11 +110,16 @@ def main():
     exp_folder = os.path.join(model_folder, args.fold_name)
     mkdir_if_not_exists(exp_folder)
 
+    # Save model json and scaler
     model_container.save_model_json(model_folder)
     save_pickle(scaler, os.path.join(exp_folder, 'scaler.pickle'))
 
+    # Train model
+    kwargs = {}
+    if args.dataset == 'URBAN_SED':
+        kwargs['label_list'] = dataset.label_list
     model_container.train(X_train, Y_train, X_val, Y_val,
-                          weights_path=exp_folder, **params['train'])
+                          weights_path=exp_folder, **params['train'], **kwargs)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 # from scipy import interpolate
 import numpy as np
 from scipy.stats import mode
+from dcase_models.utils.events import event_roll_to_event_list
+from sed_eval.sound_event import SegmentBasedMetrics
 
 eps = 1e-6
 
@@ -77,6 +79,24 @@ def accuracy(Y_val, Y_predicted):
     acc = np.mean(annotations == predictions)
 
     return acc
+
+
+def sed(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0, label_list=[]):
+    seg_metrics = SegmentBasedMetrics(label_list, time_resolution=metric_resolution_sec)
+
+    n_files = len(Y_val)
+
+    for i in range(n_files):
+        y_true = Y_val[i]
+        pred = Y_predicted[i]
+
+        pred = (pred > 0.5).astype(int)
+        event_list_val = event_roll_to_event_list(y_true, label_list, sequence_time_sec)
+        event_list_pred = event_roll_to_event_list(pred, label_list, sequence_time_sec)
+
+        seg_metrics.evaluate(event_list_val, event_list_pred)
+
+    return seg_metrics
 
 
 def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
@@ -158,3 +178,6 @@ def F1(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
 
     Fmeasure = 2*P*R/(P + R + eps)
     return Fmeasure
+
+
+

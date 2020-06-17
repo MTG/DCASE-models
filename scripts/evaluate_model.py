@@ -3,9 +3,11 @@ from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.utils.files import load_json, load_pickle
+from dcase_models.utils.events import event_roll_to_event_list
 
 import argparse
 import os
+from pandas import read_csv
 
 models_path = './models'
 
@@ -38,8 +40,11 @@ def main():
     params_features = params['features']
 
     # Get and init dataset class
+    kwargs = {}
+    if args.dataset == 'URBAN_SED':
+        kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
     dataset_class = get_available_datasets()[args.dataset]
-    dataset = dataset_class(params_dataset['dataset_path'])
+    dataset = dataset_class(params_dataset['dataset_path'], **kwargs)
 
     if args.fold_name not in dataset.fold_list:
         raise AttributeError('Fold not available')
@@ -79,11 +84,21 @@ def main():
 
     # Load model and best weights
     model_class = get_available_models()[args.model]
-    model_container = model_class(model=None, model_path=model_folder)
+    metrics = ['accuracy']
+    if args.dataset == 'URBAN_SED':
+        metrics = ['sed']
+    model_container = model_class(model=None, model_path=model_folder, metrics=metrics)
     model_container.load_model_weights(exp_folder)
 
-    results = model_container.evaluate(X_test, Y_test)
-    print('Accuracy in %s is %f' % (args.fold_name, results['accuracy']))
+    kwargs = {'sequence_time_sec':params_features['sequence_hop_time'], 
+              'metric_resolution_sec':1.0, 'label_list': dataset.label_list}
+    results = model_container.evaluate(X_test, Y_test, **kwargs)
+
+    for metric in metrics:
+        if metric == 'sed':
+            print(results['sed'])
+        else:
+            print('%s in %s is %f' % (metric, args.fold_name, results[metric]))
 
 
 if __name__ == "__main__":
