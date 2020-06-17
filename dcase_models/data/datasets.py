@@ -66,27 +66,28 @@ class ESC50(Dataset):
         # load metadata information and create label_list
         self.audio_path = os.path.join(self.dataset_path, 'audio')
         meta_file = os.path.join(self.dataset_path, 'meta/esc50.csv')
-
         self.metadata = {}
-        n_classes = 50
-        self.label_list = ['']*n_classes
-        with open(meta_file) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            line_count = 0
-            for row in csv_reader:
-                if line_count == 0:
-                    line_count += 1
-                    continue
-                filename = row[0]
-                fold = 'fold'+row[1]
-                class_ix = int(row[2])
-                class_name = row[3]
-                esc10 = row[4] == 'True'
-                self.metadata[filename] = {
-                    'fold': fold, 'class_ix': class_ix,
-                    'class_name': class_name, 'esc10': esc10}
-                if class_name not in self.label_list:
-                    self.label_list[class_ix] = class_name
+        
+        if self.check_if_dataset_was_downloaded():
+            n_classes = 50
+            self.label_list = ['']*n_classes
+            with open(meta_file) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                line_count = 0
+                for row in csv_reader:
+                    if line_count == 0:
+                        line_count += 1
+                        continue
+                    filename = row[0]
+                    fold = 'fold'+row[1]
+                    class_ix = int(row[2])
+                    class_name = row[3]
+                    esc10 = row[4] == 'True'
+                    self.metadata[filename] = {
+                        'fold': fold, 'class_ix': class_ix,
+                        'class_name': class_name, 'esc10': esc10}
+                    if class_name not in self.label_list:
+                        self.label_list[class_ix] = class_name
 
         self.fold_list = ["fold1", "fold2", "fold3", "fold4", "fold5"]
         self.evaluation_mode = 'cross-validation'
