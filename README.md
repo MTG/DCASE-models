@@ -32,9 +32,9 @@ pip install .[visualization]
 ```
 
 ## Usage
-There are several ways to use this library.
+There are several ways to use this library. In this repository there are examples of three types:
 
-### Python script
+### Python scripts
 The folder `scripts` includes python scripts for data downloading, feature extraction, model training and testing. These examples show how to use DCASE-models within a python script.
 
 ### Jupyter notebooks
