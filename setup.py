@@ -32,6 +32,7 @@ setuptools.setup(
         'autopool==0.1.0',
         'wget==3.2',
         'sox==1.3.7',
+        'sed_eval==0.2.1',
     ],
     extras_require={
         'tests': ['pytest >= 5.4.3'],
