@@ -95,8 +95,8 @@ class MLP(KerasModelContainer):
 
 class SB_CNN(KerasModelContainer):
     """
-    Inherit class of DCASEModelContainer with specific attributs
-    and methods for SB_CNN model.
+    Class inherits from DCASEModelContainer with specific attributes
+    and methods for SB-CNN model.
 
     """
 
@@ -105,7 +105,7 @@ class SB_CNN(KerasModelContainer):
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
                  large_cnn=False, n_dense_cnn=64, n_channels=0):
         """
-        Function that init the SB-CNN [1] model.
+        Initialization of the SB-CNN [1] model.
 
         [1] ​Deep Convolutional Neural Networks and Data Augmentation
             For Environmental Sound Classification
@@ -120,18 +120,18 @@ class SB_CNN(KerasModelContainer):
         n_frames_cnn : int
             number of time steps (hops) of the input
         n_filters_cnn : int
-            number of filter in each conv layer
+            number of filters in each conv layer
         filter_size_cnn : tuple of int
-            kernel size of each conv filter
+            kernel size of each convolutional filter
         pool_size_cnn : tuple of int
             kernel size of the pool operations
         n_classes : int
             number of classes for the classification task
             (size of the last layer)
         large_cnn : bool
-            If true, the model has one more dense layer
+            if true, the model has one more dense layer
         n_dense_cnn : int
-            Size of middle dense layers
+            size of middle dense layers
 
         Notes
         -----
@@ -209,8 +209,8 @@ class SB_CNN(KerasModelContainer):
 
 class SB_CNN_SED(KerasModelContainer):
     """
-    Inherit class of DCASEModelContainer with specific
-    attributs and methods for SB_CNN_SED model.
+    Class inherits from DCASEModelContainer with specific
+    attributes and methods to implement a SB-CNN-SED model.
 
     """
 
@@ -220,7 +220,7 @@ class SB_CNN_SED(KerasModelContainer):
                  large_cnn=False, n_dense_cnn=64,
                  n_filters_cnn=64, n_chanels=0):
         """
-        Function that init the SB-CNN-SED [2] model.
+        Initialization of the SB-CNN-SED [2] model.
 
         [2] Scaper: A Library for Soundscape Synthesis and Augmentation
             J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello.
@@ -235,18 +235,18 @@ class SB_CNN_SED(KerasModelContainer):
         n_frames_cnn : int
             number of time steps (hops) of the input
         n_filters_cnn : int
-            number of filter in each conv layer
+            number of filters in each conv layer
         filter_size_cnn : tuple of int
-            kernel size of each conv filter
+            kernel size of each convolutional filter
         pool_size_cnn : tuple of int
             kernel size of the pool operations
         n_classes : int
-            number of classes for the classification taks
+            number of classes for the classification task
             (size of the last layer)
         large_cnn : bool
-            If true, the model has one more dense layer
+            if true, the model has one more dense layer
         n_dense_cnn : int
-            Size of middle dense layers
+            size of middle dense layers
 
         Notes
         -----
