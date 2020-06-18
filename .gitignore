@@ -1,5 +1,6 @@
 # datasets subfolders
-datasets/*/
+datasets/*
+!datasets/README.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
