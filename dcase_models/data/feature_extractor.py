@@ -46,14 +46,14 @@ class FeatureExtractor():
         Extract sequences (windows) of a the feature representation.
     load_audio(file_name, mono=True, change_sampling_rate=True)
         Load an audio signal and convert to mono if needed.
-    calculate_features(file_name)
+    calculate(file_name)
         Load an audio file and calculate features.
-    save_parameters_json(path)
+    set_as_extracted(path)
         Save a json file with the params.
-    check_features_folder(features_folder)
+    check_if_extracted(features_folder)
         Checks if the features were calculated before.
-    get_features_shape(length_sec=10.0)
-        Run calculate_features with a dummy signal of length length_sec
+    get_shape(length_sec=10.0)
+        Run calculate with a dummy signal of length length_sec
         and returns the shape of the feature representation.
 
     """
@@ -129,7 +129,7 @@ class FeatureExtractor():
 
         return audio
 
-    def calculate_features(self, file_name):
+    def calculate(self, file_name):
         """
         Load an audio file and calculates features
 
@@ -146,7 +146,7 @@ class FeatureExtractor():
         """
         pass
 
-    def save_parameters_json(self, path):
+    def set_as_extracted(self, path):
         """
         Save a json file with the self.params.
 
@@ -163,7 +163,7 @@ class FeatureExtractor():
         with open(json_path, 'w') as fp:
             json.dump(self.params, fp)
 
-    def check_features_folder(self, features_folder):
+    def check_if_extracted(self, features_folder):
         """
         Checks if the features saved in features_folder were
         calculated with the same parameters of self.params
@@ -186,9 +186,9 @@ class FeatureExtractor():
 
         return True
 
-    def get_features_shape(self, length_sec=10.0):
+    def get_shape(self, length_sec=10.0):
         """
-        Run calculate_features() with a dummy signal of length length_sec
+        Run calculate() with a dummy signal of length length_sec
         and returns the shape of the feature representation.
 
         Parameters
@@ -205,6 +205,6 @@ class FeatureExtractor():
         audio_sample = np.zeros(int(length_sec*self.sr))
         audio_file = 'zeros.wav'
         sf.write('zeros.wav', audio_sample, self.sr)
-        features_sample = self.calculate_features(audio_file)
+        features_sample = self.calculate(audio_file)
         os.remove(audio_file)
         return features_sample.shape

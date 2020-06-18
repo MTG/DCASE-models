@@ -23,8 +23,10 @@ from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
 
 def main():
     # Parse arguments
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument('-d', '--dataset', type=str, help='dataset name (e.g. UrbanSound8k,'\
                         ' ESC50, ESC10, URBAN_SED, SONYC_UST)',
                         default='UrbanSound8k')
@@ -81,13 +83,13 @@ def main():
         audio_hop=params_features['audio_hop'],
         sr=params_features['sr'], **params_features[args.features]
     )
-    print('Features shape: ', features.get_features_shape())
+    print('Features shape: ', features.get_shape())
 
     # Init data generator
-    kwargs = {}
+    kwargs = {'evaluation_mode' : params_dataset['evaluation_mode']}
     if args.dataset in ['TUTSoundEvents2017', 'ESC50', 'ESC10']:
         # When have less data, don't use validation set.
-        kwargs = {'use_validate_set' : False}
+        kwargs['use_validate_set'] = False
     data_generator = DataGenerator(dataset, features, **kwargs)
 
     # Check if features were extracted
@@ -101,7 +103,7 @@ def main():
 
     # Get data and fit scaler
     X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(
-        args.fold_name, evaluation_mode=params_dataset['evaluation_mode']
+        args.fold_name
     )
     print(X_train.shape, Y_train.shape)
     scaler = Scaler(normalizer=params_model['normalizer'])

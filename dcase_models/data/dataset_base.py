@@ -1,6 +1,4 @@
-import glob
 import os
-import numpy as np
 import sox
 
 from ..utils.files import download_files_and_unzip
@@ -41,11 +39,11 @@ class Dataset():
         Create self.file_lists, a dict that stores a list of files per fold.
     get_annotations(file_name, features):
         Return the annotations of the file in file_path.
-    download_dataset(self, zenodo_url, zenodo_files):
+    download(self, zenodo_url, zenodo_files):
         Download and uncompress the dataset from zenodo.
-    set_dataset_download_finish():
+    set_as_downloaded():
         Save a download.txt file in dataset_path as a downloaded flag
-    check_if_dataset_was_downloaded():
+    check_if_downloaded():
         Check if the dataset was downloaded.
         Just check if exists download.txt file.
     get_audio_path(sr=None)
@@ -110,7 +108,7 @@ class Dataset():
         """
         pass
 
-    def download_dataset(self, zenodo_url, zenodo_files, force_download=False):
+    def download(self, zenodo_url, zenodo_files, force_download=False):
         """
         Download and uncompress the dataset from zenodo.
 
@@ -131,21 +129,22 @@ class Dataset():
             True if the downloading process was successful.
 
         """
-        if self.check_if_dataset_was_downloaded() and not force_download:
+        if self.check_if_downloaded() and not force_download:
             return False
 
         download_files_and_unzip(self.dataset_path, zenodo_url, zenodo_files)
         return True
 
-    def set_dataset_download_finish(self):
+    def set_as_downloaded(self):
         """
         Save a download.txt file in dataset_path as a downloaded flag.
         """
         log_file = os.path.join(self.dataset_path, 'download.txt')
         with open(log_file, 'w') as txt_file:
-            txt_file.write('The dataset was download ...\n')
+            # pass
+            txt_file.write('')
 
-    def check_if_dataset_was_downloaded(self):
+    def check_if_downloaded(self):
         """
         Check if the dataset was downloaded.
 
@@ -238,7 +237,7 @@ class Dataset():
                 self.audio_path, audio_folder_sr
             )
             # TODO: check if the audio file was resampled correctly,
-            # not only if exits.
+            # not only if exists.
             if not os.path.exists(path_to_destination):
                 return False
         return True

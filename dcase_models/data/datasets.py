@@ -4,7 +4,6 @@ import numpy as np
 import sys
 import csv
 from pandas import read_csv
-import soundfile as sf
 import yaml
 from sed_eval.util.event_roll import event_list_to_event_roll
 from librosa.util import fix_length
@@ -45,15 +44,15 @@ class UrbanSound8k(Dataset):
         y[:, class_ix] = 1
         return y
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1203745/files"
         zenodo_files = ["UrbanSound8K.tar.gz"]
-        resp = super().download_dataset(
+        resp = super().download(
             zenodo_url, zenodo_files, force_download
         )
         if resp is not None:
             move_all_files_to_parent(self.dataset_path, "UrbanSound8K")
-            self.set_dataset_download_finish()
+            self.set_as_downloaded()
 
 
 class ESC50(Dataset):
@@ -68,7 +67,7 @@ class ESC50(Dataset):
         meta_file = os.path.join(self.dataset_path, 'meta/esc50.csv')
         self.metadata = {}
         
-        if self.check_if_dataset_was_downloaded():
+        if self.check_if_downloaded():
             n_classes = 50
             self.label_list = ['']*n_classes
             with open(meta_file) as csv_file:
@@ -117,14 +116,14 @@ class ESC50(Dataset):
         # convert ..../xxxx.npy in xxxx.wav
         return os.path.basename(filename).split('.')[0] + '.wav'
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         github_url = "https://github.com/karoldvl/ESC-50/archive/"
         github_files = ["master.zip"]
-        super().download_dataset(
+        super().download(
             github_url, github_files, force_download
         )
         move_all_files_to_parent(self.dataset_path, "ESC-50-master")
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 class ESC10(ESC50):
@@ -195,7 +194,11 @@ class URBAN_SED(Dataset):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
-        event_roll = event_list_to_event_roll(labels.to_dict('records'), self.label_list, self.sequence_hop_time)
+        event_roll = event_list_to_event_roll(
+            labels.to_dict('records'),
+            self.label_list,
+            self.sequence_hop_time
+        )
         if event_roll.shape[0] > features.shape[0]:
             event_roll = event_roll[:len(features)]
         else:
@@ -203,15 +206,15 @@ class URBAN_SED(Dataset):
         assert event_roll.shape[0] == features.shape[0]
         return event_roll
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1324404/files"
         zenodo_files = ["URBAN-SED_v2.0.0.tar.gz"]
 
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
         move_all_files_to_parent(self.dataset_path, "URBAN-SED_v2.0.0")
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 class SONYC_UST(Dataset):
@@ -271,14 +274,14 @@ class SONYC_UST(Dataset):
         y = np.repeat(y, len(features), 0)
         return y
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/3693077/files"
         zenodo_files = ["annotations.csv", "audio.tar.gz",
                         "dcase-ust-taxonomy.yaml", "README.md"]
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 class _TAUUrbanAcousticScenes(Dataset):
@@ -332,7 +335,7 @@ class _TAUUrbanAcousticScenes(Dataset):
         y[:, class_ix] = 1
         return y
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         pass
 
 
@@ -342,7 +345,7 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/2589280/files"
         zenodo_files = [
             "TAU-urban-acoustic-scenes-2019-development.audio.%d.zip" %
@@ -352,12 +355,12 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2019-development.meta.zip')
 
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
         move_all_files_to_parent(
             self.dataset_path, "TAU-urban-acoustic-scenes-2019-development")
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
@@ -366,7 +369,7 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/3819968/files"
         zenodo_files = [
             "TAU-urban-acoustic-scenes-2020-mobile-development.audio.%d.zip" %
@@ -376,13 +379,13 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2020-mobile-development.meta.zip')
 
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
         move_all_files_to_parent(
             self.dataset_path,
             "TAU-urban-acoustic-scenes-2020-mobile-development")
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 class TUTSoundEvents2017(Dataset):
@@ -405,7 +408,9 @@ class TUTSoundEvents2017(Dataset):
                            'large vehicle', 'people speaking', 
                            'people walking']
 
-        self.evaluation_setup_path = os.path.join(self.dataset_path, 'evaluation_setup')
+        self.evaluation_setup_path = os.path.join(
+            self.dataset_path, 'evaluation_setup'
+        )
 
     def generate_file_lists(self):
         self.file_lists = {}
@@ -445,8 +450,12 @@ class TUTSoundEvents2017(Dataset):
     def get_annotations(self, file_name, features):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
-        labels.columns = ['file_path', 'scene', 'event_onset', 'event_offset', 'event_label', 'mixture', 'file_name']
-        event_roll = event_list_to_event_roll(labels.to_dict('records'), self.label_list, self.sequence_hop_time)
+        labels.columns = ['file_path', 'scene', 'event_onset', 
+                          'event_offset', 'event_label', 
+                          'mixture', 'file_name']
+        event_roll = event_list_to_event_roll(
+            labels.to_dict('records'), self.label_list, self.sequence_hop_time
+        )
         if event_roll.shape[0] > features.shape[0]:
             event_roll = event_roll[:len(features)]
         else:
@@ -454,7 +463,7 @@ class TUTSoundEvents2017(Dataset):
         assert event_roll.shape[0] == features.shape[0]
         return event_roll
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/814831/files"
 
         zenodo_files = [
@@ -463,7 +472,7 @@ class TUTSoundEvents2017(Dataset):
             'TUT-sound-events-2017-development.doc.zip',
             'TUT-sound-events-2017-development.meta.zip'
         ]
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
 
@@ -477,7 +486,7 @@ class TUTSoundEvents2017(Dataset):
             'TUT-sound-events-2017-evaluation.audio.zip',
             'TUT-sound-events-2017-evaluation.meta.zip',
         ]
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
         move_all_files_to(
@@ -492,7 +501,7 @@ class TUTSoundEvents2017(Dataset):
             os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/evaluation_setup"),
             os.path.join(self.dataset_path, "evaluation_setup")
         )
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 class FSDKaggle2018(Dataset):
@@ -509,8 +518,6 @@ class FSDKaggle2018(Dataset):
 
         meta_file_train = os.path.join(self.meta_path, 'train_post_competition.csv')
         meta_file_test = os.path.join(self.meta_path, 'test_post_competition_scoring_clips.csv')
-
-        listl = ["Acoustic_guitar", "Applause", "Bark", "Bass_drum", "Burping_or_eructation", "Bus", "Cello", "Chime", "Clarinet", "Computer_keyboard", "Cough", "Cowbell", "Double_bass", "Drawer_open_or_close", "Electric_piano", "Fart", "Finger_snapping", "Fireworks", "Flute", "Glockenspiel", "Gong", "Gunshot_or_gunfire", "Harmonica", "Hi-hat", "Keys_jangling", "Knock", "Laughter", "Meow", "Microwave_oven", "Oboe", "Saxophone", "Scissors", "Shatter", "Snare_drum", "Squeak", "Tambourine", "Tearing", "Telephone", "Trumpet", "Violin_or_fiddle", "Writing"]
 
         self.metadata = {}
         n_classes = 50
@@ -540,14 +547,11 @@ class FSDKaggle2018(Dataset):
 
     def generate_file_lists(self):
         self.file_lists = {fold: [] for fold in self.fold_list}
-        #print(self.file_lists)
         for filename in self.metadata.keys():
             fold = self.metadata[filename]['fold']
             file_path = os.path.join(
                 self.audio_path, fold, filename
             )
-            #print(self.file_lists)
-            #print(fold)
             self.file_lists[fold].append(file_path)
 
     def get_annotations(self, file_name, features):
@@ -557,7 +561,7 @@ class FSDKaggle2018(Dataset):
         y[:, label_index] = 1
         return y
 
-    def download_dataset(self, force_download=False):
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/2552860/files"
 
         zenodo_files = [
@@ -567,7 +571,7 @@ class FSDKaggle2018(Dataset):
             'FSDKaggle2018.meta.zip'
         ]
   
-        super().download_dataset(
+        super().download(
             zenodo_url, zenodo_files, force_download
         )
 
@@ -590,7 +594,7 @@ class FSDKaggle2018(Dataset):
             os.path.join(self.dataset_path, 'doc'),
         )     
 
-        self.set_dataset_download_finish()
+        self.set_as_downloaded()
 
 
 def get_available_datasets():

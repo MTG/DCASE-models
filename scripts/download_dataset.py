@@ -44,15 +44,15 @@ def main():
     dataset = dataset_class(dataset_path)
 
     # Download dataset
-    if dataset.check_if_dataset_was_downloaded():
+    if dataset.check_if_downloaded():
         resp = input(
             '''%s dataset is already there. It has been downloaded before.
             Do you want to download it anyway? [n] : ''' % args.dataset
         )
         if resp == 'y':
-            dataset.download_dataset(force_download=True)
+            dataset.download(force_download=True)
     else:
-        dataset.download_dataset()
+        dataset.download()
     print('Done!')
 
 

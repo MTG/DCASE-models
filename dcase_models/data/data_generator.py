@@ -78,10 +78,14 @@ class DataGenerator():
         self.feature_extractor = feature_extractor
         self.features_folder = kwargs.get('features_folder', 'features')
         self.use_validate_set = kwargs.get('use_validate_set', True)
-        self.evaluation_mode = kwargs.get('evaluation_mode', 'cross-validation')
-        print('init_eval', self.evaluation_mode)
+        self.evaluation_mode = kwargs.get(
+            'evaluation_mode', 'cross-validation'
+        )
+
         if Dataset not in inspect.getmro(dataset.__class__):
-            raise AttributeError('dataset has to be an instance of Dataset or childs')
+            raise AttributeError(
+                'dataset has to be an instance of Dataset or childs'
+            )
 
         if FeatureExtractor not in inspect.getmro(feature_extractor.__class__):
             raise AttributeError('''feature_extractor has to be an
@@ -175,7 +179,8 @@ class DataGenerator():
             List of annotations matrix for each file in validation set
 
         """
-        if self.evaluation_mode in ['cross-validation', 'cross-validation-with-test']:
+        if self.evaluation_mode in ['cross-validation',
+                                    'cross-validation-with-test']:
             # cross-validation mode
             fold_val = get_fold_val(fold_test, self.dataset.fold_list)
             folds_train = self.dataset.fold_list.copy()
@@ -214,7 +219,11 @@ class DataGenerator():
                             [Y_train_up]+[Y_j]*int(Ns[j]), axis=0)
 
             if self.evaluation_mode == 'cross-validation-with-test':
-                return X_train_up, Y_train_up, self.data[fold_test]['X'].copy(), self.data[fold_test]['Y'].copy()
+                return (
+                    X_train_up, Y_train_up,
+                    self.data[fold_test]['X'].copy(),
+                    self.data[fold_test]['Y'].copy()
+                )
 
             if self.use_validate_set:
                 return X_train_up, Y_train_up, X_val, Y_val
@@ -298,7 +307,7 @@ class DataGenerator():
                         Files_names_train.append(
                             self.dataset.file_lists[fold_train][file]
                         )
-            
+
             X_train = np.concatenate(X_train, axis=0)
             Y_train = np.concatenate(Y_train, axis=0)
             print('shapes', X_train.shape, Y_train.shape)
@@ -413,7 +422,7 @@ class DataGenerator():
         )
 
         # Check if the features were calculated already
-        if not self.feature_extractor.check_features_folder(
+        if not self.feature_extractor.check_if_extracted(
             self.features_path
         ):
 
@@ -423,7 +432,7 @@ class DataGenerator():
             # Navigate in the sctructure of audio folder and extract features
             # of the each wav file
             for path_to_file_audio in list_wav_files(audio_folder_sr):
-                features_array = self.feature_extractor.calculate_features(
+                features_array = self.feature_extractor.calculate(
                     path_to_file_audio
                 )
                 path_to_features_file = path_to_file_audio.replace(
@@ -435,11 +444,11 @@ class DataGenerator():
                 np.save(path_to_features_file, features_array)
 
             # Save parameters.json for future checking
-            self.feature_extractor.save_parameters_json(self.features_path)
+            self.feature_extractor.set_as_extracted(self.features_path)
 
     def check_if_features_extracted(self):
         """
         Check if the features were extracted before.
 
         """
-        return self.feature_extractor.check_features_folder(self.features_path)
+        return self.feature_extractor.check_if_extracted(self.features_path)

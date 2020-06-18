@@ -22,7 +22,7 @@ class Spectrogram(FeatureExtractor):
         self.params['name'] = 'Spectrogram'
         self.params['n_fft'] = 'n_fft'
 
-    def calculate_features(self, file_name):
+    def calculate(self, file_name):
         audio = self.load_audio(file_name)
 
         # Spectrogram, shape (N_frames, N_freqs)
@@ -33,13 +33,13 @@ class Spectrogram(FeatureExtractor):
         # Power
         spectrogram = np.abs(stft)**2
 
-        # Transpose time and freq dims, shape 
+        # Transpose time and freq dims, shape
         spectrogram = spectrogram.T
 
         # Pad the spectrogram, shape (N_frames', N_freqs)
         spectrogram = librosa.util.fix_length(
             spectrogram,
-            spectrogram.shape[0]+self.sequence_frames, 
+            spectrogram.shape[0]+self.sequence_frames,
             axis=0, mode='reflect'
         )
 
@@ -74,7 +74,7 @@ class MelSpectrogram(FeatureExtractor):
         self.mel_basis = librosa.filters.mel(
             sr, n_fft, mel_bands, htk=True, fmax=fmax)
 
-    def calculate_features(self, file_name):
+    def calculate(self, file_name):
         # Load audio
         audio = self.load_audio(file_name)
 
@@ -129,7 +129,7 @@ class Openl3(FeatureExtractor):
         self.params['input_repr'] = input_repr
         self.params['embedding_size'] = embedding_size
 
-    def calculate_features(self, file_name):
+    def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
         emb, ts = openl3.get_audio_embedding(
             audio, self.sr,

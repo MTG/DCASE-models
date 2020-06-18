@@ -1,21 +1,19 @@
-import sys
-import os
-import numpy as np
-import pytest
-import shutil
-import glob
-
-sys.path.append('../')
 from dcase_models.utils.files import load_json
 from dcase_models.data.features import MelSpectrogram, Spectrogram
 from dcase_models.data.dataset_base import Dataset
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.data.scaler import Scaler
 
+import os
+import numpy as np
+import pytest
+import glob
+
 params = load_json('parameters.json')
 params_features = params['features']
 
 dataset_path = 'data'
+
 
 class TestDataset(Dataset):
     def __init__(self, dataset_path):
@@ -40,23 +38,31 @@ class TestDataset(Dataset):
             glob.glob(os.path.join(self.audio_path, '*.wav'))
         )
 
+    def get_annotations(self, file_path, features):
+        y = np.zeros((len(features), len(self.label_list)))
+        class_ix = int(os.path.basename(file_path).split('-')[1])
+        y[:, class_ix] = 1
+        return y
             
+
 dataset = TestDataset(dataset_path)
 audio_files = ['40722-8-0-7.wav', '147764-4-7-0.wav', '176787-5-0-0.wav']
+feats = [Spectrogram, MelSpectrogram]
 
-@pytest.mark.parametrize("feature_extractor_class", [Spectrogram, MelSpectrogram])
+
+@pytest.mark.parametrize("feature_extractor_class", feats)
 def test_feature_extractor(feature_extractor_class):
     feature_extractor = feature_extractor_class(
-        sequence_time=params_features['sequence_time'], 
-        sequence_hop_time=params_features['sequence_hop_time'], 
-        audio_win=params_features['audio_win'], 
-        audio_hop=params_features['audio_hop'], 
-        n_fft=params_features['n_fft'], 
-        sr=params_features['sr'], 
+        sequence_time=params_features['sequence_time'],
+        sequence_hop_time=params_features['sequence_hop_time'],
+        audio_win=params_features['audio_win'],
+        audio_hop=params_features['audio_hop'],
+        n_fft=params_features['n_fft'],
+        sr=params_features['sr'],
         **params_features[feature_extractor_class.__name__]
     )
 
-    feature_shape = feature_extractor.get_features_shape()
+    feature_shape = feature_extractor.get_shape()
 
     data_generator = DataGenerator(dataset, feature_extractor)
     data_generator.load_data()
@@ -70,10 +76,10 @@ def test_feature_extractor(feature_extractor_class):
 
     assert X_test[0].shape[1:] == feature_shape[1:]
 
+
 @pytest.mark.parametrize("normalizer", ['minmax', 'standard'])
 def test_scaler(normalizer):
     X = np.random.randn(100, 32, 128)
-    min_X, max_X = np.amin(X), np.amax(X)
 
     scaler = Scaler(normalizer=normalizer)
     scaler.fit(X)

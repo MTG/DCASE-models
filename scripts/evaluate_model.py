@@ -62,7 +62,8 @@ def main():
     if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
         kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
     dataset_class = get_available_datasets()[args.dataset]
-    dataset = dataset_class(params_dataset['dataset_path'], **kwargs)
+    dataset_path = os.path.join(args.path, params_dataset['dataset_path'])
+    dataset = dataset_class(dataset_path, **kwargs)
 
     if args.fold_name not in dataset.fold_list:
         raise AttributeError('Fold not available')
@@ -78,7 +79,8 @@ def main():
     )
 
     # Init data generator
-    data_generator = DataGenerator(dataset, features)
+    data_generator = DataGenerator(dataset, features,
+                                   evaluation_mode = params_dataset['evaluation_mode'])
     data_generator.load_data()
 
     # Check if features were extracted
@@ -88,7 +90,7 @@ def main():
         print('Done!')
 
     # Get data
-    if args.dataset == 'TUTSoundEvents2017':
+    if args.dataset != 'TUTSoundEvents2017':
         X_test, Y_test = data_generator.get_data_for_testing(args.fold_name)
     else:
         X_test, Y_test = data_generator.get_data_for_testing('test')

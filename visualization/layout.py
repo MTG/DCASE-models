@@ -17,7 +17,8 @@ import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_audio_components
 
-params = load_json(os.path.join(os.path.dirname(__file__), 'parameters.json'))
+#params = load_json(os.path.join(os.path.dirname(__file__), 'parameters.json'))
+params = load_json('parameters.json')
 # params_dataset = params["datasets"][args.dataset]
 params_features = params["features"]
 # params_model = params['models'][args.model]
