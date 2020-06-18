@@ -65,39 +65,39 @@
 
     "datasets" : {
         "UrbanSound8k" : {
-            "dataset_path" : "./datasets/UrbanSound8K",
+            "dataset_path" : "datasets/UrbanSound8K",
             "evaluation_mode" : "cross-validation"
         },
         "ESC50" : {
-            "dataset_path" : "./datasets/ESC50",
+            "dataset_path" : "datasets/ESC50",
             "evaluation_mode" : "cross-validation"
         },
         "ESC10" : {
-            "dataset_path" : "./datasets/ESC50",
+            "dataset_path" : "datasets/ESC50",
             "evaluation_mode" : "cross-validation"
         },
         "URBAN_SED" : {
-            "dataset_path" : "./datasets/URBAN-SED_v2.0.0",
+            "dataset_path" : "datasets/URBAN-SED_v2.0.0",
             "evaluation_mode" : "train-validate-test"
         },
         "SONYC_UST" : {
-            "dataset_path" : "./datasets/SONYC_UST",
+            "dataset_path" : "datasets/SONYC_UST",
             "evaluation_mode" : "train-validate-test"
         },
         "TAUUrbanAcousticScenes2020Mobile" : {
-            "dataset_path" : "./datasets/TAUUrbanAcousticScenes2020Mobile",
+            "dataset_path" : "datasets/TAUUrbanAcousticScenes2020Mobile",
             "evaluation_mode" : "train-test"        
         },
         "TAUUrbanAcousticScenes2019" : {
-            "dataset_path" : "./datasets/TAUUrbanAcousticScenes2019",
+            "dataset_path" : "datasets/TAUUrbanAcousticScenes2019",
             "evaluation_mode" : "train-test"          
         },
         "TUTSoundEvents2017" : {
-            "dataset_path" : "./datasets/TUTSoundEvents2017",
+            "dataset_path" : "datasets/TUTSoundEvents2017",
             "evaluation_mode" : "cross-validation-with-test"          
         },
         "FSDKaggle2018" : {
-            "dataset_path" : "./datasets/FSDKaggle2018",
+            "dataset_path" : "datasets/FSDKaggle2018",
             "evaluation_mode" : "train-test"          
         }
     }

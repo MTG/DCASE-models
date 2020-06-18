@@ -28,6 +28,8 @@ def main():
                         default='../')
     args = parser.parse_args()
 
+    print(__doc__)
+
     if args.dataset not in get_available_datasets():
         raise AttributeError('Dataset not available')
 
