@@ -10,4 +10,4 @@
 About
 =====
 
-This is an empty folder intended for storing the datasets used in DCASE-models. See the documentation, the example scripts or the Notebooks to know how to download the datasets. Note that the datasets can be stored somewhere else, provided you set the path to them.
+This is an empty folder intended to store the datasets used in DCASE-models. See the documentation, the example scripts or the Notebooks to know how to download the datasets. Note that the datasets can be stored somewhere else, provided you set the path to them.

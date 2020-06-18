@@ -10,4 +10,4 @@
 About
 =====
 
-This is an empty folder intended for storing the trained models as `.json` files. See the documentation, the example scripts or the Notebooks to know how to save the models. Note that the models can be stored somewhere else, provided you set the path to them.
+This is an empty folder intended to store the trained models as `.json` files. See the documentation, the example scripts or the Notebooks to know how to save the models. Note that the models can be stored somewhere else, provided you set the path to them.
