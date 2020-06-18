@@ -14,7 +14,7 @@ from ..utils.callbacks import AccuracyCallback, F1ERCallback, SEDCallback
 
 class ModelContainer():
     """
-    Base abstract class to store and manage models.
+    Abstract base class to store and manage models.
 
     Attributes
     ----------
@@ -25,7 +25,7 @@ class ModelContainer():
     model_name : str
         Model name
     metrics : list of str
-        List of metric used for evaluation
+        List of metrics used for evaluation
 
     Methods
     -------
@@ -63,7 +63,7 @@ class ModelContainer():
         model_name : str
             Model name
         metrics : list of str
-            List of metric used for evaluation
+            List of metrics used for evaluation
         """
         self.model = model
         self.model_path = model_path
@@ -106,9 +106,9 @@ class ModelContainer():
 
 class KerasModelContainer(ModelContainer):
     """
-    A class that contain a keras model, the methods to train, evaluate,
-    save and load the model. Child of this class can be created for
-    especific models (i.e see SB_CNN class)
+    A class that contains a keras model, the methods to train, evaluate,
+    save and load the model. Descendants of this class can be specialized for
+    specific models (i.e see SB_CNN class)
 
     Attributes
     ----------
@@ -122,19 +122,19 @@ class KerasModelContainer(ModelContainer):
     train(X_train, Y_train, X_val, Y_val, weights_path= './',  log_path= './',
           loss_weights = [10,5,5], optimizer = 'adam',
           learning_rate = 0.001, batch_size = 256, epochs=100, fit_verbose = 1)
-        Train the keras model using the data and paramaters of arguments
+        Train the keras model using the data and paramaters as arguments
 
     evaluate(X_test, Y_test, scaler=None)
         Evaluate the keras model using X_test and Y_test
 
     load_model_from_json(folder):
-        Load model from model.json file in the path given by argument
+        Load model from model.json file in the given folder path
 
     save_model_json(folder)
-        Save a model.json file in the path given by argument
+        Save a model.json file in the given folder path
 
     save_model_weights(weights_folder)
-        Save model weights in the path given by argument
+        Save model weights in the given folder path
 
     """
 
@@ -201,9 +201,9 @@ class KerasModelContainer(ModelContainer):
         batch_size : int
             Batch size used in the training process
         epochs : int
-            Number of epochs of training
+            Number of training epochs
         fit_verbose : int
-            Verbose of fit method of keras model
+            Verbose mode for fit method of Keras model
 
         """
         import keras.optimizers as optimizers
@@ -261,7 +261,7 @@ class KerasModelContainer(ModelContainer):
         Returns
         -------
         float
-            accuracy of evaluation
+            evaluation's accuracy
         list
             list of annotations (ground_truth)
         list
@@ -292,7 +292,7 @@ class KerasModelContainer(ModelContainer):
 
     def save_model_json(self, folder):
         """
-        Save model to model.json file in the path given by argument.
+        Save model to model.json file in the given folder path.
 
         Parameters
         ----------
@@ -354,7 +354,7 @@ class KerasModelContainer(ModelContainer):
     def check_if_model_exists(self, folder, **kwargs):
         """
         Save model parameters to parameters.json file in
-        the path given by argument.
+        the given folder path.
 
         Parameters
         ----------
@@ -412,13 +412,13 @@ class KerasModelContainer(ModelContainer):
             (number of classes)
 
         new_activation : str
-            Activitation of the new fully-connected layer
+            Activation of the new fully-connected layer
 
         freeze_source_model : bool
             If True, the source model is set to not be trainable
 
         new_model : Keras Model
-            If is not None, this model is add after the cut model.
+            If is not None, this model is added after the cut model.
             This is useful if you want add more than
             a fully-connected layer.
         """
