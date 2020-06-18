@@ -230,10 +230,12 @@ class SONYC_UST(Dataset):
         self.taxonomy_file = os.path.join(
             self.dataset_path, 'dcase-ust-taxonomy.yaml')
 
-        self.metadata = read_csv(self.meta_file).sort_values('audio_filename')
-
-        with open(self.taxonomy_file, 'r') as f:
-            self.label_list = yaml.load(f, Loader=yaml.Loader)
+        self.metada = {}
+        self.label_list = []
+        if self.check_if_downloaded():
+            self.metadata = read_csv(self.meta_file).sort_values('audio_filename')
+            with open(self.taxonomy_file, 'r') as f:
+                self.label_list = yaml.load(f, Loader=yaml.Loader)
 
     def generate_file_lists(self):
         filename_to_split = self.metadata[[
