@@ -16,16 +16,22 @@ from dcase_models.data.datasets import get_available_datasets
 from dcase_models.utils.files import load_json
 
 
-
 def main():
     # Parse arguments
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-d', '--dataset', type=str, help='dataset name (e.g. UrbanSound8k,'\
-                        ' ESC50, ESC10, URBAN_SED, SONYC_UST)',
-                        default='UrbanSound8k')
-    parser.add_argument('-p', '--path', type=str, help='path to the parameters.json file',
-                        default='../')
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        '-d', '--dataset', type=str,
+        help='dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
+        default='UrbanSound8k'
+    )
+    parser.add_argument(
+        '-p', '--path', type=str,
+        help='path to the parameters.json file',
+        default='../'
+    )
     args = parser.parse_args()
 
     print(__doc__)

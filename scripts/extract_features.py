@@ -20,16 +20,25 @@ from dcase_models.utils.files import load_json
 
 def main():
     # Parse arguments
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-d', '--dataset', type=str, help='dataset name (e.g. UrbanSound8k,'\
-                        ' ESC50, ESC10, URBAN_SED, SONYC_UST)',
-                        default='UrbanSound8k')
-    parser.add_argument('-f', '--features', type=str, help='features name (e.g. Spectrogram,'\
-                        ' MelSpectrogram, Openl3)',
-                        default='MelSpectrogram')
-    parser.add_argument('-p', '--path', type=str, help='path to the parameters.json file',
-                        default='../')
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        '-d', '--dataset', type=str,
+        help='dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
+        default='UrbanSound8k'
+    )
+    parser.add_argument(
+        '-f', '--features', type=str,
+        help='features name (e.g. Spectrogram, MelSpectrogram, Openl3)',
+        default='MelSpectrogram'
+    )
+    parser.add_argument(
+        '-p', '--path', type=str,
+        help='path to the parameters.json file',
+        default='../'
+    )
     args = parser.parse_args()
 
     print(__doc__)
@@ -66,7 +75,8 @@ def main():
 
     # Extract features
     if data_generator.check_if_features_extracted():
-        print('%s features were already extracted for %s dataset. ' % (args.features, args.dataset))
+        print('%s features were already extracted for %s dataset. ' % (
+            args.features, args.dataset))
     else:
         print('Extracting features ...')
         data_generator.extract_features()

@@ -27,21 +27,32 @@ def main():
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument('-d', '--dataset', type=str, help='dataset name (e.g. UrbanSound8k,'\
-                        ' ESC50, ESC10, URBAN_SED, SONYC_UST)',
-                        default='UrbanSound8k')
-    parser.add_argument('-f', '--features', type=str, help='features name (e.g. Spectrogram,'\
-                        ' MelSpectrogram, Openl3)',
-                        default='MelSpectrogram')
-    parser.add_argument('-p', '--path', type=str, help='path to the parameters.json file',
-                        default='../')
-    parser.add_argument('-m', '--model', type=str, help='model name (e.g. MLP, SB_CNN,'\
-                        ' SB_CNN_SED, A_CRNN, VGGish)',
-                        default='SB_CNN')
+    parser.add_argument(
+        '-d', '--dataset', type=str,
+        help='dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
+        default='UrbanSound8k'
+    )
+    parser.add_argument(
+        '-f', '--features', type=str,
+        help='features name (e.g. Spectrogram, MelSpectrogram, Openl3)',
+        default='MelSpectrogram'
+    )
+    parser.add_argument(
+        '-p', '--path', type=str,
+        help='path to the parameters.json file',
+        default='../'
+    )
+    parser.add_argument(
+        '-m', '--model', type=str,
+        help='model name (e.g. MLP, SB_CNN, SB_CNN_SED, A_CRNN, VGGish)',
+        default='SB_CNN')
     parser.add_argument('-fold', '--fold_name', type=str, help='fold name',
                         default='fold1')
-    parser.add_argument('-s', '--models_path', type=str, help='path to save the trained model',
-                        default='../trained_models')
+    parser.add_argument(
+        '-s', '--models_path', type=str,
+        help='path to save the trained model',
+        default='../trained_models'
+    )
     args = parser.parse_args()
 
     print(__doc__)
@@ -86,7 +97,7 @@ def main():
     print('Features shape: ', features.get_shape())
 
     # Init data generator
-    kwargs = {'evaluation_mode' : params_dataset['evaluation_mode']}
+    kwargs = {'evaluation_mode': params_dataset['evaluation_mode']}
     if args.dataset in ['TUTSoundEvents2017', 'ESC50', 'ESC10']:
         # When have less data, don't use validation set.
         kwargs['use_validate_set'] = False

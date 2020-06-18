@@ -66,7 +66,6 @@ class ESC50(Dataset):
         self.audio_path = os.path.join(self.dataset_path, 'audio')
         meta_file = os.path.join(self.dataset_path, 'meta/esc50.csv')
         self.metadata = {}
-        
         if self.check_if_downloaded():
             n_classes = 50
             self.label_list = ['']*n_classes
@@ -404,8 +403,8 @@ class TUTSoundEvents2017(Dataset):
         self.audio_path = os.path.join(self.dataset_path, 'audio')
         self.fold_list = ["fold1", "fold2", "fold3", "fold4"]
         self.meta_path = os.path.join(self.dataset_path, 'meta')
-        self.label_list = ['brakes squeaking', 'car', 'children', 
-                           'large vehicle', 'people speaking', 
+        self.label_list = ['brakes squeaking', 'car', 'children',
+                           'large vehicle', 'people speaking',
                            'people walking']
 
         self.evaluation_setup_path = os.path.join(
@@ -424,10 +423,14 @@ class TUTSoundEvents2017(Dataset):
                 csv_reader = csv.reader(csv_file, delimiter='\t')
                 for row in csv_reader:
                     file_name = row[0].split('/')[-1]
-                    file_path = os.path.join(self.audio_path, 'street', file_name)
+                    file_path = os.path.join(
+                        self.audio_path, 'street', file_name
+                    )
                     self.file_lists[fold].append(file_path)
 
-                    file_ann = file_path.replace(self.audio_path, self.meta_path)
+                    file_ann = file_path.replace(
+                        self.audio_path, self.meta_path
+                    )
                     file_ann = file_ann.replace('.wav', '.ann')
                     self.wav_to_labels[file_path] = file_ann
 
@@ -450,8 +453,8 @@ class TUTSoundEvents2017(Dataset):
     def get_annotations(self, file_name, features):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
-        labels.columns = ['file_path', 'scene', 'event_onset', 
-                          'event_offset', 'event_label', 
+        labels.columns = ['file_path', 'scene', 'event_onset',
+                          'event_offset', 'event_label',
                           'mixture', 'file_name']
         event_roll = event_list_to_event_roll(
             labels.to_dict('records'), self.label_list, self.sequence_hop_time
@@ -490,15 +493,24 @@ class TUTSoundEvents2017(Dataset):
             zenodo_url, zenodo_files, force_download
         )
         move_all_files_to(
-            os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/audio/street"),
+            os.path.join(
+                self.dataset_path,
+                "TUT-sound-events-2017-evaluation/audio/street"
+            ),
             os.path.join(self.dataset_path, "audio/street")
         )
         move_all_files_to(
-            os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/meta/street"),
+            os.path.join(
+                self.dataset_path,
+                "TUT-sound-events-2017-evaluation/meta/street"
+            ),
             os.path.join(self.dataset_path, "meta/street")
         )
         move_all_files_to(
-            os.path.join(self.dataset_path, "TUT-sound-events-2017-evaluation/evaluation_setup"),
+            os.path.join(
+                self.dataset_path,
+                "TUT-sound-events-2017-evaluation/evaluation_setup"
+            ),
             os.path.join(self.dataset_path, "evaluation_setup")
         )
         self.set_as_downloaded()
@@ -516,11 +528,14 @@ class FSDKaggle2018(Dataset):
         self.meta_path = os.path.join(self.dataset_path, 'meta')
         self.label_list = []
 
-        meta_file_train = os.path.join(self.meta_path, 'train_post_competition.csv')
-        meta_file_test = os.path.join(self.meta_path, 'test_post_competition_scoring_clips.csv')
+        meta_file_train = os.path.join(
+            self.meta_path, 'train_post_competition.csv'
+        )
+        meta_file_test = os.path.join(
+            self.meta_path, 'test_post_competition_scoring_clips.csv'
+        )
 
         self.metadata = {}
-        n_classes = 50
         for fold_ix, meta_file in enumerate([meta_file_train, meta_file_test]):
             with open(meta_file) as csv_file:
                 csv_reader = csv.reader(csv_file, delimiter=',')
@@ -543,7 +558,6 @@ class FSDKaggle2018(Dataset):
                         self.label_list.append(label)
 
         self.label_list.sort()
-
 
     def generate_file_lists(self):
         self.file_lists = {fold: [] for fold in self.fold_list}
@@ -570,7 +584,6 @@ class FSDKaggle2018(Dataset):
             'FSDKaggle2018.doc.zip',
             'FSDKaggle2018.meta.zip'
         ]
-  
         super().download(
             zenodo_url, zenodo_files, force_download
         )
@@ -588,17 +601,18 @@ class FSDKaggle2018(Dataset):
         os.rename(
             os.path.join(self.dataset_path, 'FSDKaggle2018.meta'),
             os.path.join(self.dataset_path, 'meta'),
-        )        
+        )
         os.rename(
             os.path.join(self.dataset_path, 'FSDKaggle2018.doc'),
             os.path.join(self.dataset_path, 'doc'),
-        )     
+        )
 
         self.set_as_downloaded()
 
 
 def get_available_datasets():
     availabe_datasets = {m[0]: m[1] for m in inspect.getmembers(
-        sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__ and m[0][0] != '_'}
+        sys.modules[__name__], inspect.isclass)
+            if m[1].__module__ == __name__ and m[0][0] != '_'}
 
     return availabe_datasets

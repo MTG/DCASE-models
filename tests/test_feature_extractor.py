@@ -35,12 +35,11 @@ def test_feature_extractor(infile, feature_extractor_class):
     shutil.rmtree(data_generator.features_path)
 
     data_generator.extract_features()
-    
     mel_spec_path = os.path.join(data_generator.features_path, infile)
     mel_spec = np.load(mel_spec_path)
 
     gt_path = os.path.join(
-        dataset_path, 'features_gt', 
+        dataset_path, 'features_gt',
         feature_extractor_class.__name__, infile
     )
     gt = np.load(gt_path)

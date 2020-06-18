@@ -24,10 +24,10 @@ class TestDataset(Dataset):
         self.label_list = ["air_conditioner", "car_horn", "children_playing",
                            "dog_bark", "drilling", "engine_idling", "gun_shot",
                            "jackhammer", "siren", "street_music"]
-        self.audio_path = os.path.join(self.dataset_path, 'audio')      
+        self.audio_path = os.path.join(self.dataset_path, 'audio')
 
     def generate_file_lists(self):
-        """ 
+        """
         Create self.file_lists, a dict thath includes a list of files per fold.
 
         Each dataset has a different way of organizing the files. This
@@ -43,7 +43,7 @@ class TestDataset(Dataset):
         class_ix = int(os.path.basename(file_path).split('-')[1])
         y[:, class_ix] = 1
         return y
-            
+
 
 dataset = TestDataset(dataset_path)
 audio_files = ['40722-8-0-7.wav', '147764-4-7-0.wav', '176787-5-0-0.wav']
@@ -84,7 +84,6 @@ def test_scaler(normalizer):
     scaler = Scaler(normalizer=normalizer)
     scaler.fit(X)
     X_scaled = scaler.transform(X)
-    
     if normalizer == 'minmax':
         assert (np.amin(X_scaled) == -1.0) & (np.amax(X_scaled) == 1.0)
     elif normalizer == 'standard':
@@ -93,7 +92,7 @@ def test_scaler(normalizer):
 
         mean = np.mean(X_scaled_flat, axis=0)
         std = np.std(X_scaled_flat, axis=0)
-        
+
         assert np.allclose(mean, np.zeros(128), rtol=0.1, atol=0.1)
         assert np.allclose(std, np.ones(128), rtol=0.1, atol=0.1)
 

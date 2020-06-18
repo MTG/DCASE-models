@@ -30,7 +30,7 @@ def test_create_model(model_class):
 
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,
-        n_frames_cnn=n_frames_cnn, n_freq_cnn=n_freq_cnn, 
+        n_frames_cnn=n_frames_cnn, n_freq_cnn=n_freq_cnn,
         **params_model['model_arguments']
     )
 
@@ -55,14 +55,13 @@ feats = [MelSpectrogram, Spectrogram]
 @pytest.mark.parametrize("model_class", models)
 @pytest.mark.parametrize("feature_extractor_class", feats)
 def test_train_model(model_class, feature_extractor_class):
-    
     feature_extractor = feature_extractor_class(
-        sequence_time=params_features['sequence_time'], 
-        sequence_hop_time=params_features['sequence_hop_time'], 
-        audio_win=params_features['audio_win'], 
-        audio_hop=params_features['audio_hop'], 
-        n_fft=params_features['n_fft'], 
-        sr=params_features['sr'], 
+        sequence_time=params_features['sequence_time'],
+        sequence_hop_time=params_features['sequence_hop_time'],
+        audio_win=params_features['audio_win'],
+        audio_hop=params_features['audio_hop'],
+        n_fft=params_features['n_fft'],
+        sr=params_features['sr'],
         **params_features[feature_extractor_class.__name__]
     )
 
@@ -88,7 +87,7 @@ def test_train_model(model_class, feature_extractor_class):
         n_freq_cnn=n_freq_cnn,
         **params_model['model_arguments'])
 
-    model_container.train(X_train, Y_train, X_val, Y_val, 
+    model_container.train(X_train, Y_train, X_val, Y_val,
                           weights_path=exp_folder, epochs=10)
 
     model_container.load_model_weights(exp_folder)
