@@ -3,6 +3,8 @@
 This folder contains [IPython](http://ipython.org/) / [Jupyter](http://jupyter.org/) interactive notebooks to demonstrate `DCASE-models`.
 
  - [Basics](https://github.com/pzinemanas/DCASE-models/tree/master/notebooks/basics): examples on how to download datasets and extract features.
+ 	-[[Downloading datasets]](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/basics/download_and_prepare_datasets.ipynb)
+	-[Extract features](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/basics/feature_extraction.ipynb)
  - [Challenges](https://github.com/pzinemanas/DCASE-models/tree/master/notebooks/challenges):   DCASE challenge examples.
 	 - [[2020 Task 1]](http://dcase.community/challenge2020/task-acoustic-scene-classification)(http://dcase.community/challenge2020/index). *Acoustic scene clasification.*
  -  [Papers](https://github.com/pzinemanas/DCASE-models/tree/master/notebooks/papers): replicating paper results.
