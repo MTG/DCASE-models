@@ -53,7 +53,7 @@ def list_wav_files(path):
     for dirpath, dirnames, filenames in os.walk(path):
         for file_audio in filenames:
             path_to_file_audio = os.path.join(dirpath, file_audio)
-            if path_to_file_audio.endswith('wav'):
+            if ((file_audio.endswith('wav')) and (not file_audio.startswith('.'))):
                 wav_files.append(path_to_file_audio)
     return wav_files
 

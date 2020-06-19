@@ -10,7 +10,7 @@ from librosa.util import fix_length
 
 from .dataset_base import Dataset
 from ..utils.files import move_all_files_to_parent, move_all_files_to
-from ..utils.files import mkdir_if_not_exists
+from ..utils.files import mkdir_if_not_exists, list_wav_files
 
 import inspect
 
@@ -34,9 +34,10 @@ class UrbanSound8k(Dataset):
     def generate_file_lists(self):
         for fold in self.fold_list:
             audio_folder = os.path.join(self.audio_path, fold)
-            self.file_lists[fold] = sorted(
-                glob.glob(os.path.join(audio_folder, '*.wav'))
-            )
+            self.file_lists[fold] = list_wav_files(audio_folder)
+         #   self.file_lists[fold] = sorted(
+         #       glob.glob(os.path.join(audio_folder, '*.wav'))
+         #   )
 
     def get_annotations(self, file_path, features):
         y = np.zeros((len(features), len(self.label_list)))
@@ -94,8 +95,9 @@ class ESC50(Dataset):
         self.file_lists = {}
         for fold in self.fold_list:
             self.file_lists[fold] = []
-            all_files = sorted(
-                glob.glob(os.path.join(self.audio_path, '*.wav')))
+            # all_files = sorted(
+            #    glob.glob(os.path.join(self.audio_path, '*.wav')))
+            all_files = list_wav_files(self.audio_path)
             for fil in all_files:
                 basename = self.get_basename_wav(fil)
                 if basename in self.metadata:
@@ -247,8 +249,9 @@ class SONYC_UST(Dataset):
         self.file_lists = {}
         for fold in self.fold_list:
             self.file_lists[fold] = []
-            all_files = sorted(
-                glob.glob(os.path.join(self.audio_folder, '*.wav')))
+            #all_files = sorted(
+            #    glob.glob(os.path.join(self.audio_folder, '*.wav')))
+            all_files = list_wav_files(self.audio_path)
             assert len(all_files) != 0
             for fil in all_files:
                 basename = os.path.basename(fil)
@@ -633,16 +636,14 @@ class MAVD(Dataset):
         # Only vehicle level for now
         # TODO: Add other levels
         self.vehicle_list = ['car', 'bus', 'truck', 'motorcycle']
-        self.component_list = ['engine_idling', 'engine_accelerating', 'brakes',
-                               'wheel_rolling', 'compressor']
+        self.component_list = ['engine_idling', 'engine_accelerating',
+                               'brakes', 'wheel_rolling', 'compressor']
         self.label_list = self.vehicle_list + self.component_list
 
     def generate_file_lists(self):
         for fold in self.fold_list:
             audio_folder = os.path.join(self.audio_path, fold)
-            self.file_lists[fold] = sorted(
-                glob.glob(os.path.join(audio_folder, '*.wav'))
-            )
+            self.file_lists[fold] = list_wav_files(audio_folder)
 
     def get_annotations(self, file_name, features):
         audio_path, _ = self.get_audio_paths()
@@ -662,7 +663,7 @@ class MAVD(Dataset):
                     label_ix = self.label_list.index(sub_label)
 
                     event_onset = event['event_onset']
-                    event_offset = event['event_offset']    
+                    event_offset = event['event_offset']
 
                     onset = int(np.floor(
                         event_onset / float(self.sequence_hop_time))
@@ -671,7 +672,7 @@ class MAVD(Dataset):
                         event_offset / float(self.sequence_hop_time))
                     )
 
-                    event_roll[onset:offset, label_ix] = 1        
+                    event_roll[onset:offset, label_ix] = 1
 
         return event_roll
 
