@@ -13,15 +13,15 @@ from ..utils.files import list_wav_files
 
 class DataGenerator():
     """
-    DataGenerator inlcudes methods to load features files from DCASE datasets.
+    DataGenerator includes methods to load features files from DCASE datasets.
 
     It's also used to calculate features in each file in the dataset.
 
     Attributes
     ----------
-    dataset : Dataset or childs
+    dataset : Dataset or classes inherited from.
         Instance of Dataset.
-    feature_extractor : FeatureExtractor or childs
+    feature_extractor : FeatureExtractor or classes inherited from.
         Instance of FeatureExtractor. This is only needed to use
         functions related to feature extraction
     features_folder : str
@@ -68,7 +68,7 @@ class DataGenerator():
         ----------
         dataset_path : str
             Path to the dataset fold
-        feature_extractor : FeatureExtractor or childs
+        feature_extractor : FeatureExtractor or classes inherited from.
             Instance of FeatureExtractor. This is only needed to use
             functions related to feature extraction
 
@@ -82,14 +82,14 @@ class DataGenerator():
             'evaluation_mode', 'cross-validation'
         )
 
-        if Dataset not in inspect.getmro(dataset.__class__):
+        if (Dataset not in inspect.getmro(dataset.__class__)):
             raise AttributeError(
-                'dataset has to be an instance of Dataset or childs'
+                'dataset has to be an instance of Dataset or similar'
             )
 
         if FeatureExtractor not in inspect.getmro(feature_extractor.__class__):
             raise AttributeError('''feature_extractor has to be an
-                                    instance of FeatureExtractor or childs''')
+                                    instance of FeatureExtractor or similar''')
 
         feature_name = type(feature_extractor).__name__
         mkdir_if_not_exists(
@@ -105,7 +105,7 @@ class DataGenerator():
             self.dataset.change_sampling_rate(feature_extractor.sr)
             print('Done!')
 
-        self.audio_path = self.dataset.get_audio_path(feature_extractor.sr)
+        self.audio_path = self.dataset.get_audio_paths(feature_extractor.sr)
 
         self.data = {}
 
@@ -146,14 +146,23 @@ class DataGenerator():
             self.extract_features()
 
         self.dataset.generate_file_lists()
+        audio_path, subfolders = self.dataset.get_audio_paths(
+            self.feature_extractor.sr
+        )
+        if subfolders is None:
+            subfolders = ['']
 
         for fold in progressbar(self.dataset.fold_list, prefix='fold: '):
-            file_audio = self.dataset.file_lists[fold]
-            file_features = self.convert_audio_path_to_features_path(
-                file_audio
-            )
-            X, Y = self.data_generation(file_features)
-            self.data[fold] = {'X': X, 'Y': Y}
+            self.data[fold] = {'X': [], 'Y': []}
+            for subfolder in subfolders:
+                subfolder_name = os.path.basename(subfolder)
+                files_audio = self.dataset.file_lists[fold]
+                file_features = self.convert_audio_path_to_features_path(
+                    files_audio, subfolder=subfolder_name
+                )
+                X, Y = self.data_generation(file_features)
+                self.data[fold]['X'].extend(X)
+                self.data[fold]['Y'].extend(Y)
 
     def get_data_for_training(self, fold_test, upsampling=False):
         """ Returns arrays and lists for use in training process
@@ -276,7 +285,6 @@ class DataGenerator():
         # cross-validation mode
 
         if train:
-            print('eval', self.evaluation_mode)
             if self.evaluation_mode == 'cross-validation':
                 fold_val = get_fold_val(fold_test, self.dataset.fold_list)
                 folds_train = self.dataset.fold_list.copy()
@@ -310,7 +318,7 @@ class DataGenerator():
 
             X_train = np.concatenate(X_train, axis=0)
             Y_train = np.concatenate(Y_train, axis=0)
-            print('shapes', X_train.shape, Y_train.shape)
+
             return X_train, Y_train, Files_names_train
 
         else:
@@ -370,7 +378,7 @@ class DataGenerator():
                 audio_file.append(audio_file_j)
         return audio_file
 
-    def convert_audio_path_to_features_path(self, audio_file):
+    def convert_audio_path_to_features_path(self, audio_file, subfolder=''):
         """
         Convert the path to an audio file (or list of files)
         to the path to the feature file.
@@ -386,16 +394,17 @@ class DataGenerator():
             Path to the features file or files.
 
         """
+        features_path = os.path.join(self.features_path, subfolder)
         if type(audio_file) is str:
             features_file = audio_file.replace(
-                self.dataset.audio_path, self.features_path
+                self.dataset.audio_path, features_path
             )
             features_file = features_file.replace('.wav', '.npy')
         elif type(audio_file) is list:
             features_file = []
             for j in range(len(audio_file)):
                 features_file_j = audio_file[j].replace(
-                    self.dataset.audio_path, self.features_path
+                    self.dataset.audio_path, features_path
                 )
                 features_file_j = features_file_j.replace('.wav', '.npy')
                 features_file.append(features_file_j)
@@ -417,34 +426,34 @@ class DataGenerator():
             self.dataset.change_sampling_rate(self.feature_extractor.sr)
 
         # Define path to audio and features folders
-        audio_folder_sr = self.dataset.get_audio_path(
+        audio_path, subfolders = self.dataset.get_audio_paths(
             self.feature_extractor.sr
         )
 
-        # Check if the features were calculated already
-        if not self.feature_extractor.check_if_extracted(
-            self.features_path
-        ):
+        # Duplicate folder structure of audio in features folder
+        duplicate_folder_structure(audio_path, self.features_path)
 
-            # Duplicate folder structure of audio in features folder
-            duplicate_folder_structure(audio_folder_sr, self.features_path)
+        for audio_folder in subfolders:
+            subfolder_name = os.path.basename(audio_folder)
+            features_path = os.path.join(self.features_path, subfolder_name)
+            if not self.feature_extractor.check_if_extracted(features_path):
+                # input()
+                # Navigate in the structure of audio folder and extract
+                # features of the each wav file
+                for path_to_file_audio in list_wav_files(audio_folder):
+                    features_array = self.feature_extractor.calculate(
+                        path_to_file_audio
+                    )
+                    path_to_features_file = path_to_file_audio.replace(
+                        audio_folder, features_path
+                    )
+                    path_to_features_file = path_to_features_file.replace(
+                        'wav', 'npy'
+                    )
+                    np.save(path_to_features_file, features_array)
 
-            # Navigate in the sctructure of audio folder and extract features
-            # of the each wav file
-            for path_to_file_audio in list_wav_files(audio_folder_sr):
-                features_array = self.feature_extractor.calculate(
-                    path_to_file_audio
-                )
-                path_to_features_file = path_to_file_audio.replace(
-                    audio_folder_sr, self.features_path
-                )
-                path_to_features_file = path_to_features_file.replace(
-                    'wav', 'npy'
-                )
-                np.save(path_to_features_file, features_array)
-
-            # Save parameters.json for future checking
-            self.feature_extractor.set_as_extracted(self.features_path)
+                # Save parameters.json for future checking
+                self.feature_extractor.set_as_extracted(features_path)
 
     def check_if_features_extracted(self):
         """

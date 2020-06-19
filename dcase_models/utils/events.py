@@ -1,7 +1,9 @@
 import numpy as np
 
-# From Salamon's code 
+# From Salamon's code
 # https://github.com/justinsalamon/scaper_waspaa2017/blob/master/urban_sed/util.py
+
+
 def contiguous_regions(act):
     act = np.asarray(act)
     onsets = np.where(np.diff(act) == 1)[0] + 1
@@ -36,8 +38,10 @@ def contiguous_regions(act):
     assert (onsets <= offsets).all()
     return np.asarray([onsets, offsets]).T
 
-# From Salamon's code 
+# From Salamon's code
 # https://github.com/justinsalamon/scaper_waspaa2017/blob/master/urban_sed/util.py
+
+
 def event_roll_to_event_list(event_roll, event_label_list, time_resolution):
     event_list = []
     for event_id, event_label in enumerate(event_label_list):

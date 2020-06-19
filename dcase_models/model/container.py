@@ -36,7 +36,7 @@ class ModelContainer():
     evaluate()
         Evaluate the model on a test set
     save_model_json(folder):
-        Save a json file with the model arquitecture and all information
+        Save a json file with the model architecture and all information
         needed for loading the model
     load_model_json(folder):
         Create a model based on the json file
@@ -112,10 +112,6 @@ class KerasModelContainer(ModelContainer):
 
     Attributes
     ----------
-    model : keras model
-        APNet keras model (see apnet.model.apnet())
-    folder : str
-        if model is None, this path is used to load the model
 
     Methods
     -------
@@ -144,11 +140,17 @@ class KerasModelContainer(ModelContainer):
         """
         Parameters
         ----------
-        model : keras model
-            APNet keras model (see apnet.model.apnet())
-        folder : str
-            if model is None, this path is used to load the model.
-            See load_model_from_json()
+        model : keras.models.Model, optional
+            Keras model.
+        model_path : str or None, optional
+            If a model_path is passed, the model is loaded from
+            this path. See self.load_model_from_json()
+        model_name : str
+            Model name.
+        metrics : list
+            List of metrics to be used in evaluation.
+        kwargs : kwargs
+            kwargs for self.load_model_from_json()
         """
         super().__init__(model=model, model_path=model_path,
                          model_name=model_name,
@@ -270,7 +272,9 @@ class KerasModelContainer(ModelContainer):
         """
         if scaler is not None:
             X_test = scaler.transform(X_test)
-        return evaluate_metrics(self.model, X_test, Y_test, self.metrics, **kwargs)
+        return evaluate_metrics(
+            self.model, X_test, Y_test, self.metrics, **kwargs
+        )
 
     def load_model_from_json(self, folder, **kwargs):
         """
@@ -345,7 +349,7 @@ class KerasModelContainer(ModelContainer):
         weights_path = os.path.join(basepath, weights_folder, weights_file)
         self.model.load_weights(weights_path, by_name=True)
 
-    def get_numer_of_parameters(self):
+    def get_number_of_parameters(self):
         trainable_count = int(
             np.sum([K.count_params(p) for p in
                     set(self.model.trainable_weights)]))

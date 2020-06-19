@@ -134,7 +134,7 @@ class ESC10(ESC50):
     def build(self):
         super().build()
 
-        # then change self.metadata and self.laberl_lsit to keep only ESC-10
+        # then change self.metadata and self.label_list to keep only ESC-10
         new_metada = {}
         new_label_list_ids = []
         for j in self.metadata.keys():

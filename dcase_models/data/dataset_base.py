@@ -21,7 +21,7 @@ class Dataset():
         Dict of form: {fold_name : list_of_files}.
         e.g. {'fold1' : [file1, file2 ...], 'fold2' : [file3, file4 ...],}.
     audio_path : str
-        Path to the audio folder, i.e {self.daset_path}/audio.
+        Path to the audio folder, i.e {self.dataset_path}/audio.
         Define in build()
     fold_list : list
         List of fold names.
@@ -40,13 +40,13 @@ class Dataset():
     get_annotations(file_name, features):
         Return the annotations of the file in file_path.
     download(self, zenodo_url, zenodo_files):
-        Download and uncompress the dataset from zenodo.
+        Download and decompress the dataset from zenodo.
     set_as_downloaded():
         Save a download.txt file in dataset_path as a downloaded flag
     check_if_downloaded():
         Check if the dataset was downloaded.
         Just check if exists download.txt file.
-    get_audio_path(sr=None)
+    get_audio_paths(sr=None)
         Return path to the audio folder.
         If sr is not None, return {audio_path}{sr}
     change_sampling_rate(new_sr)
@@ -79,7 +79,7 @@ class Dataset():
 
     def generate_file_lists(self):
         """
-        Create self.file_lists, a dict thath includes a list of files per fold.
+        Create self.file_lists, a dict that includes a list of files per fold.
 
         Each dataset has a different way of organizing the files. This
         function defines the dataset structure.
@@ -110,7 +110,7 @@ class Dataset():
 
     def download(self, zenodo_url, zenodo_files, force_download=False):
         """
-        Download and uncompress the dataset from zenodo.
+        Download and decompress the dataset from zenodo.
 
         Parameters
         ----------
@@ -156,9 +156,9 @@ class Dataset():
         log_file = os.path.join(self.dataset_path, 'download.txt')
         return os.path.exists(log_file)
 
-    def get_audio_path(self, sr=None):
+    def get_audio_paths(self, sr=None):
         """
-        Return path to the audio folder.
+        Return paths to the audio folder.
 
         If sr is None, return audio_path. Else, return {audio_path}{sr}.
 
@@ -169,15 +169,22 @@ class Dataset():
 
         Returns
         -------
-        str
-            Path to the audio folder.
-
+        audio_path : str
+            Path to the root audio folder.
+            e.g. DATASET_PATH/audio
+        subfolders : list of str
+            List of subfolders include in audio folder.
+            Important when use AugmentedDataset.
+            e.g. ['{DATASET_PATH}/audio/original']
         """
+        subfolders = None
         if sr is None:
             audio_path = self.audio_path
         else:
             audio_path = self.audio_path + str(sr)
-        return audio_path
+            subfolders = [os.path.join(audio_path, 'original')]
+
+        return audio_path, subfolders
 
     def change_sampling_rate(self, new_sr):
         """
@@ -193,8 +200,8 @@ class Dataset():
             Sampling rate.
 
         """
-
-        new_audio_folder = self.get_audio_path(new_sr)
+        new_audio_path, subfolders = self.get_audio_paths(new_sr)
+        new_audio_folder = subfolders[0]  # audio22050/original
         duplicate_folder_structure(self.audio_path, new_audio_folder)
 
         tfm = sox.Transformer()
@@ -228,7 +235,7 @@ class Dataset():
 
         """
 
-        audio_folder_sr = self.get_audio_path(sr)
+        audio_folder_sr = self.get_audio_paths(sr)[0]
         if not os.path.exists(audio_folder_sr):
             return False
 

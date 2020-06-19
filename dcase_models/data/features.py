@@ -77,6 +77,8 @@ class MelSpectrogram(FeatureExtractor):
     def calculate(self, file_name):
         # Load audio
         audio = self.load_audio(file_name)
+        # if len(audio) < self.audio_win:
+        #     return None
 
         # Get the spectrogram, shape (N_freqs, N_frames)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
@@ -98,7 +100,7 @@ class MelSpectrogram(FeatureExtractor):
         # Pad the mel_spectrogram, shape (N_frames', N_bands)
         mel_spectrogram = librosa.util.fix_length(
             mel_spectrogram,
-            mel_spectrogram.shape[0]+self.sequence_frames, 
+            mel_spectrogram.shape[0]+self.sequence_frames,
             axis=0, mode='reflect'
         )
 

@@ -26,11 +26,11 @@ class MLP(KerasModelContainer):
                  metrics=['accuracy'], n_classes=10,
                  n_frames_cnn=64, n_freq_cnn=12,
                  hidden_layers_size=[128, 64],
-                 dropout_rates=[0.5, 0.5], hidden_activation='relu', 
+                 dropout_rates=[0.5, 0.5], hidden_activation='relu',
                  l2_reg=1e-5, final_activation='softmax',
                  temporal_integration='mean', **kwargs):
-                 
-        #self.input_shape = input_shape
+
+        # self.input_shape = input_shape
         self.n_classes = n_classes
         self.n_frames_cnn = n_frames_cnn
         self.n_freq_cnn = n_freq_cnn
@@ -53,27 +53,28 @@ class MLP(KerasModelContainer):
         else:
             input_shape = (self.n_freq_cnn)
 
-        inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn), dtype='float32', name='input')
+        inputs = Input(shape=input_shape, dtype='float32', name='input')
 
         # Hidden layers
         for idx in range(len(self.hidden_layers_size)):
             if idx == 0:
                 y = inputs
-            dense_layer = Dense(self.hidden_layers_size[idx], activation=self.hidden_activation,
-                                kernel_regularizer=l2(self.l2_reg), 
+            dense_layer = Dense(self.hidden_layers_size[idx],
+                                activation=self.hidden_activation,
+                                kernel_regularizer=l2(self.l2_reg),
                                 name='dense_{}'.format(idx+1), **self.kwargs)
             if self.use_time_distributed:
                 y = TimeDistributed(dense_layer)(y)
             else:
                 y = dense_layer(y)
 
-            # Droput
+            # Dropout
             if self.dropout_rates[idx] > 0:
                 y = Dropout(self.dropout_rates[idx])(y)
-            
         # Output layer
         dense_layer = Dense(self.n_classes, activation=self.final_activation,
-                            kernel_regularizer=l2(self.l2_reg), name='output', **self.kwargs)
+                            kernel_regularizer=l2(self.l2_reg),
+                            name='output', **self.kwargs)
 
         if self.use_time_distributed:
             y = TimeDistributed(dense_layer)(y)
@@ -86,12 +87,13 @@ class MLP(KerasModelContainer):
         elif self.temporal_integration == 'sum':
             y = Lambda(lambda x: K.sum(x, 1), name='temporal_integration')(y)
         elif self.temporal_integration == 'autopool':
-            y = AutoPool1D(axis=1, name='output')(y)        
+            y = AutoPool1D(axis=1, name='output')(y)
 
         # Create model
         self.model = Model(inputs=inputs, outputs=y, name='model')
 
         super().build()
+
 
 class SB_CNN(KerasModelContainer):
     """
@@ -116,7 +118,7 @@ class SB_CNN(KerasModelContainer):
         model : keras Model
 
         n_freq_cnn : int
-            number of frecuency bins of the input
+            number of frequency bins of the input
         n_frames_cnn : int
             number of time steps (hops) of the input
         n_filters_cnn : int
@@ -231,7 +233,7 @@ class SB_CNN_SED(KerasModelContainer):
         model : keras Model
 
         n_freq_cnn : int
-            number of frecuency bins of the input
+            number of frequency bins of the input
         n_frames_cnn : int
             number of time steps (hops) of the input
         n_filters_cnn : int

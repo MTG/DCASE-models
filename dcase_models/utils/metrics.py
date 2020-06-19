@@ -33,7 +33,7 @@ def evaluate_metrics(model, X_val, Y_val, metrics, **kwargs):
     Y_val : list ndarray
         Each element in the list is a 1D array with
         the annotations (one hot encoding).
-        Shape of each elment (N_classes,)
+        Shape of each element (N_classes,)
     """
     n_files = len(X_val)
 
@@ -81,8 +81,11 @@ def accuracy(Y_val, Y_predicted):
     return acc
 
 
-def sed(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0, label_list=[]):
-    seg_metrics = SegmentBasedMetrics(label_list, time_resolution=metric_resolution_sec)
+def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
+        metric_resolution_sec=1.0, label_list=[]):
+    seg_metrics = SegmentBasedMetrics(
+        label_list, time_resolution=metric_resolution_sec
+    )
 
     n_files = len(Y_val)
 
@@ -91,8 +94,10 @@ def sed(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0, la
         pred = Y_predicted[i]
 
         pred = (pred > 0.5).astype(int)
-        event_list_val = event_roll_to_event_list(y_true, label_list, sequence_time_sec)
-        event_list_pred = event_roll_to_event_list(pred, label_list, sequence_time_sec)
+        event_list_val = event_roll_to_event_list(
+            y_true, label_list, sequence_time_sec)
+        event_list_pred = event_roll_to_event_list(
+            pred, label_list, sequence_time_sec)
 
         seg_metrics.evaluate(event_list_val, event_list_pred)
 
@@ -178,6 +183,3 @@ def F1(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
 
     Fmeasure = 2*P*R/(P + R + eps)
     return Fmeasure
-
-
-

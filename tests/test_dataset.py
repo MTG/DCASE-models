@@ -14,8 +14,8 @@ audio_files = ['40722-8-0-7.wav', '147764-4-7-0.wav', '176787-5-0-0.wav']
 def test_change_sampling_rate(sr):
     dataset_path = 'data'
     dataset = Dataset(dataset_path)
-    audio_path = dataset.get_audio_path()
-    audio_path_sr = dataset.get_audio_path(sr)
+    audio_path = dataset.get_audio_paths()
+    audio_path_sr = dataset.get_audio_paths(sr)
     if os.path.exists(audio_path_sr):
         shutil.rmtree(audio_path_sr)
     dataset.change_sampling_rate(sr)

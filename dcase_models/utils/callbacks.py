@@ -1,7 +1,6 @@
 from .metrics import evaluate_metrics
 # from keras import backend as K
 from keras.callbacks import Callback
-import sed_eval
 # import matplotlib
 # matplotlib.use('Agg')
 eps = 1e-6
@@ -27,7 +26,7 @@ class AccuracyCallback(Callback):
             Path to the file with the weights
 
         best_acc : float
-            Last accuarcy value, only if continue
+            Last accuracy value, only if continue
 
         early_stopping : int
             Number of epochs for cut the training if not improves
@@ -89,7 +88,8 @@ class SEDCallback(Callback):
 
     def __init__(self, X_val, Y_val, file_weights=None, best_F1=0,
                  early_stopping=0, considered_improvement=0.01,
-                 sequence_time_sec=0.5, metric_resolution_sec=1.0, label_list=[]):
+                 sequence_time_sec=0.5, metric_resolution_sec=1.0,
+                 label_list=[]):
         """ Initialize the keras callback
         Parameters
         ----------
@@ -103,7 +103,7 @@ class SEDCallback(Callback):
             Path to the file with the weights
 
         best_acc : float
-            Last accuarcy value, only if continue
+            Last accuracy value, only if continue
 
         early_stopping : int
             Number of epochs for cut the training if not improves
@@ -138,7 +138,7 @@ class SEDCallback(Callback):
             self.model, self.X_val, self.Y_val, ['sed'],
             sequence_time_sec=self.sequence_time_sec,
             metric_resolution_sec=self.metric_resolution_sec,
-            label_list = self.label_list
+            label_list=self.label_list
         )
         results = results['sed'].results()
         F1 = results['overall']['f_measure']['f_measure']
@@ -188,7 +188,7 @@ class F1ERCallback(Callback):
             Path to the file with the weights
 
         best_acc : float
-            Last accuarcy value, only if continue
+            Last accuracy value, only if continue
 
         early_stopping : int
             Number of epochs for cut the training if not improves

@@ -87,7 +87,9 @@ class FeatureExtractor():
         self.sr = sr
 
         self.sequence_frames = int(np.round(sequence_time*sr/float(audio_hop)))
-        self.sequence_hop = int(np.round(sequence_hop_time * sr / float(audio_hop)))
+        self.sequence_hop = int(
+            np.round(sequence_hop_time * sr / float(audio_hop))
+        )
 
         self.params = {'sr': self.sr,
                        'sequence_time': self.sequence_time,

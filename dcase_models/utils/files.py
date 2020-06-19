@@ -38,7 +38,14 @@ def duplicate_folder_structure(origin_path, destination_path):
         structure = os.path.join(
             destination_path, dirpath[len(origin_path)+1:]
         )
-        mkdir_if_not_exists(structure)
+        try:
+            mkdir_if_not_exists(structure)
+        except:
+            parent_structure = os.path.abspath(
+                os.path.join(structure, os.pardir)
+            )
+            mkdir_if_not_exists(parent_structure)
+            mkdir_if_not_exists(structure)
 
 
 def list_wav_files(path):
@@ -120,6 +127,7 @@ def move_all_files_to_parent(parent, child):
     for f in files:
         shutil.move(os.path.join(source, f), os.path.join(parent, f))
     shutil.rmtree(source)
+
 
 def move_all_files_to(source, destination):
     files = os.listdir(source)
