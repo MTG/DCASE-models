@@ -632,7 +632,10 @@ class MAVD(Dataset):
 
         # Only vehicle level for now
         # TODO: Add other levels
-        self.label_list = ['car', 'bus', 'truck', 'motorcycle']
+        self.vehicle_list = ['car', 'bus', 'truck', 'motorcycle']
+        self.component_list = ['engine_idling', 'engine_accelerating', 'brakes',
+                               'wheel_rolling', 'compressor']
+        self.label_list = self.vehicle_list + self.component_list
 
     def generate_file_lists(self):
         for fold in self.fold_list:
@@ -650,21 +653,29 @@ class MAVD(Dataset):
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
         labels_dict = labels.to_dict('records')
-        filter_labels_dict = []
+
+        event_roll = np.zeros((len(features), len(self.label_list)))
         for event in labels_dict:
-            if event['event_label'] in self.label_list:
-                filter_labels_dict.append(event)
-        event_roll = event_list_to_event_roll(
-            filter_labels_dict, self.label_list, self.sequence_hop_time
-        )
-        if event_roll.shape[0] > features.shape[0]:
-            event_roll = event_roll[:len(features)]
-        else:
-            event_roll = fix_length(event_roll, features.shape[0], axis=0)
-        assert event_roll.shape[0] == features.shape[0]
+            event_label = event['event_label']
+            for sub_label in event_label.split('/'):
+                if sub_label in self.label_list:
+                    label_ix = self.label_list.index(sub_label)
+
+                    event_onset = event['event_onset']
+                    event_offset = event['event_offset']    
+
+                    onset = int(np.floor(
+                        event_onset / float(self.sequence_hop_time))
+                    )
+                    offset = int(np.ceil(
+                        event_offset / float(self.sequence_hop_time))
+                    )
+
+                    event_roll[onset:offset, label_ix] = 1        
+
         return event_roll
 
-    def download(self, force_download=False):      
+    def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/3338727/files/"
 
         zenodo_files = ['audio_train.zip', 'audio_validate.zip',
@@ -687,7 +698,7 @@ class MAVD(Dataset):
                 os.path.join(self.dataset_path, 'annotations_%s' % fold),
                 os.path.join(self.annotations_path, fold)
             )
-        
+
         # Convert .flac to .wav
         self.convert_to_wav()
 
