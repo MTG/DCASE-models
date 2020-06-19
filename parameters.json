@@ -100,5 +100,9 @@
             "dataset_path" : "datasets/FSDKaggle2018",
             "evaluation_mode" : "train-test"          
         }
-    }
+    },
+    "data_augmentations": [
+        {"type": "pitch_shift", "n_semitones": -1},
+        {"type": "time_stretching", "factor": 1.05}       
+    ]
 }

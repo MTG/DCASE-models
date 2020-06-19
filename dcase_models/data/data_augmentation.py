@@ -75,8 +75,8 @@ class AugmentedDataset(Dataset):
             if aug_type == 'pitch_shift':
                 tfm.pitch(augmentation['n_semitones'])
             if aug_type == 'time_stretching':
-                # tfm.tempo(augmentation['factor'])
-                tfm.stretch(augmentation['factor'])
+                tfm.tempo(augmentation['factor'])
+                # tfm.stretch(augmentation['factor'])
             augmentations_list[index]['transformer'] = tfm
 
         # Copy attributes of dataset
