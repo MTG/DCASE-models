@@ -18,6 +18,8 @@ from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.utils.files import load_json, load_pickle
 
+sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
+
 
 def main():
     # Parse arguments
@@ -72,7 +74,7 @@ def main():
 
     # Get and init dataset class
     kwargs = {}
-    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+    if args.dataset in sed_datasets:
         kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
     dataset_class = get_available_datasets()[args.dataset]
     dataset_path = os.path.join(args.path, params_dataset['dataset_path'])
@@ -123,7 +125,7 @@ def main():
     # Load model and best weights
     model_class = get_available_models()[args.model]
     metrics = ['accuracy']
-    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+    if args.dataset in sed_datasets:
         metrics = ['sed']
     model_container = model_class(
         model=None, model_path=model_folder, metrics=metrics
@@ -131,7 +133,7 @@ def main():
     model_container.load_model_weights(exp_folder)
 
     kwargs = {}
-    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+    if args.dataset in sed_datasets:
         kwargs = {'sequence_time_sec': params_features['sequence_hop_time'],
                   'metric_resolution_sec': 1.0,
                   'label_list': dataset.label_list}

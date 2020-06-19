@@ -20,6 +20,8 @@ from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import load_json
 from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
 
+sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
+
 
 def main():
     # Parse arguments
@@ -74,7 +76,7 @@ def main():
     params_model = params['models'][args.model]
 
     kwargs = {}
-    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+    if args.dataset in sed_datasets:
         kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
 
     # Get and init dataset class
@@ -128,7 +130,7 @@ def main():
     n_classes = Y_train.shape[1]
     model_class = get_available_models()[args.model]
     metrics = ['accuracy']
-    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+    if args.dataset in sed_datasets:
         metrics = ['sed']
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,
@@ -153,7 +155,7 @@ def main():
 
     # Train model
     kwargs = {}
-    if args.dataset in ['URBAN_SED', 'TUTSoundEvents2017']:
+    if args.dataset in sed_datasets:
         kwargs['label_list'] = dataset.label_list
     model_container.train(X_train, Y_train, X_val, Y_val,
                           weights_path=exp_folder, **params['train'], **kwargs)

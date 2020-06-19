@@ -58,6 +58,15 @@ def list_wav_files(path):
     return wav_files
 
 
+def list_all_files(path):
+    files = []
+    for dirpath, dirnames, filenames in os.walk(path):
+        for file_ in filenames:
+            path_to_file = os.path.join(dirpath, file_)
+            files.append(path_to_file)
+    return files
+
+
 def load_training_log(weights_folder):
     log_file = 'training.log'
     log_path = os.path.join(weights_folder, log_file)

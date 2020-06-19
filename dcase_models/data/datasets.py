@@ -613,6 +613,87 @@ class FSDKaggle2018(Dataset):
         self.set_as_downloaded()
 
 
+class MAVD(Dataset):
+    ''' MAVD-traffic dataset class '''
+
+    def __init__(self, dataset_path,
+                 sequence_time=1.0, sequence_hop_time=0.5,
+                 metric_resolution_sec=1.0):
+        self.sequence_time = sequence_time
+        self.sequence_hop_time = sequence_hop_time
+        self.metric_resolution_sec = metric_resolution_sec
+
+        super().__init__(dataset_path)
+
+    def build(self):
+        self.audio_path = os.path.join(self.dataset_path, 'audio')
+        self.annotations_path = os.path.join(self.dataset_path, 'annotations')
+        self.fold_list = ["train", "validate", "test"]
+
+        # Only vehicle level for now
+        # TODO: Add other levels
+        self.label_list = ['car', 'bus', 'truck', 'motorcycle']
+
+    def generate_file_lists(self):
+        for fold in self.fold_list:
+            audio_folder = os.path.join(self.audio_path, fold)
+            self.file_lists[fold] = sorted(
+                glob.glob(os.path.join(audio_folder, '*.wav'))
+            )
+
+    def get_annotations(self, file_name, features):
+        audio_path, _ = self.get_audio_paths()
+        label_file = file_name.replace(
+            audio_path,
+            self.annotations_path
+        ).replace('.wav', '.txt')
+        labels = read_csv(label_file, delimiter='\t', header=None)
+        labels.columns = ['event_onset', 'event_offset', 'event_label']
+        labels_dict = labels.to_dict('records')
+        filter_labels_dict = []
+        for event in labels_dict:
+            if event['event_label'] in self.label_list:
+                filter_labels_dict.append(event)
+        event_roll = event_list_to_event_roll(
+            filter_labels_dict, self.label_list, self.sequence_hop_time
+        )
+        if event_roll.shape[0] > features.shape[0]:
+            event_roll = event_roll[:len(features)]
+        else:
+            event_roll = fix_length(event_roll, features.shape[0], axis=0)
+        assert event_roll.shape[0] == features.shape[0]
+        return event_roll
+
+    def download(self, force_download=False):      
+        zenodo_url = "https://zenodo.org/record/3338727/files/"
+
+        zenodo_files = ['audio_train.zip', 'audio_validate.zip',
+                        'audio_test.zip', 'annotations_train.zip',
+                        'annotations_validate.zip',
+                        'annotations_test.zip', 'README']
+
+        super().download(
+            zenodo_url, zenodo_files, force_download
+        )
+
+        mkdir_if_not_exists(self.audio_path)
+        mkdir_if_not_exists(self.annotations_path)
+        for fold in self.fold_list:
+            os.rename(
+                os.path.join(self.dataset_path, 'audio_%s' % fold),
+                os.path.join(self.audio_path, fold)
+            )
+            os.rename(
+                os.path.join(self.dataset_path, 'annotations_%s' % fold),
+                os.path.join(self.annotations_path, fold)
+            )
+        
+        # Convert .flac to .wav
+        self.convert_to_wav()
+
+        self.set_as_downloaded()
+
+
 def get_available_datasets():
     availabe_datasets = {m[0]: m[1] for m in inspect.getmembers(
         sys.modules[__name__], inspect.isclass)

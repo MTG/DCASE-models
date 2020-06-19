@@ -99,7 +99,11 @@
         "FSDKaggle2018" : {
             "dataset_path" : "datasets/FSDKaggle2018",
             "evaluation_mode" : "train-test"          
-        }
+        },
+        "MAVD" : {
+            "dataset_path" : "datasets/MAVD",
+            "evaluation_mode" : "train-validate-test"          
+        }  
     },
     "data_augmentations": [
         {"type": "pitch_shift", "n_semitones": -1},

@@ -3,7 +3,7 @@ import sox
 
 from ..utils.files import download_files_and_unzip
 from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files
+from ..utils.files import list_wav_files, list_all_files
 
 
 class Dataset():
@@ -179,7 +179,7 @@ class Dataset():
         """
         subfolders = None
         if sr is None:
-            audio_path = self.audio_path
+            audio_path = os.path.join(self.audio_path, 'original')
         else:
             audio_path = self.audio_path + str(sr)
             subfolders = [os.path.join(audio_path, 'original')]
@@ -248,3 +248,20 @@ class Dataset():
             if not os.path.exists(path_to_destination):
                 return False
         return True
+
+    def convert_to_wav(self, remove_original=False):
+        tfm = sox.Transformer()
+
+        for path_to_file in list_all_files(self.audio_path):
+            if path_to_file.endswith('wav'):
+                continue
+            path_to_destination = path_to_file.replace(
+                os.path.splitext(path_to_file)[1], '.wav'
+            )
+            if os.path.exists(path_to_destination):
+                continue
+
+            tfm.build(path_to_file, path_to_destination)
+
+            if remove_original:
+                os.remove(path_to_file)
