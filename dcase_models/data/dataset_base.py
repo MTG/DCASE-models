@@ -235,7 +235,8 @@ class Dataset():
 
         """
 
-        audio_folder_sr = self.get_audio_paths(sr)[0]
+        audio_path, subfolders = self.get_audio_paths(sr)
+        audio_folder_sr = subfolders[0]
         if not os.path.exists(audio_folder_sr):
             return False
 
@@ -246,6 +247,7 @@ class Dataset():
             # TODO: check if the audio file was resampled correctly,
             # not only if exists.
             if not os.path.exists(path_to_destination):
+                print(path_to_destination)
                 return False
         return True
 

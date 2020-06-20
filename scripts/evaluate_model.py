@@ -53,6 +53,10 @@ def main():
         help='path to load the trained model',
         default='../trained_models'
     )
+    parser.add_argument(
+        '-ft', '--fine_tuning', type=str,
+        help='fine-tuned dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
+    )
     args = parser.parse_args()
 
     print(__doc__)
@@ -69,14 +73,16 @@ def main():
     # Get parameters
     parameters_file = os.path.join(args.path, 'parameters.json')
     params = load_json(parameters_file)
-    params_dataset = params['datasets'][args.dataset]
     params_features = params['features']
+
+    dataset_name = args.dataset if args.fine_tuning is None else args.fine_tuning
+    params_dataset = params['datasets'][dataset_name]
 
     # Get and init dataset class
     kwargs = {}
-    if args.dataset in sed_datasets:
+    if dataset_name in sed_datasets:
         kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
-    dataset_class = get_available_datasets()[args.dataset]
+    dataset_class = get_available_datasets()[dataset_name]
     dataset_path = os.path.join(args.path, params_dataset['dataset_path'])
     dataset = dataset_class(dataset_path, **kwargs)
 
@@ -107,13 +113,18 @@ def main():
         print('Done!')
 
     # Get data
-    if args.dataset != 'TUTSoundEvents2017':
+    if dataset_name != 'TUTSoundEvents2017':
         X_test, Y_test = data_generator.get_data_for_testing(args.fold_name)
     else:
         X_test, Y_test = data_generator.get_data_for_testing('test')
 
-    # Set paths
-    model_folder = os.path.join(args.models_path, args.model, args.dataset)
+    # Set paths 
+    if args.fine_tuning is None:
+        dataset_path = args.dataset
+    else:
+        dataset_path = args.dataset + '_ft_' + args.fine_tuning
+
+    model_folder = os.path.join(args.models_path, args.model, dataset_path)        
     exp_folder = os.path.join(model_folder, args.fold_name)
 
     # Load scaler
@@ -125,7 +136,7 @@ def main():
     # Load model and best weights
     model_class = get_available_models()[args.model]
     metrics = ['accuracy']
-    if args.dataset in sed_datasets:
+    if dataset_name in sed_datasets:
         metrics = ['sed']
     model_container = model_class(
         model=None, model_path=model_folder, metrics=metrics
@@ -133,7 +144,7 @@ def main():
     model_container.load_model_weights(exp_folder)
 
     kwargs = {}
-    if args.dataset in sed_datasets:
+    if dataset_name in sed_datasets:
         kwargs = {'sequence_time_sec': params_features['sequence_hop_time'],
                   'metric_resolution_sec': 1.0,
                   'label_list': dataset.label_list}

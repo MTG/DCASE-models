@@ -5,7 +5,7 @@ r'''
  | |_| | |___ / ___ \ ___) | |__|_____| | | | | | (_) | (_| |  __/ \__ \\
  |____/ \____/_/   \_\____/|_____|    |_| |_| |_|\___/ \__,_|\___|_|___/
 
- Training model example
+ Model fine-tuning example
 
 '''
 
@@ -30,10 +30,23 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        '-d', '--dataset', type=str,
+        '-od', '--origin_dataset', type=str,
         help='dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
         default='UrbanSound8k'
     )
+    parser.add_argument(
+        '-ofold', '--origin_fold_name', type=str,
+        help='origin fold name',
+        default='fold1')
+    parser.add_argument(
+        '-d', '--dataset', type=str,
+        help='dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
+        default='ESC50'
+    )
+    parser.add_argument(
+        '-fold', '--fold_name', type=str,
+        help='destination fold name',
+        default='fold1')
     parser.add_argument(
         '-f', '--features', type=str,
         help='features name (e.g. Spectrogram, MelSpectrogram, Openl3)',
@@ -48,8 +61,7 @@ def main():
         '-m', '--model', type=str,
         help='model name (e.g. MLP, SB_CNN, SB_CNN_SED, A_CRNN, VGGish)',
         default='SB_CNN')
-    parser.add_argument('-fold', '--fold_name', type=str, help='fold name',
-                        default='fold1')
+
     parser.add_argument(
         '-s', '--models_path', type=str,
         help='path to save the trained model',
@@ -74,6 +86,20 @@ def main():
     params_dataset = params['datasets'][args.dataset]
     params_features = params['features']
     params_model = params['models'][args.model]
+
+    # Load origin model
+    model_path_origin = os.path.join(args.models_path, args.model,
+                                     args.origin_dataset)
+    model_class = get_available_models()[args.model]
+    metrics = ['accuracy']
+    if args.dataset in sed_datasets:
+        metrics = ['sed']
+    model_container = model_class(
+        model=None, model_path=model_path_origin,
+        metrics=metrics
+    )
+    model_container.load_model_weights(
+        os.path.join(model_path_origin, args.origin_fold_name))
 
     kwargs = {}
     if args.dataset in sed_datasets:
@@ -124,27 +150,21 @@ def main():
     X_train = scaler.transform(X_train)
     X_val = scaler.transform(X_val)
 
-    # Define model
-    n_frames_cnn = X_train.shape[1]
-    n_freq_cnn = X_train.shape[2]
+    # Fine-tune model
     n_classes = Y_train.shape[1]
-    model_class = get_available_models()[args.model]
-    metrics = ['accuracy']
-    if args.dataset in sed_datasets:
-        metrics = ['sed']
-    model_container = model_class(
-        model=None, model_path=None, n_classes=n_classes,
-        n_frames_cnn=n_frames_cnn, n_freq_cnn=n_freq_cnn,
-        metrics=metrics,
-        **params_model['model_arguments']
-    )
+    layer_where_to_cut = -2
+    model_container.fine_tuning(layer_where_to_cut,
+                                new_number_of_classes=n_classes,
+                                new_activation='sigmoid',
+                                freeze_source_model=True)
 
     model_container.model.summary()
 
     # Set paths
     model_folder = os.path.join(args.models_path, args.model)
     mkdir_if_not_exists(model_folder)
-    model_folder = os.path.join(model_folder, args.dataset)
+    model_folder = os.path.join(
+        model_folder, args.origin_dataset+'_ft_'+args.dataset)
     mkdir_if_not_exists(model_folder)
     exp_folder = os.path.join(model_folder, args.fold_name)
     mkdir_if_not_exists(exp_folder)
