@@ -1,6 +1,9 @@
 import os
 import numpy as np
 import inspect
+import random
+
+from keras.utils import Sequence
 
 from .feature_extractor import FeatureExtractor
 from .dataset_base import Dataset
@@ -132,6 +135,7 @@ class DataGenerator():
             features = np.load(file_name)
             features_list.append(features)
             file_audio = self.convert_features_path_to_audio_path(file_name)
+            file_audio = self.paths_remove_aug_subfolder(file_audio)
             y = self.dataset.get_annotations(file_audio, features)
             annotations.append(y)
 
@@ -411,6 +415,17 @@ class DataGenerator():
 
         return features_file
 
+    def paths_remove_aug_subfolder(self, path):
+        audio_path, subfolders = self.dataset.get_audio_paths()
+        new_path = None
+        for subfolder in subfolders:
+            if subfolder in path:
+                new_path = path.replace(subfolder, audio_path)
+                break
+
+        return new_path
+
+
     def extract_features(self):
         """
         Extracts features of each wav file present in self.audio_path.
@@ -472,3 +487,66 @@ class DataGenerator():
                 return False
 
         return True
+
+
+class KerasDataGenerator(Sequence):
+
+    def __init__(self, data_generator, folds,
+                 batch_size=32, shuffle=True,
+                 validation=False, scaler=None):
+        self.data_gen = data_generator
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.validation = validation
+        self.folds = folds
+        self.scaler = scaler
+
+        self.file_list = []
+
+        self.data_gen.dataset.generate_file_lists()
+        audio_path, subfolders = self.data_gen.dataset.get_audio_paths(
+            self.data_gen.feature_extractor.sr
+        )
+
+        for fold in folds:
+            #self.file_list.extend(data_generator.file_lists[fold])
+            for subfolder in subfolders:
+                subfolder_name = os.path.basename(subfolder)
+                files_audio = self.data_gen.dataset.file_lists[fold]
+                file_features = self.data_gen.convert_audio_path_to_features_path(
+                    files_audio, subfolder=subfolder_name
+                )
+                self.file_list.extend(file_features)
+
+        self.on_epoch_end()
+
+    def load_batch(self, index):
+        list_file_batch = self.file_list[
+            index*self.batch_size:(index+1)*self.batch_size
+        ]
+
+        # Generate data
+        X, Y = self.data_gen.data_generation(list_file_batch)
+
+        if self.scaler is not None:
+            X = self.scaler.transform(X)
+
+        if not self.validation:
+            X = np.concatenate(X, axis=0)
+            Y = np.concatenate(Y, axis=0)
+
+        return X, Y   
+
+    def __len__(self):
+        'Denotes the number of batches per epoch'
+        return int(np.floor(len(self.file_list) / self.batch_size))
+
+    def __getitem__(self, index):
+        'Generate one batch of data'
+        # Generate indexes of the batch
+        return self.load_batch(index)
+
+    def on_epoch_end(self):
+        'Updates indexes after each epoch'
+        if self.shuffle:
+            random.shuffle(self.file_list)

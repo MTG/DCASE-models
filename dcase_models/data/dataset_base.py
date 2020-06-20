@@ -179,7 +179,8 @@ class Dataset():
         """
         subfolders = None
         if sr is None:
-            audio_path = os.path.join(self.audio_path, 'original')
+            audio_path = self.audio_path
+            subfolders = [os.path.join(self.audio_path, 'original')]
         else:
             audio_path = self.audio_path + str(sr)
             subfolders = [os.path.join(audio_path, 'original')]

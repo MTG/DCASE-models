@@ -183,7 +183,11 @@ class URBAN_SED(Dataset):
         self.evaluation_mode = 'train-validate-test'
 
     def generate_file_lists(self):
-        super().generate_file_lists()
+       # super().generate_file_lists()
+        for fold in self.fold_list:
+            audio_folder = os.path.join(self.audio_path, fold)
+            self.file_lists[fold] = list_wav_files(audio_folder)
+
         self.wav_to_labels = {}
         for fold in self.fold_list:
             for fil in self.file_lists[fold]:
@@ -192,6 +196,8 @@ class URBAN_SED(Dataset):
                     self.annotations_folder, fold, label_file)
 
     def get_annotations(self, file_name, features, time_resolution=1.0):
+        #audio_path, _ = self.get_audio_paths()
+        #file_name = file_name.replace(audio_path, self.audio_path)
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']

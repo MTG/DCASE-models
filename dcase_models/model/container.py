@@ -170,7 +170,8 @@ class KerasModelContainer(ModelContainer):
               optimizer='Adam', learning_rate=0.001, early_stopping=100,
               considered_improvement=0.01, losses='categorical_crossentropy',
               loss_weights=[1], sequence_time_sec=0.5,
-              metric_resolution_sec=1.0, label_list=[], **kwargs_keras_fit):
+              metric_resolution_sec=1.0, label_list=[],
+              fit_generator=None, **kwargs_keras_fit):
         """
         Train the keras model using the data and paramaters of arguments.
 
@@ -233,7 +234,7 @@ class KerasModelContainer(ModelContainer):
             )
         if self.metrics[0] == 'sed':
             metrics_callback = SEDCallback(
-                X_val, Y_val, file_weights=file_weights,
+                (X_val, Y_val), file_weights=file_weights, #(X_val, Y_val) #fit_generator['validate']
                 early_stopping=early_stopping,
                 considered_improvement=considered_improvement,
                 sequence_time_sec=sequence_time_sec,
@@ -241,10 +242,21 @@ class KerasModelContainer(ModelContainer):
                 label_list=label_list
             )
         log = CSVLogger(file_log)
-        self.model.fit(x=X_train, y=Y_train, shuffle=True,
-                       callbacks=[metrics_callback, log],
-                       **kwargs_keras_fit)
-
+        if fit_generator is None:
+            self.model.fit(x=X_train, y=Y_train, shuffle=True,
+                        callbacks=[metrics_callback, log],
+                        **kwargs_keras_fit)
+        else:
+            training_generator = fit_generator['train']
+            #validation_generator = fit_generator['validate']
+            kwargs_keras_fit.pop('batch_size')
+            self.model.fit_generator(generator=training_generator,
+                                 #    validation_data=validation_generator,
+                                callbacks=[metrics_callback, log],
+                                **kwargs_keras_fit)
+                                #use_multiprocessing=True,
+                                #workers=6)  
+                                #           
     def evaluate(self, X_test, Y_test, scaler=None, **kwargs):
         """
         Evaluate the keras model using X_test and Y_test
