@@ -181,9 +181,9 @@ class FeatureExtractor():
         if not os.path.exists(json_features_folder):
             return False
         parameters_features_folder = load_json(json_features_folder)
-
         for key in parameters_features_folder.keys():
             if parameters_features_folder[key] != self.params[key]:
+                print(key, parameters_features_folder[key],  self.params[key])
                 return False
 
         return True

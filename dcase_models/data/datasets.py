@@ -48,10 +48,10 @@ class UrbanSound8k(Dataset):
     def download(self, force_download=False):
         zenodo_url = "https://zenodo.org/record/1203745/files"
         zenodo_files = ["UrbanSound8K.tar.gz"]
-        resp = super().download(
+        downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
-        if resp is not None:
+        if downloaded:
             move_all_files_to_parent(self.dataset_path, "UrbanSound8K")
             self.set_as_downloaded()
 
@@ -120,11 +120,12 @@ class ESC50(Dataset):
     def download(self, force_download=False):
         github_url = "https://github.com/karoldvl/ESC-50/archive/"
         github_files = ["master.zip"]
-        super().download(
+        downloaded = super().download(
             github_url, github_files, force_download
         )
-        move_all_files_to_parent(self.dataset_path, "ESC-50-master")
-        self.set_as_downloaded()
+        if downloaded:
+            move_all_files_to_parent(self.dataset_path, "ESC-50-master")
+            self.set_as_downloaded()
 
 
 class ESC10(ESC50):
@@ -217,11 +218,12 @@ class URBAN_SED(Dataset):
         zenodo_url = "https://zenodo.org/record/1324404/files"
         zenodo_files = ["URBAN-SED_v2.0.0.tar.gz"]
 
-        super().download(
+        downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
-        move_all_files_to_parent(self.dataset_path, "URBAN-SED_v2.0.0")
-        self.set_as_downloaded()
+        if downloaded:
+            move_all_files_to_parent(self.dataset_path, "URBAN-SED_v2.0.0")
+            self.set_as_downloaded()
 
 
 class SONYC_UST(Dataset):
@@ -366,12 +368,13 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2019-development.meta.zip')
 
-        super().download(
+        downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
-        move_all_files_to_parent(
-            self.dataset_path, "TAU-urban-acoustic-scenes-2019-development")
-        self.set_as_downloaded()
+        if downloaded:
+            move_all_files_to_parent(
+                self.dataset_path, "TAU-urban-acoustic-scenes-2019-development")
+            self.set_as_downloaded()
 
 
 class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
@@ -390,13 +393,14 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
         zenodo_files.append(
             'TAU-urban-acoustic-scenes-2020-mobile-development.meta.zip')
 
-        super().download(
+        downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
-        move_all_files_to_parent(
-            self.dataset_path,
-            "TAU-urban-acoustic-scenes-2020-mobile-development")
-        self.set_as_downloaded()
+        if downloaded:
+            move_all_files_to_parent(
+                self.dataset_path,
+                "TAU-urban-acoustic-scenes-2020-mobile-development")
+            self.set_as_downloaded()
 
 
 class TUTSoundEvents2017(Dataset):
@@ -487,13 +491,13 @@ class TUTSoundEvents2017(Dataset):
             'TUT-sound-events-2017-development.doc.zip',
             'TUT-sound-events-2017-development.meta.zip'
         ]
-        super().download(
+        downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
-
-        move_all_files_to_parent(
-            self.dataset_path,
-            "TUT-sound-events-2017-development")
+        if downloaded:
+            move_all_files_to_parent(
+                self.dataset_path,
+                "TUT-sound-events-2017-development")
 
         zenodo_url = "https://zenodo.org/record/1040179/files"
 
@@ -501,31 +505,32 @@ class TUTSoundEvents2017(Dataset):
             'TUT-sound-events-2017-evaluation.audio.zip',
             'TUT-sound-events-2017-evaluation.meta.zip',
         ]
-        super().download(
+        downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
-        move_all_files_to(
-            os.path.join(
-                self.dataset_path,
-                "TUT-sound-events-2017-evaluation/audio/street"
-            ),
-            os.path.join(self.dataset_path, "audio/street")
-        )
-        move_all_files_to(
-            os.path.join(
-                self.dataset_path,
-                "TUT-sound-events-2017-evaluation/meta/street"
-            ),
-            os.path.join(self.dataset_path, "meta/street")
-        )
-        move_all_files_to(
-            os.path.join(
-                self.dataset_path,
-                "TUT-sound-events-2017-evaluation/evaluation_setup"
-            ),
-            os.path.join(self.dataset_path, "evaluation_setup")
-        )
-        self.set_as_downloaded()
+        if downloaded:
+            move_all_files_to(
+                os.path.join(
+                    self.dataset_path,
+                    "TUT-sound-events-2017-evaluation/audio/street"
+                ),
+                os.path.join(self.dataset_path, "audio/street")
+            )
+            move_all_files_to(
+                os.path.join(
+                    self.dataset_path,
+                    "TUT-sound-events-2017-evaluation/meta/street"
+                ),
+                os.path.join(self.dataset_path, "meta/street")
+            )
+            move_all_files_to(
+                os.path.join(
+                    self.dataset_path,
+                    "TUT-sound-events-2017-evaluation/evaluation_setup"
+                ),
+                os.path.join(self.dataset_path, "evaluation_setup")
+            )
+            self.set_as_downloaded()
 
 
 class FSDKaggle2018(Dataset):

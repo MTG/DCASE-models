@@ -481,8 +481,10 @@ class DataGenerator():
         for audio_folder in subfolders:
             subfolder_name = os.path.basename(audio_folder)
             features_path = os.path.join(self.features_path, subfolder_name)
+            
             feat_extracted = self.feature_extractor.check_if_extracted(
                 features_path)
+
             if not feat_extracted:
                 return False
 
