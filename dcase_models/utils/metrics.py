@@ -32,7 +32,8 @@ def evaluate_metrics(model, data, metrics, **kwargs):
         (X_val, Y_val) or KerasDataGenerator
         X_val : list of ndarray
             Each element in list is a 3D array with the mel-spectrograms
-            of one file. Shape of each element: (N_windows, N_hops, N_mel_bands)
+            of one file. Shape of each element:
+            (N_windows, N_hops, N_mel_bands)
             N_windows can be different in each file (element)
         Y_val : list ndarray
             Each element in the list is a 1D array with

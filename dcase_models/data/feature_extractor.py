@@ -8,6 +8,7 @@ from ..utils.files import load_json, mkdir_if_not_exists
 from ..utils.files import duplicate_folder_structure
 from ..utils.files import list_wav_files
 
+
 class FeatureExtractor():
     """
     Abstract base class for feature extraction.
@@ -238,29 +239,6 @@ class FeatureExtractor():
                 return False
 
         return True
-
-    # def check_if_extracted(self, features_folder):
-    #     """
-    #     Checks if the features saved in features_folder were
-    #     calculated with the same parameters of self.params
-
-    #     Parameters
-    #     ----------
-    #     path : str
-    #         Path to the features folder
-
-    #     """
-
-    #     json_features_folder = os.path.join(features_folder, "parameters.json")
-    #     if not os.path.exists(json_features_folder):
-    #         return False
-    #     parameters_features_folder = load_json(json_features_folder)
-    #     for key in parameters_features_folder.keys():
-    #         if parameters_features_folder[key] != self.params[key]:
-    #             print(key, parameters_features_folder[key],  self.params[key])
-    #             return False
-
-    #     return True
 
     def get_shape(self, length_sec=10.0):
         """

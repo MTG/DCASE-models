@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import json
-import inspect
 
 import keras.backend as K
 from keras.callbacks import CSVLogger
@@ -10,9 +9,9 @@ from keras.layers import Dense, Input
 
 from ..utils.files import save_json
 from ..utils.metrics import evaluate_metrics
-from ..utils.callbacks import F1ERCallback
 from ..utils.callbacks import ClassificationCallback, SEDCallback
 from ..data.data_generator import DataGenerator, KerasDataGenerator
+
 
 class ModelContainer():
     """
@@ -229,7 +228,7 @@ class KerasModelContainer(ModelContainer):
             )
         if self.metrics[0] == 'sed':
             metrics_callback = SEDCallback(
-                data_val, file_weights=file_weights, #(X_val, Y_val) #fit_generator['validate']
+                data_val, file_weights=file_weights,
                 early_stopping=early_stopping,
                 considered_improvement=considered_improvement,
                 sequence_time_sec=sequence_time_sec,

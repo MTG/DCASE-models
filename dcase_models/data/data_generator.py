@@ -7,9 +7,6 @@ from keras.utils import Sequence
 
 from .feature_extractor import FeatureExtractor
 from .dataset_base import Dataset
-from ..utils.files import mkdir_if_not_exists
-from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files
 
 
 class DataGenerator():
@@ -99,16 +96,6 @@ class DataGenerator():
             raise AttributeError('''feature_extractor has to be an
                                     instance of FeatureExtractor or similar''')
 
-        # feature_name = type(feature_extractor).__name__
-        # self.features_path = os.path.join(
-        #     dataset.dataset_path, self.features_folder, feature_name
-        # )
-        # mkdir_if_not_exists(self.features_path, parents=True)
-
-        # if not self.dataset.check_sampling_rate(feature_extractor.sr):
-        #     print('Changing sampling rate ...')
-        #     self.dataset.change_sampling_rate(feature_extractor.sr)
-        #     print('Done!')
         self.features_path = self.feature_extractor.get_features_path(
             dataset
         )
@@ -162,37 +149,6 @@ class DataGenerator():
             annotations.append(y)
 
         return features_list, annotations
-
-    def load_data(self):
-        """ Creates self.data that contains features and annotations for all files
-        in all folds
-        """
-
-        if not self.check_if_features_extracted:
-            self.extract_features()
-
-        X, Y = self.data_generation(self.features_file_list)
-        self.data['X'] = X
-        self.data['Y'] = Y
-
-        # self.dataset.generate_file_lists()
-        # audio_path, subfolders = self.dataset.get_audio_paths(
-        #     self.feature_extractor.sr
-        # )
-        # if subfolders is None:
-        #     subfolders = ['']
-
-        # for fold in progressbar(self.dataset.fold_list, prefix='fold: '):
-        #     self.data[fold] = {'X': [], 'Y': []}
-        #     for subfolder in subfolders:
-        #         subfolder_name = os.path.basename(subfolder)
-        #         files_audio = self.dataset.file_lists[fold]
-        #         file_features = self.convert_audio_path_to_features_path(
-        #             files_audio, subfolder=subfolder_name
-        #         )
-        #         X, Y = self.data_generation(file_features)
-        #         self.data[fold]['X'].extend(X)
-        #         self.data[fold]['Y'].extend(Y)
 
     def get_data(self):
         X_list, Y_list = self.data_generation(self.features_file_list)
@@ -303,70 +259,6 @@ class DataGenerator():
                 break
 
         return new_path
-
-    def extract_features(self):
-        """
-        Extracts features of each wav file present in self.audio_path.
-
-        If the dataset is nos sampled at  the sampling rate set in
-        feature_extractor.sr, the dataset is resampled before
-        feature extraction.
-
-        """
-
-        # Change sampling rate if needed
-        if not self.dataset.check_sampling_rate(self.feature_extractor.sr):
-            self.dataset.change_sampling_rate(self.feature_extractor.sr)
-
-        # Define path to audio and features folders
-        audio_path, subfolders = self.dataset.get_audio_paths(
-            self.feature_extractor.sr
-        )
-
-        # Duplicate folder structure of audio in features folder
-        duplicate_folder_structure(audio_path, self.features_path)
-
-        for audio_folder in subfolders:
-            subfolder_name = os.path.basename(audio_folder)
-            features_path = os.path.join(self.features_path, subfolder_name)
-            if not self.feature_extractor.check_if_extracted(features_path):
-                # input()
-                # Navigate in the structure of audio folder and extract
-                # features of the each wav file
-                for path_to_file_audio in list_wav_files(audio_folder):
-                    features_array = self.feature_extractor.calculate(
-                        path_to_file_audio
-                    )
-                    path_to_features_file = path_to_file_audio.replace(
-                        audio_folder, features_path
-                    )
-                    path_to_features_file = path_to_features_file.replace(
-                        'wav', 'npy'
-                    )
-                    np.save(path_to_features_file, features_array)
-
-                # Save parameters.json for future checking
-                self.feature_extractor.set_as_extracted(features_path)
-
-    def check_if_features_extracted(self):
-        """
-        Check if the features were extracted before.
-
-        """
-        audio_path, subfolders = self.dataset.get_audio_paths(
-            self.feature_extractor.sr
-        )
-        for audio_folder in subfolders:
-            subfolder_name = os.path.basename(audio_folder)
-            features_path = os.path.join(self.features_path, subfolder_name)
-            
-            feat_extracted = self.feature_extractor.check_if_extracted(
-                features_path)
-
-            if not feat_extracted:
-                return False
-
-        return True
 
     def shuffle_list(self):
         'Updates indexes after each epoch'

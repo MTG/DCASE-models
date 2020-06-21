@@ -139,7 +139,9 @@ def main():
     if dataset_name in sed_datasets:
         kwargs = {'sequence_time_sec': params_features['sequence_hop_time'],
                   'metric_resolution_sec': 1.0}
-    results = model_container.evaluate(data_gen_test, label_list=dataset.label_list, **kwargs)
+    results = model_container.evaluate(
+        data_gen_test, label_list=dataset.label_list, **kwargs
+    )
 
     print(results[metrics[0]])
 

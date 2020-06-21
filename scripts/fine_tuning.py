@@ -183,11 +183,12 @@ def main():
     save_pickle(scaler, os.path.join(exp_folder, 'scaler.pickle'))
 
     # Train model
-    model_container.train(data_gen_train, data_gen_val,
-                          label_list=dataset.label_list,
-                          weights_path=exp_folder,
-                          sequence_time_sec=params_features['sequence_hop_time'],
-                          **params['train'])
+    model_container.train(
+        data_gen_train, data_gen_val,
+        label_list=dataset.label_list,
+        weights_path=exp_folder,
+        sequence_time_sec=params_features['sequence_hop_time'],
+        **params['train'])
 
 
 if __name__ == "__main__":
