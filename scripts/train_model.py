@@ -16,7 +16,6 @@ from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
-from dcase_models.data.data_generator import KerasDataGenerator
 from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import load_json
 from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
@@ -132,10 +131,10 @@ def main():
 
     model_class = get_available_models()[args.model]
 
-    metrics = ['accuracy']
+    metrics = ['classification']
     if args.dataset in sed_datasets:
         metrics = ['sed']
-        
+
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,
         n_frames_cnn=n_frames_cnn, n_freq_cnn=n_freq_cnn,
@@ -157,11 +156,11 @@ def main():
     save_pickle(scaler, os.path.join(exp_folder, 'scaler.pickle'))
 
     # Train model
-    kwargs = {}
-    if args.dataset in sed_datasets:
-        kwargs['label_list'] = dataset.label_list
-    model_container.train(X_train, Y_train, X_val, Y_val,
-                          weights_path=exp_folder, **params['train'], **kwargs)
+    model_container.train(
+        X_train, Y_train, X_val, Y_val,
+        label_list=dataset.label_list,
+        weights_path=exp_folder, **params['train']
+    )
 
 
 if __name__ == "__main__":

@@ -135,7 +135,7 @@ def main():
 
     # Load model and best weights
     model_class = get_available_models()[args.model]
-    metrics = ['accuracy']
+    metrics = ['classification']
     if dataset_name in sed_datasets:
         metrics = ['sed']
     model_container = model_class(
@@ -146,15 +146,14 @@ def main():
     kwargs = {}
     if dataset_name in sed_datasets:
         kwargs = {'sequence_time_sec': params_features['sequence_hop_time'],
-                  'metric_resolution_sec': 1.0,
-                  'label_list': dataset.label_list}
-    results = model_container.evaluate(X_test, Y_test, **kwargs)
-
-    for metric in metrics:
-        if metric == 'sed':
-            print(results['sed'])
-        else:
-            print('%s in %s is %f' % (metric, args.fold_name, results[metric]))
+                  'metric_resolution_sec': 1.0}
+    results = model_container.evaluate(X_test, Y_test, label_list=dataset.label_list, **kwargs)
+    print(results[metrics[0]])
+    #for metric in metrics:
+    #    if metric == 'sed':
+    #        print(results['sed'])
+    #    else:
+    #        print('%s in %s is %f' % (metric, args.fold_name, results[metric]))
 
 
 if __name__ == "__main__":

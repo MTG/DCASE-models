@@ -9,7 +9,8 @@ from keras.layers import Dense, Input
 
 from ..utils.files import save_json
 from ..utils.metrics import evaluate_metrics
-from ..utils.callbacks import AccuracyCallback, F1ERCallback, SEDCallback
+from ..utils.callbacks import F1ERCallback
+from ..utils.callbacks import ClassificationCallback, SEDCallback
 
 
 class ModelContainer():
@@ -218,19 +219,12 @@ class KerasModelContainer(ModelContainer):
 
         file_weights = os.path.join(weights_path, 'best_weights.hdf5')
         file_log = os.path.join(weights_path, 'training.log')
-        if self.metrics[0] == 'accuracy':
-            metrics_callback = AccuracyCallback(
-                X_val, Y_val, file_weights=file_weights,
-                early_stopping=early_stopping,
-                considered_improvement=considered_improvement
-            )
-        if 'F1' in self.metrics:
-            metrics_callback = F1ERCallback(
-                X_val, Y_val, file_weights=file_weights,
+        if self.metrics[0] == 'classification':
+            metrics_callback = ClassificationCallback(
+                (X_val, Y_val), file_weights=file_weights,
                 early_stopping=early_stopping,
                 considered_improvement=considered_improvement,
-                sequence_time_sec=sequence_time_sec,
-                metric_resolution_sec=metric_resolution_sec
+                label_list=label_list
             )
         if self.metrics[0] == 'sed':
             metrics_callback = SEDCallback(
@@ -285,7 +279,7 @@ class KerasModelContainer(ModelContainer):
         if scaler is not None:
             X_test = scaler.transform(X_test)
         return evaluate_metrics(
-            self.model, X_test, Y_test, self.metrics, **kwargs
+            self.model, (X_test, Y_test), self.metrics, **kwargs
         )
 
     def load_model_from_json(self, folder, **kwargs):

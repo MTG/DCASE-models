@@ -6,22 +6,25 @@ from keras.callbacks import Callback
 # matplotlib.use('Agg')
 eps = 1e-6
 
+from sed_eval.sound_event import SegmentBasedMetrics
+from sed_eval.scene import SceneClassificationMetrics
+import numpy as np
 
-class AccuracyCallback(Callback):
+
+class ClassificationCallback(Callback):
     """Keras callback to calculate acc after each epoch and save
     file with the weights if the evaluation improves
     """
 
-    def __init__(self, X_val, Y_val, file_weights=None, best_acc=0,
-                 early_stopping=0, considered_improvement=0.01):
+    def __init__(self, data, file_weights=None, best_acc=0,
+                 early_stopping=0, considered_improvement=0.01,
+                 label_list=[]):
         """ Initialize the keras callback
         Parameters
         ----------
-        X_val : array
+        data : tuple or KerasDataGenerator
             Validation data for model evaluation
-
-        Y_val : array
-            Ground-truth of th validation set
+            (X_val, Y_val) or KerasDataGenerator
 
         file_weights : string
             Path to the file with the weights
@@ -34,14 +37,14 @@ class AccuracyCallback(Callback):
             if 0, do not use it
         """
 
-        self.X_val = X_val
-        self.Y_val = Y_val
+        self.data = data
         self.best_acc = best_acc
         self.file_weights = file_weights
         self.early_stopping = early_stopping
         self.epochs_since_improvement = 0
         self.epoch_best = 0
         self.considered_improvement = considered_improvement
+        self.label_list = label_list
 
     def on_epoch_end(self, epoch, logs={}):
         """ This function is run when each epoch ends.
@@ -56,9 +59,12 @@ class AccuracyCallback(Callback):
 
         """
         results = evaluate_metrics(
-            self.model, self.X_val, self.Y_val, ['accuracy'])
-        acc = results['accuracy']
-        logs['Acc'] = acc
+           self.model, self.data, ['classification'],
+           label_list=self.label_list)
+
+        results = results['classification'].results()
+        acc = results['overall']['accuracy']
+        logs['accuracy'] = acc
 
         self.current_acc = acc
 
@@ -77,9 +83,6 @@ class AccuracyCallback(Callback):
             print('Not improvement for %d epochs, stopping the training' %
                   self.early_stopping)
             self.model.stop_training = True
-
-
-from sed_eval.sound_event import SegmentBasedMetrics
 
 
 class SEDCallback(Callback):
@@ -135,35 +138,40 @@ class SEDCallback(Callback):
             log data (from Callback class)
 
         """
-        if type(self.data) in [list, tuple]:
-            X_val = self.data[0]
-            Y_val = self.data[1]
-            results = evaluate_metrics(
-                self.model, X_val, Y_val, ['sed'],
-                sequence_time_sec=self.sequence_time_sec,
-                metric_resolution_sec=self.metric_resolution_sec,
-                label_list=self.label_list
-            )
-            results = results['sed'].results()
-        else:
-            for batch_index in range(0, len(self.validation_data)):
-                X_val, Y_val = self.validation_data.load_batch(batch_index)
-                seg_metrics = SegmentBasedMetrics(
-                    self.label_list, time_resolution=self.metric_resolution_sec
-                )            
-                n_files = len(Y_val)
-                for i in range(n_files):
-                    y_true = Y_val[i]
-                    pred = self.model.predict(X_val[i])
-                    pred = (pred > 0.5).astype(int) 
-                    event_list_val = event_roll_to_event_list(
-                        y_true, self.label_list, self.sequence_time_sec)
-                    event_list_pred = event_roll_to_event_list(
-                        pred, self.label_list, self.sequence_time_sec)
+        # if type(self.data) in [list, tuple]:
+        #     X_val = self.data[0]
+        #     Y_val = self.data[1]
+        #     results = evaluate_metrics(
+        #         self.model, X_val, Y_val, ['sed'],
+        #         sequence_time_sec=self.sequence_time_sec,
+        #         metric_resolution_sec=self.metric_resolution_sec,
+        #         label_list=self.label_list
+        #     )
+        #     results = results['sed'].results()
+        # else:
+        #     for batch_index in range(0, len(self.validation_data)):
+        #         X_val, Y_val = self.validation_data.load_batch(batch_index)
+        #         seg_metrics = SegmentBasedMetrics(
+        #             self.label_list, time_resolution=self.metric_resolution_sec
+        #         )            
+        #         n_files = len(Y_val)
+        #         for i in range(n_files):
+        #             y_true = Y_val[i]
+        #             pred = self.model.predict(X_val[i])
+        #             pred = (pred > 0.5).astype(int) 
+        #             event_list_val = event_roll_to_event_list(
+        #                 y_true, self.label_list, self.sequence_time_sec)
+        #             event_list_pred = event_roll_to_event_list(
+        #                 pred, self.label_list, self.sequence_time_sec)
 
-                    seg_metrics.evaluate(event_list_val, event_list_pred)                
-            results = seg_metrics.results()
+        #             seg_metrics.evaluate(event_list_val, event_list_pred)                
+        #     results = seg_metrics.results()
 
+        results = evaluate_metrics(
+           self.model, self.data, ['sed'],
+           label_list=self.label_list)
+           
+        results = results['sed'].results()
         F1 = results['overall']['f_measure']['f_measure']
         ER = results['overall']['error_rate']['error_rate']
         logs['F1'] = F1
