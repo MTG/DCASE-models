@@ -11,7 +11,6 @@ r'''
 
 import os
 import argparse
-import numpy as np
 
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
@@ -174,7 +173,7 @@ def main():
     # Train model
     model_container.train(
         data_gen_train, data_gen_val,
-        #data_train, data_val,
+        # data_train, data_val,
         label_list=dataset.label_list,
         weights_path=exp_folder, **params['train'],
         sequence_time_sec=params_features['sequence_hop_time']

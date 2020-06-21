@@ -252,9 +252,9 @@ class KerasModelContainer(ModelContainer):
                 callbacks=[metrics_callback, log],
                 **kwargs_keras_fit
                 # use_multiprocessing=True,
-                # workers=6) 
+                # workers=6)
             )
-       
+
     def evaluate(self, data_test, **kwargs):
         """
         Evaluate the keras model using X_test and Y_test

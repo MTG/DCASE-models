@@ -55,7 +55,7 @@ def main():
     )
     parser.add_argument(
         '-ft', '--fine_tuning', type=str,
-        help='fine-tuned dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED, SONYC_UST)',
+        help='fine-tuned dataset name (e.g. UrbanSound8k, ESC50, URBAN_SED)',
     )
     args = parser.parse_args()
 
@@ -75,7 +75,8 @@ def main():
     params = load_json(parameters_file)
     params_features = params['features']
 
-    dataset_name = args.dataset if args.fine_tuning is None else args.fine_tuning
+    dataset_name = (args.dataset if args.fine_tuning is None
+                    else args.fine_tuning)
     params_dataset = params['datasets'][dataset_name]
 
     # Get and init dataset class
@@ -144,7 +145,6 @@ def main():
     )
 
     print(results[metrics[0]])
-
 
 
 if __name__ == "__main__":

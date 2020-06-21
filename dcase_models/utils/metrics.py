@@ -70,7 +70,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
                 if type(Y_predicted) == list:
                     Y_predicted = Y_predicted[0]
                 predictions.append(Y_predicted)
-                
+
             annotations.extend(Y_val)
 
     results['annotations'] = annotations
@@ -110,9 +110,8 @@ def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
 
 
 def classification(Y_val, Y_predicted, label_list=[]):
-
     acc_metrics = SceneClassificationMetrics(label_list)
-    
+
     n_files = len(Y_val)
     for i in range(n_files):
         y_true = Y_val[i]

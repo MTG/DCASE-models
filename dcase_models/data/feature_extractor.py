@@ -206,7 +206,7 @@ class FeatureExtractor():
 
                 # Save parameters.json for future checking
                 self.set_as_extracted(features_path)
-        
+
     def check_if_extracted_path(self, path):
         json_features_folder = os.path.join(path, "parameters.json")
         if not os.path.exists(json_features_folder):
