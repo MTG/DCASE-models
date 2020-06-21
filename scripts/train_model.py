@@ -129,10 +129,13 @@ def main():
     n_frames_cnn = X_train.shape[1]
     n_freq_cnn = X_train.shape[2]
     n_classes = Y_train.shape[1]
+
     model_class = get_available_models()[args.model]
+
     metrics = ['accuracy']
     if args.dataset in sed_datasets:
         metrics = ['sed']
+        
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,
         n_frames_cnn=n_frames_cnn, n_freq_cnn=n_freq_cnn,
@@ -143,12 +146,11 @@ def main():
     model_container.model.summary()
 
     # Set paths
-    model_folder = os.path.join(args.models_path, args.model)
-    mkdir_if_not_exists(model_folder)
-    model_folder = os.path.join(model_folder, args.dataset)
-    mkdir_if_not_exists(model_folder)
+    model_folder = os.path.join(
+        args.models_path, args.model, args.dataset
+        )
     exp_folder = os.path.join(model_folder, args.fold_name)
-    mkdir_if_not_exists(exp_folder)
+    mkdir_if_not_exists(exp_folder, parents=True)
 
     # Save model json and scaler
     model_container.save_model_json(model_folder)

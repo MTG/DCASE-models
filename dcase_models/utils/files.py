@@ -28,9 +28,12 @@ def load_json(path):
     return data
 
 
-def mkdir_if_not_exists(path):
+def mkdir_if_not_exists(path, parents=False):
     if not os.path.exists(path):
-        os.mkdir(path)
+        if parents:
+            os.makedirs(path)
+        else:
+            os.mkdir(path)
 
 
 def duplicate_folder_structure(origin_path, destination_path):
