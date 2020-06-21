@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import json
+import inspect
 
 import keras.backend as K
 from keras.callbacks import CSVLogger
@@ -11,7 +12,7 @@ from ..utils.files import save_json
 from ..utils.metrics import evaluate_metrics
 from ..utils.callbacks import F1ERCallback
 from ..utils.callbacks import ClassificationCallback, SEDCallback
-
+from ..data.data_generator import DataGenerator, KerasDataGenerator
 
 class ModelContainer():
     """
@@ -167,12 +168,12 @@ class KerasModelContainer(ModelContainer):
         # Define your model here
         pass
 
-    def train(self, X_train, Y_train, X_val, Y_val, weights_path='./',
+    def train(self, data_train, data_val, weights_path='./',
               optimizer='Adam', learning_rate=0.001, early_stopping=100,
               considered_improvement=0.01, losses='categorical_crossentropy',
               loss_weights=[1], sequence_time_sec=0.5,
               metric_resolution_sec=1.0, label_list=[],
-              fit_generator=None, **kwargs_keras_fit):
+              shuffle=True, **kwargs_keras_fit):
         """
         Train the keras model using the data and paramaters of arguments.
 
@@ -221,14 +222,14 @@ class KerasModelContainer(ModelContainer):
         file_log = os.path.join(weights_path, 'training.log')
         if self.metrics[0] == 'classification':
             metrics_callback = ClassificationCallback(
-                (X_val, Y_val), file_weights=file_weights,
+                data_val, file_weights=file_weights,
                 early_stopping=early_stopping,
                 considered_improvement=considered_improvement,
                 label_list=label_list
             )
         if self.metrics[0] == 'sed':
             metrics_callback = SEDCallback(
-                (X_val, Y_val), file_weights=file_weights, #(X_val, Y_val) #fit_generator['validate']
+                data_val, file_weights=file_weights, #(X_val, Y_val) #fit_generator['validate']
                 early_stopping=early_stopping,
                 considered_improvement=considered_improvement,
                 sequence_time_sec=sequence_time_sec,
@@ -236,22 +237,26 @@ class KerasModelContainer(ModelContainer):
                 label_list=label_list
             )
         log = CSVLogger(file_log)
-        if fit_generator is None:
-            self.model.fit(x=X_train, y=Y_train, shuffle=True,
-                        callbacks=[metrics_callback, log],
-                        **kwargs_keras_fit)
+
+        if type(data_train) in [list, tuple]:
+            self.model.fit(
+                x=data_train[0], y=data_train[1], shuffle=shuffle,
+                callbacks=[metrics_callback, log],
+                **kwargs_keras_fit
+            )
         else:
-            training_generator = fit_generator['train']
-            #validation_generator = fit_generator['validate']
+            if data_train.__class__ is DataGenerator:
+                data_train = KerasDataGenerator(data_train)
             kwargs_keras_fit.pop('batch_size')
-            self.model.fit_generator(generator=training_generator,
-                                 #    validation_data=validation_generator,
-                                callbacks=[metrics_callback, log],
-                                **kwargs_keras_fit)
-                                #use_multiprocessing=True,
-                                #workers=6)  
-                                #           
-    def evaluate(self, X_test, Y_test, scaler=None, **kwargs):
+            self.model.fit_generator(
+                generator=data_train,
+                callbacks=[metrics_callback, log],
+                **kwargs_keras_fit
+                # use_multiprocessing=True,
+                # workers=6) 
+            )
+       
+    def evaluate(self, data_test, **kwargs):
         """
         Evaluate the keras model using X_test and Y_test
 
@@ -276,10 +281,8 @@ class KerasModelContainer(ModelContainer):
             list of model predictions
 
         """
-        if scaler is not None:
-            X_test = scaler.transform(X_test)
         return evaluate_metrics(
-            self.model, (X_test, Y_test), self.metrics, **kwargs
+            self.model, data_test, self.metrics, **kwargs
         )
 
     def load_model_from_json(self, folder, **kwargs):

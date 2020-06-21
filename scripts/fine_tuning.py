@@ -19,6 +19,7 @@ from dcase_models.data.data_generator import DataGenerator
 from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import load_json
 from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
+from dcase_models.utils.data import evaluation_setup
 
 sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
 
@@ -124,34 +125,44 @@ def main():
     )
     print('Features shape: ', features.get_shape())
 
-    # Init data generator
-    kwargs = {'evaluation_mode': params_dataset['evaluation_mode']}
-    if args.dataset in ['TUTSoundEvents2017', 'ESC50', 'ESC10']:
-        # When have less data, don't use validation set.
-        kwargs['use_validate_set'] = False
-    data_generator = DataGenerator(dataset, features, **kwargs)
-
     # Check if features were extracted
-    if not data_generator.check_if_features_extracted():
+    if not features.check_if_extracted(dataset):
         print('Extracting features ...')
-        data_generator.extract_features()
+        features.extract(dataset)
         print('Done!')
 
-    # Load data
-    data_generator.load_data()
+    use_validate_set = True
+    if args.dataset in ['TUTSoundEvents2017', 'ESC50', 'ESC10']:
+        # When have less data, don't use validation set.
+        use_validate_set = False
 
-    # Get data and fit scaler
-    X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(
-        args.fold_name
+    folds_train, folds_val, _ = evaluation_setup(
+        args.fold_name, dataset.fold_list,
+        params_dataset['evaluation_mode'],
+        use_validate_set=use_validate_set
     )
-    print(X_train.shape, Y_train.shape)
+
+    data_gen_train = DataGenerator(
+        dataset, features, folds=folds_train,
+        batch_size=params['train']['batch_size'],
+        shuffle=True, train=True, scaler=None
+    )
+
     scaler = Scaler(normalizer=params_model['normalizer'])
-    scaler.fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_val = scaler.transform(X_val)
+    print('Fitting features ...')
+    scaler.fit(data_gen_train)
+    print('Done!')
+
+    data_gen_train.set_scaler(scaler)
+
+    data_gen_val = DataGenerator(
+        dataset, features, folds=folds_val,
+        batch_size=params['train']['batch_size'],
+        shuffle=False, train=False, scaler=scaler
+    )
 
     # Fine-tune model
-    n_classes = Y_train.shape[1]
+    n_classes = len(dataset.label_list)
     layer_where_to_cut = -2
     model_container.fine_tuning(layer_where_to_cut,
                                 new_number_of_classes=n_classes,
@@ -161,24 +172,22 @@ def main():
     model_container.model.summary()
 
     # Set paths
-    model_folder = os.path.join(args.models_path, args.model)
-    mkdir_if_not_exists(model_folder)
     model_folder = os.path.join(
-        model_folder, args.origin_dataset+'_ft_'+args.dataset)
-    mkdir_if_not_exists(model_folder)
+        args.models_path, args.model,
+        args.origin_dataset+'_ft_'+args.dataset)
     exp_folder = os.path.join(model_folder, args.fold_name)
-    mkdir_if_not_exists(exp_folder)
+    mkdir_if_not_exists(exp_folder, parents=True)
 
     # Save model json and scaler
     model_container.save_model_json(model_folder)
     save_pickle(scaler, os.path.join(exp_folder, 'scaler.pickle'))
 
     # Train model
-    kwargs = {}
-    if args.dataset in sed_datasets:
-        kwargs['label_list'] = dataset.label_list
-    model_container.train(X_train, Y_train, X_val, Y_val,
-                          weights_path=exp_folder, **params['train'], **kwargs)
+    model_container.train(data_gen_train, data_gen_val,
+                          label_list=dataset.label_list,
+                          weights_path=exp_folder,
+                          sequence_time_sec=params_features['sequence_hop_time'],
+                          **params['train'])
 
 
 if __name__ == "__main__":

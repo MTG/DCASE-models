@@ -99,24 +99,11 @@ def main():
         sr=params_features['sr'], **params_features[args.features]
     )
 
-    # Init data generator
-    data_generator = DataGenerator(
-        dataset, features,
-        evaluation_mode=params_dataset['evaluation_mode']
-    )
-    data_generator.load_data()
-
     # Check if features were extracted
-    if not data_generator.check_if_features_extracted():
+    if not features.check_if_extracted(dataset):
         print('Extracting features ...')
-        data_generator.extract_features()
+        features.extract(dataset)
         print('Done!')
-
-    # Get data
-    if dataset_name != 'TUTSoundEvents2017':
-        X_test, Y_test = data_generator.get_data_for_testing(args.fold_name)
-    else:
-        X_test, Y_test = data_generator.get_data_for_testing('test')
 
     # Set paths 
     if args.fine_tuning is None:
@@ -131,7 +118,12 @@ def main():
     scaler_file = os.path.join(exp_folder, 'scaler.pickle')
     scaler = load_pickle(scaler_file)
 
-    X_test = scaler.transform(X_test)
+    # Init data generator
+    data_gen_test = DataGenerator(
+        dataset, features, folds=[args.fold_name],
+        batch_size=params['train']['batch_size'],
+        shuffle=False, train=False, scaler=scaler, **kwargs
+    )
 
     # Load model and best weights
     model_class = get_available_models()[args.model]
@@ -147,13 +139,10 @@ def main():
     if dataset_name in sed_datasets:
         kwargs = {'sequence_time_sec': params_features['sequence_hop_time'],
                   'metric_resolution_sec': 1.0}
-    results = model_container.evaluate(X_test, Y_test, label_list=dataset.label_list, **kwargs)
+    results = model_container.evaluate(data_gen_test, label_list=dataset.label_list, **kwargs)
+
     print(results[metrics[0]])
-    #for metric in metrics:
-    #    if metric == 'sed':
-    #        print(results['sed'])
-    #    else:
-    #        print('%s in %s is %f' % (metric, args.fold_name, results[metric]))
+
 
 
 if __name__ == "__main__":

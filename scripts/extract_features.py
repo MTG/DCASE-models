@@ -14,7 +14,6 @@ import argparse
 
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
-from dcase_models.data.data_generator import DataGenerator
 from dcase_models.utils.files import load_json
 
 
@@ -70,16 +69,13 @@ def main():
         sr=params_features['sr'], **params_features[args.features]
     )
 
-    # Init data generator
-    data_generator = DataGenerator(dataset, features)
-
     # Extract features
-    if data_generator.check_if_features_extracted():
+    if features.check_if_extracted(dataset):
         print('%s features were already extracted for %s dataset. ' % (
             args.features, args.dataset))
     else:
         print('Extracting features ...')
-        data_generator.extract_features()
+        features.extract(dataset)
 
     print('Done!')
 

@@ -1,17 +1,25 @@
+from .data_generator import DataGenerator
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+import inspect
 
 
 class Scaler():
-    def __init__(self, normalizer='standard', bands=None):
+    def __init__(self, normalizer='standard'):
         self.normalizer = normalizer
-        self.bands = bands
         if normalizer == 'standard':
             self.scaler = StandardScaler()
         if normalizer == 'minmax':
             self.scaler = []
 
     def fit(self, mel):
+        if (DataGenerator in inspect.getmro(mel.__class__)):
+            for batch_index in range(len(mel)):
+                X, Y = mel.get_data_batch(batch_index)
+                self.partial_fit(X)
+            return True
+
+        print('NO!')
         if type(mel) == list:
             mel = np.concatenate(mel, axis=0)
 
@@ -20,19 +28,25 @@ class Scaler():
             self.scaler.fit(np.reshape(mel, (-1, mel_bands)))
             assert len(self.scaler.mean_) == mel_bands
         if self.normalizer == 'minmax':
-            if self.bands is None:
-                min_v = np.amin(mel)  # ,axis=(0,2))
-                max_v = np.amax(mel)  # ,axis=(0,2))
-                self.scaler = [min_v, max_v]
-            else:
-                for i in range(1, len(self.bands)):
-                    min_band = self.bands[i-1]
-                    max_band = self.bands[i]
-                    mel_i = mel[:, :, min_band:max_band]
-                    min_v = np.amin(mel_i)
-                    max_v = np.amax(mel_i)
+            min_v = np.amin(mel)  # ,axis=(0,2))
+            max_v = np.amax(mel)  # ,axis=(0,2))
+            self.scaler = [min_v, max_v]
 
-                    self.scaler.append([min_v, max_v])
+    def partial_fit(self, mel):
+        if type(mel) == list:
+            mel = np.concatenate(mel, axis=0)
+        if self.normalizer == 'standard':
+            mel_bands = mel.shape[-1]
+            self.scaler.partial_fit(np.reshape(mel, (-1, mel_bands)))
+            assert len(self.scaler.mean_) == mel_bands
+        if self.normalizer == 'minmax':
+            min_v = np.amin(mel)
+            max_v = np.amax(mel)
+            if len(self.scaler) > 0:
+                min_v = min(min_v, self.scaler[0])
+                max_v = max(max_v, self.scaler[1])
+  
+            self.scaler = [min_v, max_v]
 
     def transform(self, mel):
         if type(mel) == list:
@@ -51,17 +65,8 @@ class Scaler():
             mel_temp = self.scaler.transform(mel_temp)
             mel = mel_temp.reshape(mel_dims)
         if self.normalizer == 'minmax':
-            if self.bands is None:
-                mel = 2*((mel-self.scaler[0]) /
-                         (self.scaler[1]-self.scaler[0])-0.5)
-            else:
-                for i in range(1, len(self.bands)):
-                    min_band = self.bands[i-1]
-                    max_band = self.bands[i]
-                    scaler = self.scaler[i-1]
-                    mel[:, :, min_band:max_band] = 2 * \
-                        ((mel[:, :, min_band:max_band]-scaler[0]) /
-                         (scaler[1]-scaler[0])-0.5)
+            mel = 2*((mel-self.scaler[0]) /
+                        (self.scaler[1]-self.scaler[0])-0.5)
         return mel
 
     def inverse_transform(self, mel):

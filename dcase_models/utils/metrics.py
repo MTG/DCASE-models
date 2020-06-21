@@ -48,10 +48,8 @@ def evaluate_metrics(model, data, metrics, **kwargs):
         X_val = data[0]
         Y_val = data[1]
         n_files = len(X_val)
-
         for i in range(n_files):
             X = X_val[i]
-            # Y = Y_val[i]
             Y_predicted = model.predict(X)
             # if multiple outputs, select the first
             if type(Y_predicted) == list:
@@ -63,7 +61,8 @@ def evaluate_metrics(model, data, metrics, **kwargs):
     else:
         # data type is DataGenerator
         for batch_index in range(0, len(data)):
-            X_val, Y_val = data.load_batch(batch_index)
+            X_val, Y_val = data.get_data_batch(batch_index)
+            n_files = len(X_val)
             for i in range(n_files):
                 X = X_val[i]
                 Y_predicted = model.predict(X)
@@ -82,7 +81,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
         else:
             metric_function = globals()[metric]
 
-        results[metric] = metric_function(Y_val, predictions, **kwargs)
+        results[metric] = metric_function(annotations, predictions, **kwargs)
     return results
 
 

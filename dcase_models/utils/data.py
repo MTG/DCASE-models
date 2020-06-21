@@ -11,44 +11,36 @@ def get_fold_val(fold_test, fold_list):
     return fold_val
 
 
-def get_data_train_list(folds_data, fold_test, evaluation_mode,
-                        scaler=None, upsampling=True):
-    fold_list = list(folds_data.keys())
-
-    if evaluation_mode == "cross-validation":
-        fold_val = get_fold_val(fold_test, fold_list)
-        folds_train = fold_list.copy()  # list(range(1,N_folds+1))
-        folds_train.remove(fold_test)
-        folds_train.remove(fold_val)
-
-        X_val = folds_data[fold_val]['X']
-        Y_val = folds_data[fold_val]['Y']
-        if scaler is not None:
-            X_val = scaler.transform(X_val)
-        X_train = []
-        Y_train = []
-        for fold in folds_train:
-            X_fold = folds_data[fold]['X']
-            # print(type(X_fold), len(X_fold))
-            if scaler is not None:
-                X_fold = scaler.transform(X_fold)
-            X_train.extend(X_fold)
-            Y_train.extend(folds_data[fold]['Y'])
-
-    return X_train, Y_train, X_val, Y_val
-
-
-def get_fold_list(folds, evaluation_mode):
+def evaluation_setup(fold_test, folds, evaluation_mode,
+                     use_validate_set=True):
     if evaluation_mode == 'cross-validation':
-        fold_list = folds
-    elif evaluation_mode == 'train_validate_test':
-        fold_list = [folds[2]]  # only test fold
+        fold_val = get_fold_val(fold_test, folds)
+        folds_train = folds.copy()  # list(range(1,N_folds+1))
+        folds_train.remove(fold_test)
+        if use_validate_set:
+            folds_train.remove(fold_val)
+            folds_val = [fold_val]
+        else:
+            folds_val = folds_train.copy()
+        folds_test = [fold_test]
+    elif evaluation_mode == 'train-validate-test':
+        folds_train = ['train']
+        folds_val = ['validate']
+        folds_test = ['test']
     elif evaluation_mode == 'train_test':
-        fold_list = [folds[1]]  # only test fold
+        folds_train = ['train']
+        folds_val = ['train']
+        folds_test = ['test']
+    elif evaluation_mode == 'cross-validation-with-test':
+        folds_train = folds.copy()
+        fold_val = get_fold_val(fold_test, folds)
+        folds_train.remove(fold_val)
+        folds_val = [fold_val]
+        folds_test = ['test']
     else:
-        raise AttributeError("incorrect evaluation_mode %s" % evaluation_mode)
+        raise AttributeError("Incorrect evaluation_mode %s" % evaluation_mode)    
 
-    return fold_list
+    return folds_train, folds_val, folds_test
 
 
 def check_model_exists(path):

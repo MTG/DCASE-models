@@ -7,8 +7,6 @@ from keras.utils import Sequence
 
 from .feature_extractor import FeatureExtractor
 from .dataset_base import Dataset
-from ..utils.ui import progressbar
-from ..utils.data import get_fold_val
 from ..utils.files import mkdir_if_not_exists
 from ..utils.files import duplicate_folder_structure
 from ..utils.files import list_wav_files
@@ -64,7 +62,9 @@ class DataGenerator():
         Check if the features were extracted before.
     """
 
-    def __init__(self, dataset, feature_extractor, **kwargs):
+    def __init__(self, dataset, feature_extractor, folds,
+                 batch_size=32, shuffle=True,
+                 train=True, scaler=None, **kwargs):
         """ Initialize the DataGenerator
 
         Parameters
@@ -79,6 +79,11 @@ class DataGenerator():
         # General attributes
         self.dataset = dataset
         self.feature_extractor = feature_extractor
+        self.folds = folds
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.train = train
+        self.scaler = scaler
         self.features_folder = kwargs.get('features_folder', 'features')
         self.use_validate_set = kwargs.get('use_validate_set', True)
         self.evaluation_mode = kwargs.get(
@@ -94,21 +99,38 @@ class DataGenerator():
             raise AttributeError('''feature_extractor has to be an
                                     instance of FeatureExtractor or similar''')
 
-        feature_name = type(feature_extractor).__name__
-        mkdir_if_not_exists(
-            os.path.join(dataset.dataset_path, self.features_folder)
-        )
-        self.features_path = os.path.join(
-            dataset.dataset_path, self.features_folder, feature_name
-        )
-        mkdir_if_not_exists(self.features_path)
+        # feature_name = type(feature_extractor).__name__
+        # self.features_path = os.path.join(
+        #     dataset.dataset_path, self.features_folder, feature_name
+        # )
+        # mkdir_if_not_exists(self.features_path, parents=True)
 
-        if not self.dataset.check_sampling_rate(feature_extractor.sr):
-            print('Changing sampling rate ...')
-            self.dataset.change_sampling_rate(feature_extractor.sr)
-            print('Done!')
+        # if not self.dataset.check_sampling_rate(feature_extractor.sr):
+        #     print('Changing sampling rate ...')
+        #     self.dataset.change_sampling_rate(feature_extractor.sr)
+        #     print('Done!')
+        self.features_path = self.feature_extractor.get_features_path(
+            dataset
+        )
 
         self.audio_path = self.dataset.get_audio_paths(feature_extractor.sr)
+
+        self.features_file_list = []
+        self.dataset.generate_file_lists()
+        audio_path, subfolders = self.dataset.get_audio_paths(
+            self.feature_extractor.sr
+        )
+        for fold in folds:
+            for subfolder in subfolders:
+                subfolder_name = os.path.basename(subfolder)
+                files_audio = self.dataset.file_lists[fold]
+                file_features = self.convert_audio_path_to_features_path(
+                    files_audio, subfolder=subfolder_name
+                )
+                self.features_file_list.extend(file_features)
+
+        if shuffle:
+            self.shuffle_list()
 
         self.data = {}
 
@@ -149,206 +171,63 @@ class DataGenerator():
         if not self.check_if_features_extracted:
             self.extract_features()
 
-        self.dataset.generate_file_lists()
-        audio_path, subfolders = self.dataset.get_audio_paths(
-            self.feature_extractor.sr
-        )
-        if subfolders is None:
-            subfolders = ['']
+        X, Y = self.data_generation(self.features_file_list)
+        self.data['X'] = X
+        self.data['Y'] = Y
 
-        for fold in progressbar(self.dataset.fold_list, prefix='fold: '):
-            self.data[fold] = {'X': [], 'Y': []}
-            for subfolder in subfolders:
-                subfolder_name = os.path.basename(subfolder)
-                files_audio = self.dataset.file_lists[fold]
-                file_features = self.convert_audio_path_to_features_path(
-                    files_audio, subfolder=subfolder_name
-                )
-                X, Y = self.data_generation(file_features)
-                self.data[fold]['X'].extend(X)
-                self.data[fold]['Y'].extend(Y)
+        # self.dataset.generate_file_lists()
+        # audio_path, subfolders = self.dataset.get_audio_paths(
+        #     self.feature_extractor.sr
+        # )
+        # if subfolders is None:
+        #     subfolders = ['']
 
-    def get_data_for_training(self, fold_test, upsampling=False):
-        """ Returns arrays and lists for use in training process
+        # for fold in progressbar(self.dataset.fold_list, prefix='fold: '):
+        #     self.data[fold] = {'X': [], 'Y': []}
+        #     for subfolder in subfolders:
+        #         subfolder_name = os.path.basename(subfolder)
+        #         files_audio = self.dataset.file_lists[fold]
+        #         file_features = self.convert_audio_path_to_features_path(
+        #             files_audio, subfolder=subfolder_name
+        #         )
+        #         X, Y = self.data_generation(file_features)
+        #         self.data[fold]['X'].extend(X)
+        #         self.data[fold]['Y'].extend(Y)
 
-        Parameters
-        ----------
-        fold_test : str
-            Name of fold test
-        upsampling : bool, optional
-            If true, the training set is upsampled to get a balanced array
+    def get_data(self):
+        X_list, Y_list = self.data_generation(self.features_file_list)
 
-        Return
-        ----------
-        X_train : ndarray
-            3D array with all instances of train set.
-            Shape: (N_instances, N_hops, N_freqs)
-        Y_train : list of ndarray
-            2D array with annotations (one-hot coding)
-            Shape: (N_instances, N_classes)
-        X_val : list of ndarray
-            List of features for each file of validation set
-        Y_val : list of ndarray
-            List of annotations matrix for each file in validation set
+        if self.scaler is not None:
+            X_list = self.scaler.transform(X_list)
 
-        """
-        if self.evaluation_mode in ['cross-validation',
-                                    'cross-validation-with-test']:
-            # cross-validation mode
-            fold_val = get_fold_val(fold_test, self.dataset.fold_list)
-            folds_train = self.dataset.fold_list.copy()
-            folds_train.remove(fold_test)
-            if self.use_validate_set:
-                folds_train.remove(fold_val)
-                X_val = self.data[fold_val]['X']
-                Y_val = self.data[fold_val]['Y']
-
-            X_train_list = []
-            Y_train_list = []
-            for fold in folds_train:
-                X_train_list.extend(self.data[fold]['X'])
-                Y_train_list.extend(self.data[fold]['Y'])
-
-            X_train = np.concatenate(X_train_list, axis=0)
-            Y_train = np.concatenate(Y_train_list, axis=0)
-
-            X_train_up = X_train.copy()
-            Y_train_up = Y_train.copy()
-
-            # upsampling
-            if upsampling:
-                n_classes = Y_train.shape[1]
-                Ns = np.zeros(n_classes)
-                for j in range(n_classes):
-                    Ns[j] = np.sum(Y_train[:, j] == 1)
-                Ns = np.floor(np.amax(Ns)/Ns)-1
-                for j in range(n_classes):
-                    if Ns[j] > 1:
-                        X_j = X_train[Y_train[:, j] == 1]
-                        Y_j = Y_train[Y_train[:, j] == 1]
-                        X_train_up = np.concatenate(
-                            [X_train_up]+[X_j]*int(Ns[j]), axis=0)
-                        Y_train_up = np.concatenate(
-                            [Y_train_up]+[Y_j]*int(Ns[j]), axis=0)
-
-            if self.evaluation_mode == 'cross-validation-with-test':
-                return (
-                    X_train_up, Y_train_up,
-                    self.data[fold_test]['X'].copy(),
-                    self.data[fold_test]['Y'].copy()
-                )
-
-            if self.use_validate_set:
-                return X_train_up, Y_train_up, X_val, Y_val
-            else:
-                return X_train_up, Y_train_up, X_train_list, Y_train_list
-
-        if (self.evaluation_mode == 'train-validate-test'):
-            # train-val-test mode
-            X_val = self.data['validate']['X'].copy()
-            Y_val = self.data['validate']['Y'].copy()
-
-            X_train = np.concatenate(self.data['train']['X'], axis=0)
-            Y_train = np.concatenate(self.data['train']['Y'], axis=0)
-
-            return X_train, Y_train, X_val, Y_val
-
-        if (self.evaluation_mode == 'train-test'):
-            # train-test mode
-            X_val = self.data['train']['X'].copy()
-            Y_val = self.data['train']['Y'].copy()
-
-            X_train = np.concatenate(self.data['train']['X'], axis=0)
-            Y_train = np.concatenate(self.data['train']['Y'], axis=0)
-
-            return X_train, Y_train, X_val, Y_val
-
-    def get_data_for_testing(self, fold_test):
-        """ Returns lists to use to evaluate a model
-
-        Parameters
-        ----------
-        fold_test : str
-            Name of fold test
-
-        Return
-        ----------
-        X_test : list of ndarray
-            List of features for each file of test set
-        Y_test : list of ndarray
-            List of annotations matrix for each file in test set
-
-        """
-        # cross-validation mode
-        X_test = self.data[fold_test]['X'].copy()
-        Y_test = self.data[fold_test]['Y'].copy()
-
-        return X_test, Y_test
-
-    def get_one_example_per_file(self, fold_test, train=True):
-        # cross-validation mode
-
-        if train:
-            if self.evaluation_mode == 'cross-validation':
-                fold_val = get_fold_val(fold_test, self.dataset.fold_list)
-                folds_train = self.dataset.fold_list.copy()
-                folds_train.remove(fold_test)
-                folds_train.remove(fold_val)
-            if self.evaluation_mode in ['train-test', 'train-validate-test']:
-                folds_train = ['train']
-
-            # X_val = self.data[fold_val]['X']
-            # Y_val = self.data[fold_val]['Y']
-
-            X_train = []
-            Y_train = []
-            Files_names_train = []
-            for fold_train in folds_train:
-                for file in range(len(self.data[fold_train]['X'])):
-                    X = self.data[fold_train]['X'][file]
-                    if len(X) == 0:
-                        continue
-                    ix = int(len(X)/2) if len(X) > 1 else 0
-                    X = np.expand_dims(
-                        self.data[fold_train]['X'][file][ix], axis=0)
-                    X_train.append(X)
-                    Y = np.expand_dims(
-                        self.data[fold_train]['Y'][file][ix], axis=0)
-                    Y_train.append(Y)
-                    if self.dataset.file_lists is not None:
-                        Files_names_train.append(
-                            self.dataset.file_lists[fold_train][file]
-                        )
-
-            X_train = np.concatenate(X_train, axis=0)
-            Y_train = np.concatenate(Y_train, axis=0)
-
-            return X_train, Y_train, Files_names_train
-
+        if self.train:
+            X = np.concatenate(X_list, axis=0)
+            Y = np.concatenate(Y_list, axis=0)
         else:
-            X_test = []
-            Y_test = []
-            Files_names_test = []
+            X = X_list.copy()
+            Y = Y_list.copy()
 
-            for file in range(len(self.data[fold_test]['X'])):
-                X = self.data[fold_test]['X'][file]
-                if len(X) == 0:
-                    continue
-                ix = int(len(X)/2) if len(X) > 1 else 0
-                X = np.expand_dims(
-                    self.data[fold_test]['X'][file][ix], axis=0)
-                X_test.append(X)
-                Y = np.expand_dims(
-                    self.data[fold_test]['Y'][file][ix], axis=0)
-                Y_test.append(Y)
-                if self.dataset.file_lists is not None:
-                    Files_names_test.append(
-                        self.dataset.file_lists[fold_test][file]
-                    )
-            X_test = np.concatenate(X_test, axis=0)
-            Y_test = np.concatenate(Y_test, axis=0)
+        return X, Y
 
-            return X_test, Y_test, Files_names_test
+    def get_data_batch(self, index):
+        list_file_batch = self.features_file_list[
+            index*self.batch_size:(index+1)*self.batch_size
+        ]
+
+        # Generate data
+        X_list, Y_list = self.data_generation(list_file_batch)
+
+        if self.scaler is not None:
+            X_list = self.scaler.transform(X_list)
+
+        if self.train:
+            X = np.concatenate(X_list, axis=0)
+            Y = np.concatenate(Y_list, axis=0)
+        else:
+            X = X_list.copy()
+            Y = Y_list.copy()
+
+        return X, Y
 
     def convert_features_path_to_audio_path(self, features_file):
         """
@@ -425,7 +304,6 @@ class DataGenerator():
 
         return new_path
 
-
     def extract_features(self):
         """
         Extracts features of each wav file present in self.audio_path.
@@ -490,65 +368,33 @@ class DataGenerator():
 
         return True
 
+    def shuffle_list(self):
+        'Updates indexes after each epoch'
+        if self.shuffle:
+            random.shuffle(self.features_file_list)
+
+    def __len__(self):
+        return int(np.ceil(len(self.features_file_list) / self.batch_size))
+
+    def set_scaler(self, scaler):
+        self.scaler = scaler
+
 
 class KerasDataGenerator(Sequence):
 
-    def __init__(self, data_generator, folds,
-                 batch_size=32, shuffle=True,
-                 validation=False, scaler=None):
+    def __init__(self, data_generator):
         self.data_gen = data_generator
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.validation = validation
-        self.folds = folds
-        self.scaler = scaler
-
-        self.file_list = []
-
-        self.data_gen.dataset.generate_file_lists()
-        audio_path, subfolders = self.data_gen.dataset.get_audio_paths(
-            self.data_gen.feature_extractor.sr
-        )
-
-        for fold in folds:
-            #self.file_list.extend(data_generator.file_lists[fold])
-            for subfolder in subfolders:
-                subfolder_name = os.path.basename(subfolder)
-                files_audio = self.data_gen.dataset.file_lists[fold]
-                file_features = self.data_gen.convert_audio_path_to_features_path(
-                    files_audio, subfolder=subfolder_name
-                )
-                self.file_list.extend(file_features)
-
-        self.on_epoch_end()
-
-    def load_batch(self, index):
-        list_file_batch = self.file_list[
-            index*self.batch_size:(index+1)*self.batch_size
-        ]
-
-        # Generate data
-        X, Y = self.data_gen.data_generation(list_file_batch)
-
-        if self.scaler is not None:
-            X = self.scaler.transform(X)
-
-        if not self.validation:
-            X = np.concatenate(X, axis=0)
-            Y = np.concatenate(Y, axis=0)
-
-        return X, Y   
+        self.data_gen.shuffle_list()
 
     def __len__(self):
         'Denotes the number of batches per epoch'
-        return int(np.floor(len(self.file_list) / self.batch_size))
+        return len(self.data_gen)
 
     def __getitem__(self, index):
         'Generate one batch of data'
         # Generate indexes of the batch
-        return self.load_batch(index)
+        return self.data_gen.get_data_batch(index)
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
-        if self.shuffle:
-            random.shuffle(self.file_list)
+        self.data_gen.shuffle_list()

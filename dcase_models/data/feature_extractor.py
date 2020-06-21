@@ -4,8 +4,9 @@ import librosa
 import soundfile as sf
 import json
 
-from ..utils.files import load_json
-
+from ..utils.files import load_json, mkdir_if_not_exists
+from ..utils.files import duplicate_folder_structure
+from ..utils.files import list_wav_files
 
 class FeatureExtractor():
     """
@@ -59,7 +60,7 @@ class FeatureExtractor():
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100):
+                 audio_win=1024, audio_hop=512, sr=44100, **kwargs):
         """
         Initialize the FeatureExtractor
 
@@ -90,6 +91,8 @@ class FeatureExtractor():
         self.sequence_hop = int(
             np.round(sequence_hop_time * sr / float(audio_hop))
         )
+
+        self.features_folder = kwargs.get('features_folder', 'features')
 
         self.params = {'sr': self.sr,
                        'sequence_time': self.sequence_time,
@@ -165,7 +168,56 @@ class FeatureExtractor():
         with open(json_path, 'w') as fp:
             json.dump(self.params, fp)
 
-    def check_if_extracted(self, features_folder):
+    def extract(self, dataset):
+        features_path = self.get_features_path(dataset)
+        mkdir_if_not_exists(features_path, parents=True)
+
+        if not dataset.check_sampling_rate(self.sr):
+            print('Changing sampling rate ...')
+            dataset.change_sampling_rate(self.sr)
+            print('Done!')
+
+        # Define path to audio and features folders
+        audio_path, subfolders = dataset.get_audio_paths(
+            self.sr
+        )
+
+        # Duplicate folder structure of audio in features folder
+        duplicate_folder_structure(audio_path, features_path)
+
+        for audio_folder in subfolders:
+            subfolder_name = os.path.basename(audio_folder)
+            features_path = os.path.join(features_path, subfolder_name)
+            if not self.check_if_extracted_path(features_path):
+                # Navigate in the structure of audio folder and extract
+                # features of the each wav file
+                for path_to_file_audio in list_wav_files(audio_folder):
+                    features_array = self.calculate(
+                        path_to_file_audio
+                    )
+                    path_to_features_file = path_to_file_audio.replace(
+                        audio_folder, features_path
+                    )
+                    path_to_features_file = path_to_features_file.replace(
+                        'wav', 'npy'
+                    )
+                    np.save(path_to_features_file, features_array)
+
+                # Save parameters.json for future checking
+                self.set_as_extracted(features_path)
+        
+    def check_if_extracted_path(self, path):
+        json_features_folder = os.path.join(path, "parameters.json")
+        if not os.path.exists(json_features_folder):
+            return False
+        parameters_features_folder = load_json(json_features_folder)
+        for key in parameters_features_folder.keys():
+            if parameters_features_folder[key] != self.params[key]:
+                print(key, parameters_features_folder[key],  self.params[key])
+                return False
+        return True
+
+    def check_if_extracted(self, dataset):
         """
         Checks if the features saved in features_folder were
         calculated with the same parameters of self.params
@@ -176,17 +228,39 @@ class FeatureExtractor():
             Path to the features folder
 
         """
-
-        json_features_folder = os.path.join(features_folder, "parameters.json")
-        if not os.path.exists(json_features_folder):
-            return False
-        parameters_features_folder = load_json(json_features_folder)
-        for key in parameters_features_folder.keys():
-            if parameters_features_folder[key] != self.params[key]:
-                print(key, parameters_features_folder[key],  self.params[key])
+        features_path = self.get_features_path(dataset)
+        audio_path, subfolders = dataset.get_audio_paths(self.sr)
+        for audio_folder in subfolders:
+            subfolder_name = os.path.basename(audio_folder)
+            features_path_sub = os.path.join(features_path, subfolder_name)
+            feat_extracted = self.check_if_extracted_path(features_path_sub)
+            if not feat_extracted:
                 return False
 
         return True
+
+    # def check_if_extracted(self, features_folder):
+    #     """
+    #     Checks if the features saved in features_folder were
+    #     calculated with the same parameters of self.params
+
+    #     Parameters
+    #     ----------
+    #     path : str
+    #         Path to the features folder
+
+    #     """
+
+    #     json_features_folder = os.path.join(features_folder, "parameters.json")
+    #     if not os.path.exists(json_features_folder):
+    #         return False
+    #     parameters_features_folder = load_json(json_features_folder)
+    #     for key in parameters_features_folder.keys():
+    #         if parameters_features_folder[key] != self.params[key]:
+    #             print(key, parameters_features_folder[key],  self.params[key])
+    #             return False
+
+    #     return True
 
     def get_shape(self, length_sec=10.0):
         """
@@ -210,3 +284,10 @@ class FeatureExtractor():
         features_sample = self.calculate(audio_file)
         os.remove(audio_file)
         return features_sample.shape
+
+    def get_features_path(self, dataset):
+        feature_name = self.__class__.__name__
+        features_path = os.path.join(
+            dataset.dataset_path, self.features_folder, feature_name
+        )
+        return features_path
