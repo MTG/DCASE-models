@@ -54,3 +54,12 @@ def event_roll_to_event_list(event_roll, event_label_list, time_resolution):
                      'event_label': event_label})
 
     return event_list
+
+
+def tag_probabilities_to_tag_list(tag_probabilities, label_list,
+                                  threshold=0.5):
+    tag_binary = (tag_probabilities > threshold).astype(int)
+    tag_indexes = np.argwhere(tag_binary == 1)
+    tag_list = [label_list[index[0]] for index in tag_indexes]
+
+    return tag_list

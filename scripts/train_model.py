@@ -22,6 +22,7 @@ from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
 from dcase_models.utils.data import evaluation_setup
 
 sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
+tagging_datasets = ['SONYC_UST', 'FSDKaggle2018']
 
 
 def main():
@@ -123,7 +124,7 @@ def main():
     )
 
     scaler = Scaler(normalizer=params_model['normalizer'])
-    print('Fitting features ...')
+    print('Fitting scaler ...')
     scaler.fit(data_gen_train)
     print('Done!')
 
@@ -146,6 +147,8 @@ def main():
     metrics = ['classification']
     if args.dataset in sed_datasets:
         metrics = ['sed']
+    if args.dataset in tagging_datasets:
+        metrics = ['tagging']
 
     model_container = model_class(
         model=None, model_path=None, n_classes=n_classes,

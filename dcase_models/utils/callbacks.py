@@ -138,35 +138,6 @@ class SEDCallback(Callback):
             log data (from Callback class)
 
         """
-        # if type(self.data) in [list, tuple]:
-        #     X_val = self.data[0]
-        #     Y_val = self.data[1]
-        #     results = evaluate_metrics(
-        #         self.model, X_val, Y_val, ['sed'],
-        #         sequence_time_sec=self.sequence_time_sec,
-        #         metric_resolution_sec=self.metric_resolution_sec,
-        #         label_list=self.label_list
-        #     )
-        #     results = results['sed'].results()
-        # else:
-        #     for batch_index in range(0, len(self.validation_data)):
-        #         X_val, Y_val = self.validation_data.load_batch(batch_index)
-        #         seg_metrics = SegmentBasedMetrics(
-        #             self.label_list, time_resolution=self.metric_resolution_sec
-        #         )            
-        #         n_files = len(Y_val)
-        #         for i in range(n_files):
-        #             y_true = Y_val[i]
-        #             pred = self.model.predict(X_val[i])
-        #             pred = (pred > 0.5).astype(int) 
-        #             event_list_val = event_roll_to_event_list(
-        #                 y_true, self.label_list, self.sequence_time_sec)
-        #             event_list_pred = event_roll_to_event_list(
-        #                 pred, self.label_list, self.sequence_time_sec)
-
-        #             seg_metrics.evaluate(event_list_val, event_list_pred)                
-        #     results = seg_metrics.results()
-
         results = evaluate_metrics(
            self.model, self.data, ['sed'],
            label_list=self.label_list)
@@ -191,6 +162,81 @@ class SEDCallback(Callback):
             msg = 'F1 = {:.4f}, ER = {:.4f} - Best val F1: {:.4f} ({:d})\n'
             print(msg.format(self.current_F1, ER,
                              self.best_F1, self.epoch_best))
+            self.epochs_since_improvement += 1
+        if self.epochs_since_improvement >= self.early_stopping-1:
+            print('Not improvement for %d epochs, stopping the training' %
+                  self.early_stopping)
+            self.model.stop_training = True
+
+
+class TaggingCallback(Callback):
+    """Keras callback to calculate acc after each epoch and save
+    file with the weights if the evaluation improves
+    """
+
+    def __init__(self, data, file_weights=None, best_F1=0,
+                 early_stopping=0, considered_improvement=0.01,
+                 label_list=[]):
+        """ Initialize the keras callback
+        Parameters
+        ----------
+        data : tuple or KerasDataGenerator
+            Validation data for model evaluation
+            (X_val, Y_val) or KerasDataGenerator
+
+        file_weights : string
+            Path to the file with the weights
+
+        best_acc : float
+            Last accuracy value, only if continue
+
+        early_stopping : int
+            Number of epochs for cut the training if not improves
+            if 0, do not use it
+        """
+
+        self.data = data
+        self.best_F1 = best_F1
+        self.file_weights = file_weights
+        self.early_stopping = early_stopping
+        self.epochs_since_improvement = 0
+        self.epoch_best = 0
+        self.considered_improvement = considered_improvement
+        self.label_list = label_list
+
+    def on_epoch_end(self, epoch, logs={}):
+        """ This function is run when each epoch ends.
+        The metrics are calculated, printed and saved to the log file.
+        Parameters
+        ----------
+        epoch : int
+            number of epoch (from Callback class)
+
+        logs : dict
+            log data (from Callback class)
+
+        """
+        results = evaluate_metrics(
+           self.model, self.data, ['tagging'],
+           label_list=self.label_list)
+
+        results = results['tagging'].results()
+        
+        F1 = results['overall']['f_measure']['f_measure']
+        logs['F1'] = F1
+
+        self.current_F1 = F1
+
+        if self.current_F1 > self.best_F1 + self.considered_improvement:
+            self.best_F1 = self.current_F1
+            self.model.save_weights(self.file_weights)
+            msg = 'F1 = {:.4f} - Best val F1: {:.4f} (IMPROVEMENT, saving)\n'
+            print(msg.format(self.current_F1, self.best_F1))
+            self.epochs_since_improvement = 0
+            self.epoch_best = epoch
+        else:
+            print('F1 = {:.4f} - Best val F1: {:.4f} ({:d})\n'.format(
+                self.current_F1, self.best_F1, self.epoch_best))
             self.epochs_since_improvement += 1
         if self.epochs_since_improvement >= self.early_stopping-1:
             print('Not improvement for %d epochs, stopping the training' %

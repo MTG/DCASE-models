@@ -541,7 +541,7 @@ class FSDKaggle2018(Dataset):
 
     def build(self):
         self.audio_path = os.path.join(self.dataset_path, 'audio')
-        self.fold_list = ["train", "test"]
+        self.fold_list = ["train", "validate", "test"]
         self.meta_path = os.path.join(self.dataset_path, 'meta')
         self.label_list = []
 
@@ -553,7 +553,7 @@ class FSDKaggle2018(Dataset):
         )
 
         self.metadata = {}
-        for fold_ix, meta_file in enumerate([meta_file_train, meta_file_test]):
+        for meta_file in [meta_file_train, meta_file_test]:
             with open(meta_file) as csv_file:
                 csv_reader = csv.reader(csv_file, delimiter=',')
                 line_count = 0
@@ -567,10 +567,18 @@ class FSDKaggle2018(Dataset):
                     freesound_id = row[3]
                     license = row[4]
 
+                    if meta_file == meta_file_train:
+                        fold = 'train'
+                    else:
+                        if usage == 'Public':
+                            fold = 'validate'
+                        else:
+                            fold = 'test'
+
                     self.metadata[filename] = {
                         'label': label, 'usage': usage,
                         'freesound_id': freesound_id, 'license': license,
-                        'fold': self.fold_list[fold_ix]}
+                        'fold': fold}
                     if label not in self.label_list:
                         self.label_list.append(label)
 
@@ -580,8 +588,11 @@ class FSDKaggle2018(Dataset):
         self.file_lists = {fold: [] for fold in self.fold_list}
         for filename in self.metadata.keys():
             fold = self.metadata[filename]['fold']
+            fold_folder = fold
+            if fold == 'validate':
+                fold_folder = 'test' 
             file_path = os.path.join(
-                self.audio_path, fold, filename
+                self.audio_path, fold_folder, filename
             )
             self.file_lists[fold].append(file_path)
 

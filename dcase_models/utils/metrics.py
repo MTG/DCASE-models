@@ -2,8 +2,10 @@
 import numpy as np
 from scipy.stats import mode
 from dcase_models.utils.events import event_roll_to_event_list
+from dcase_models.utils.events import tag_probabilities_to_tag_list
 from sed_eval.sound_event import SegmentBasedMetrics
 from sed_eval.scene import SceneClassificationMetrics
+from sed_eval.audio_tag import AudioTaggingMetrics
 
 eps = 1e-6
 
@@ -125,6 +127,28 @@ def classification(Y_val, Y_predicted, label_list=[]):
             [{'scene_label': label_predicted, 'file': ''}])
 
     return acc_metrics
+
+
+def tagging(Y_val, Y_predicted, label_list=[]):
+    tagging_metrics = AudioTaggingMetrics(label_list)
+
+    n_files = len(Y_val)
+
+    for i in range(n_files):
+        y_true = Y_val[i]
+        pred = Y_predicted[i]
+        pred = np.mean(pred, axis=0)
+
+        tag_list_val = tag_probabilities_to_tag_list(
+            y_true[0], label_list, threshold=0.5)
+        tag_list_pred = tag_probabilities_to_tag_list(
+            pred, label_list, threshold=0.5)
+
+        tagging_metrics.evaluate(
+            [{'tags': tag_list_val, 'file': ''}],
+            [{'tags': tag_list_pred, 'file': ''}])
+
+    return tagging_metrics
 
 
 def accuracy(Y_val, Y_predicted):

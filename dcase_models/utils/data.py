@@ -27,7 +27,7 @@ def evaluation_setup(fold_test, folds, evaluation_mode,
         folds_train = ['train']
         folds_val = ['validate']
         folds_test = ['test']
-    elif evaluation_mode == 'train_test':
+    elif evaluation_mode == 'train-test':
         folds_train = ['train']
         folds_val = ['train']
         folds_test = ['test']

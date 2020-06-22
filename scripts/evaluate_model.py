@@ -19,6 +19,7 @@ from dcase_models.data.data_generator import DataGenerator
 from dcase_models.utils.files import load_json, load_pickle
 
 sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
+tagging_datasets = ['SONYC_UST', 'FSDKaggle2018']
 
 
 def main():
@@ -131,6 +132,9 @@ def main():
     metrics = ['classification']
     if dataset_name in sed_datasets:
         metrics = ['sed']
+    if args.dataset in tagging_datasets:
+        metrics = ['tagging']
+
     model_container = model_class(
         model=None, model_path=model_folder, metrics=metrics
     )

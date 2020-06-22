@@ -10,6 +10,7 @@ from keras.layers import Dense, Input
 from ..utils.files import save_json
 from ..utils.metrics import evaluate_metrics
 from ..utils.callbacks import ClassificationCallback, SEDCallback
+from ..utils.callbacks import TaggingCallback
 from ..data.data_generator import DataGenerator, KerasDataGenerator
 
 
@@ -233,6 +234,13 @@ class KerasModelContainer(ModelContainer):
                 considered_improvement=considered_improvement,
                 sequence_time_sec=sequence_time_sec,
                 metric_resolution_sec=metric_resolution_sec,
+                label_list=label_list
+            )
+        if self.metrics[0] == 'tagging':
+            metrics_callback = TaggingCallback(
+                data_val, file_weights=file_weights,
+                early_stopping=early_stopping,
+                considered_improvement=considered_improvement,
                 label_list=label_list
             )
         log = CSVLogger(file_log)
