@@ -128,6 +128,8 @@ def main():
     scaler.fit(data_gen_train)
     print('Done!')
 
+    # Pass scaler to data_gen_train to be used when data
+    # loading
     data_gen_train.set_scaler(scaler)
 
     data_gen_val = DataGenerator(
@@ -162,7 +164,7 @@ def main():
     # Set paths
     model_folder = os.path.join(
         args.models_path, args.model, args.dataset
-        )
+    )
     exp_folder = os.path.join(model_folder, args.fold_name)
     mkdir_if_not_exists(exp_folder, parents=True)
 

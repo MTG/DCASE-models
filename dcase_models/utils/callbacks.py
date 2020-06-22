@@ -1,14 +1,7 @@
 from .metrics import evaluate_metrics
-from .events import event_roll_to_event_list
-# from keras import backend as K
 from keras.callbacks import Callback
-# import matplotlib
-# matplotlib.use('Agg')
-eps = 1e-6
 
-from sed_eval.sound_event import SegmentBasedMetrics
-from sed_eval.scene import SceneClassificationMetrics
-import numpy as np
+eps = 1e-6
 
 
 class ClassificationCallback(Callback):
@@ -141,7 +134,7 @@ class SEDCallback(Callback):
         results = evaluate_metrics(
            self.model, self.data, ['sed'],
            label_list=self.label_list)
-           
+
         results = results['sed'].results()
         F1 = results['overall']['f_measure']['f_measure']
         ER = results['overall']['error_rate']['error_rate']
@@ -221,7 +214,7 @@ class TaggingCallback(Callback):
            label_list=self.label_list)
 
         results = results['tagging'].results()
-        
+
         F1 = results['overall']['f_measure']['f_measure']
         logs['F1'] = F1
 

@@ -52,12 +52,17 @@ class FeatureExtractor():
         Load an audio file and calculate features.
     set_as_extracted(path)
         Save a json file with the params.
-    check_if_extracted(features_folder)
-        Checks if the features were calculated before.
+    extract(dataset)
+        Extract features for each file in dataset.
+    check_if_extracted_path(path):
+        Check if the features in path were calculated before.
+    check_if_extracted(dataset):
+        Check if the features of each file in dataset was calculated.
     get_shape(length_sec=10.0)
         Run calculate with a dummy signal of length length_sec
         and returns the shape of the feature representation.
-
+    get_features_path(dataset):
+        Return the path to the features folder.
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
@@ -170,6 +175,17 @@ class FeatureExtractor():
             json.dump(self.params, fp)
 
     def extract(self, dataset):
+        """ Extract features for each file in dataset.
+
+        Call calculate() for each file in dataset and save the
+        result into the features path.
+
+        Parameters
+        ----------
+        dataset : Dataset
+            Instance of the dataset.
+
+        """
         features_path = self.get_features_path(dataset)
         mkdir_if_not_exists(features_path, parents=True)
 
@@ -208,6 +224,22 @@ class FeatureExtractor():
                 self.set_as_extracted(features_path)
 
     def check_if_extracted_path(self, path):
+        """ Check if the features saved in path were calculated.
+
+        Compare if the features were calculated with the same parameters
+        of self.params.
+
+        Parameters
+        ----------
+        path : str
+            Path to the features folder
+
+        Returns
+        -------
+        bool
+            True if the features were extracted before.
+
+        """
         json_features_folder = os.path.join(path, "parameters.json")
         if not os.path.exists(json_features_folder):
             return False
@@ -219,14 +251,19 @@ class FeatureExtractor():
         return True
 
     def check_if_extracted(self, dataset):
-        """
-        Checks if the features saved in features_folder were
-        calculated with the same parameters of self.params
+        """ Check if the features of each file in dataset was calculated.
+
+        Call check_if_extracted_path for each path in the dataset.
 
         Parameters
         ----------
         path : str
             Path to the features folder
+
+        Returns
+        -------
+        bool
+            True if the features were extracted before.
 
         """
         features_path = self.get_features_path(dataset)
@@ -251,7 +288,7 @@ class FeatureExtractor():
             Duration in seconds of the test signal
 
         Returns
-        ----------
+        -------
         tuple
             Shape of the feature representation
         """
@@ -264,6 +301,19 @@ class FeatureExtractor():
         return features_sample.shape
 
     def get_features_path(self, dataset):
+        """ Return the path to the features folder.
+
+        Parameters
+        ----------
+        dataset : Dataset
+            Instance of the dataset.
+
+        Returns
+        -------
+        features_path : str
+            Path to the features folder.
+
+        """
         feature_name = self.__class__.__name__
         features_path = os.path.join(
             dataset.dataset_path, self.features_folder, feature_name

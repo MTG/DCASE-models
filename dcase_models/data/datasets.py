@@ -1,4 +1,3 @@
-import glob
 import os
 import numpy as np
 import sys
@@ -16,7 +15,19 @@ import inspect
 
 
 class UrbanSound8k(Dataset):
-    ''' UrbanSound8k dataset class '''
+    """ UrbanSound8k dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for UrbanSound8k.
+
+    Url: https://urbansounddataset.weebly.com/urbansound8k.html
+
+    J. Salamon,  C.  Jacoby,  and  J.  P.  Bello
+    “A  dataset  and  taxonomy  for  urban  sound  research,”
+    22st  ACM  International  Conference  on  Multimedia (ACM-MM’14)
+    Orlando, FL, USA, November 2014
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -35,9 +46,6 @@ class UrbanSound8k(Dataset):
         for fold in self.fold_list:
             audio_folder = os.path.join(self.audio_path, fold)
             self.file_lists[fold] = list_wav_files(audio_folder)
-         #   self.file_lists[fold] = sorted(
-         #       glob.glob(os.path.join(audio_folder, '*.wav'))
-         #   )
 
     def get_annotations(self, file_path, features):
         y = np.zeros((len(features), len(self.label_list)))
@@ -57,7 +65,19 @@ class UrbanSound8k(Dataset):
 
 
 class ESC50(Dataset):
-    ''' ESC50 dataset class '''
+    """ ESC-50 dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for ESC-50.
+
+    Url: https://github.com/karolpiczak/ESC-50
+
+    K. J. Piczak
+    “Esc:  Dataset for environmental sound classification,”
+    Proceedings of the 23rd ACM international conference on Multimedia
+    Brisbane, Australia, October, 2015.
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -129,7 +149,21 @@ class ESC50(Dataset):
 
 
 class ESC10(ESC50):
-    ''' ESC10 dataset class '''
+    """ ESC-10 dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for ESC-10.
+
+    ESC-10 is a subsampled version of ESC-50.
+
+    Url: https://github.com/karolpiczak/ESC-50
+
+    K. J. Piczak
+    “Esc:  Dataset for environmental sound classification,”
+    Proceedings of the 23rd ACM international conference on Multimedia
+    Brisbane, Australia, October, 2015.
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -162,7 +196,19 @@ class ESC10(ESC50):
 
 
 class URBAN_SED(Dataset):
-    ''' URBAN-SED dataset class '''
+    """ URBAN-SED dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for URBAN-SED.
+
+    Url: http://urbansed.weebly.com/
+
+    J. Salamon,  D. MacConnell,  M. Cartwright,  P. Li,  and J. P.Bello.
+    "Scaper: A library for soundscape synthesis and augmentation".
+    IEEE Workshop on Applications of Signal Processing to Audio and Acoustics
+    New York, USA, October 2017.
+
+    """
 
     def __init__(self, dataset_path,
                  sequence_time=1.0, sequence_hop_time=0.5,
@@ -184,7 +230,6 @@ class URBAN_SED(Dataset):
         self.evaluation_mode = 'train-validate-test'
 
     def generate_file_lists(self):
-       # super().generate_file_lists()
         for fold in self.fold_list:
             audio_folder = os.path.join(self.audio_path, fold)
             self.file_lists[fold] = list_wav_files(audio_folder)
@@ -197,8 +242,6 @@ class URBAN_SED(Dataset):
                     self.annotations_folder, fold, label_file)
 
     def get_annotations(self, file_name, features, time_resolution=1.0):
-        #audio_path, _ = self.get_audio_paths()
-        #file_name = file_name.replace(audio_path, self.audio_path)
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
@@ -227,7 +270,22 @@ class URBAN_SED(Dataset):
 
 
 class SONYC_UST(Dataset):
-    ''' SONYC-UST dataset class '''
+    """ SONYC-UST dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for SONYC-UST.
+
+    Version: 2.1.0
+
+    Url: https://zenodo.org/record/3693077
+
+    M. Cartwright, et al.
+    "SONYC Urban Sound Tagging (SONYC-UST): A Multilabel Dataset
+    from an Urban Acoustic Sensor Network".
+    Proceedings of the Workshop on Detection and Classification
+    of Acoustic Scenes and Events (DCASE), 2019.
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -257,8 +315,6 @@ class SONYC_UST(Dataset):
         self.file_lists = {}
         for fold in self.fold_list:
             self.file_lists[fold] = []
-            #all_files = sorted(
-            #    glob.glob(os.path.join(self.audio_folder, '*.wav')))
             all_files = list_wav_files(self.audio_path)
             assert len(all_files) != 0
             for fil in all_files:
@@ -298,7 +354,9 @@ class SONYC_UST(Dataset):
 
 
 class _TAUUrbanAcousticScenes(Dataset):
-    ''' Base class for TAUUrbanAcousticScenes datasets'''
+    """ Base class for TAU Urban Acoustic Scenes datasets.
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -353,7 +411,21 @@ class _TAUUrbanAcousticScenes(Dataset):
 
 
 class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
-    ''' TAUUrbanAcousticScenes2019 dataset class '''
+    """ TAU Urban Acoustic Scenes 2019 dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for TAU Urban
+    Acoustic Scenes 2019.
+
+    Url: https://zenodo.org/record/2589280
+
+    A.  Mesaros,  T.  Heittola,  and  T.  Virtanen.
+    "A  multi-devicedataset for urban acoustic scene classification".
+    Proceedings of  the  Detection  and  Classification  of  Acoustic
+    Scenes and Events 2018 Workshop (DCASE 2018).
+    November 2018.
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -373,12 +445,28 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
         )
         if downloaded:
             move_all_files_to_parent(
-                self.dataset_path, "TAU-urban-acoustic-scenes-2019-development")
+                self.dataset_path,
+                "TAU-urban-acoustic-scenes-2019-development")
             self.set_as_downloaded()
 
 
 class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
-    ''' TAUUrbanAcousticScenes2020Mobile dataset class '''
+    """ TAU Urban Acoustic Scenes 2019 dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for TAU Urban
+    Acoustic Scenes 2020 Mobile.
+
+    Url: https://zenodo.org/record/3819968
+
+    T.  Heittola,  A.  Mesaros,  and  T.  Virtanen.
+    "Acoustic  sceneclassification   in   DCASE   2020  challenge:
+    generalizationacross devices and low complexity solutions".
+    Proceedings of  the  Detection  and  Classification  of  Acoustic
+    Scenes and Events  2020  Workshop  (DCASE  2020).
+    2020
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -534,7 +622,20 @@ class TUTSoundEvents2017(Dataset):
 
 
 class FSDKaggle2018(Dataset):
-    ''' FSDKaggle2018 dataset class '''
+    """ FSDKaggle2018 dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for FSDKaggle2018.
+
+    Url: https://zenodo.org/record/2552860
+
+    Eduardo Fonseca et al.
+    "General-purpose Tagging of Freesound Audio with AudioSet Labels:
+    Task Description, Dataset, and Baseline".
+    Proceedings of the DCASE 2018 Workshop.
+    2018.
+
+    """
 
     def __init__(self, dataset_path):
         super().__init__(dataset_path)
@@ -590,7 +691,7 @@ class FSDKaggle2018(Dataset):
             fold = self.metadata[filename]['fold']
             fold_folder = fold
             if fold == 'validate':
-                fold_folder = 'test' 
+                fold_folder = 'test'
             file_path = os.path.join(
                 self.audio_path, fold_folder, filename
             )
@@ -639,7 +740,20 @@ class FSDKaggle2018(Dataset):
 
 
 class MAVD(Dataset):
-    ''' MAVD-traffic dataset class '''
+    """ MAVD-traffic dataset.
+
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for MAVD-traffic.
+
+    Url: https://zenodo.org/record/3338727
+
+    P. Zinemanas,  P. Cancela,  and  M. Rocamora.
+    "MAVD: a dataset for sound event detection in urban environments"
+    Proceedings of the Detection and Classification of Acoustic
+    Scenes and Events 2019 Workshop (DCASE 2019).
+    October, 2019.
+
+    """
 
     def __init__(self, dataset_path,
                  sequence_time=1.0, sequence_hop_time=0.5,

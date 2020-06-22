@@ -7,8 +7,7 @@ from ..utils.files import list_wav_files, list_all_files
 
 
 class Dataset():
-    """
-    Abstract base class to load and manage DCASE datasets.
+    """ Abstract base class to load and manage DCASE datasets.
 
     This class can be redefined by inheritance (see UrbanSound8k, ESC50)
 
@@ -53,10 +52,12 @@ class Dataset():
         Changes sampling rate of each wav file in audio_path.
     check_sampling_rate(new_sr)
         Check if the dataset was resampled to new_sr.
+    convert_to_wav(remove_original=False):
+        Convert each file in the dataset to wav format.
     """
     def __init__(self, dataset_path):
-        """
-        Init Dataset
+        """ Init Dataset
+
         """
 
         self.dataset_path = dataset_path
@@ -64,8 +65,7 @@ class Dataset():
         self.build()
 
     def build(self):
-        """
-        Build the dataset.
+        """ Build the dataset.
 
         Define specific attributes of the dataset.
         It's mandatory to define audio_path, fold_list and label_list.
@@ -78,8 +78,7 @@ class Dataset():
         self.label_list = ['class1', 'class2', 'class3']
 
     def generate_file_lists(self):
-        """
-        Create self.file_lists, a dict that includes a list of files per fold.
+        """ Create file_lists, a dict that includes a list of files per fold.
 
         Each dataset has a different way of organizing the files. This
         function defines the dataset structure.
@@ -89,8 +88,7 @@ class Dataset():
         self.file_lists = {[] for fold in self.fold_list}
 
     def get_annotations(self, file_path, features):
-        """
-        Return the annotations of the file in file_path.
+        """ Return the annotations of the file in file_path.
 
         Parameters
         ----------
@@ -109,8 +107,7 @@ class Dataset():
         pass
 
     def download(self, zenodo_url, zenodo_files, force_download=False):
-        """
-        Download and decompress the dataset from zenodo.
+        """ Download and decompress the dataset from zenodo.
 
         Parameters
         ----------
@@ -136,8 +133,8 @@ class Dataset():
         return True
 
     def set_as_downloaded(self):
-        """
-        Save a download.txt file in dataset_path as a downloaded flag.
+        """ Save a download.txt file in dataset_path as a downloaded flag.
+
         """
         log_file = os.path.join(self.dataset_path, 'download.txt')
         with open(log_file, 'w') as txt_file:
@@ -145,8 +142,7 @@ class Dataset():
             txt_file.write('')
 
     def check_if_downloaded(self):
-        """
-        Check if the dataset was downloaded.
+        """ Check if the dataset was downloaded.
 
         Just check if exists download.txt file.
 
@@ -157,8 +153,7 @@ class Dataset():
         return os.path.exists(log_file)
 
     def get_audio_paths(self, sr=None):
-        """
-        Return paths to the audio folder.
+        """ Return paths to the audio folder.
 
         If sr is None, return audio_path. Else, return {audio_path}{sr}.
 
@@ -188,8 +183,7 @@ class Dataset():
         return audio_path, subfolders
 
     def change_sampling_rate(self, new_sr):
-        """
-        Change sampling rate of each wav file in audio_path.
+        """ Change sampling rate of each wav file in audio_path.
 
         Creates a new folder named audio_path{new_sr} (i.e audio22050)
         and converts each wav file in audio_path and save the result in
@@ -217,8 +211,7 @@ class Dataset():
             tfm.build(path_to_file, path_to_destination)
 
     def check_sampling_rate(self, sr):
-        """
-        Check if dataset was resampled before.
+        """ Check if dataset was resampled before.
 
         For now, only check if the folder {audio_path}{sr} exists and
         each wav file present in audio_path is also present in
@@ -253,6 +246,16 @@ class Dataset():
         return True
 
     def convert_to_wav(self, remove_original=False):
+        """ Convert each file in the dataset to wav format.
+
+        If remove_original is False, the original files will be deleted
+
+        Parameters
+        ----------
+        remove_original : bool
+            Remove original files.
+
+        """
         tfm = sox.Transformer()
 
         for path_to_file in list_all_files(self.audio_path):

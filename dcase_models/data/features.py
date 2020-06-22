@@ -8,7 +8,16 @@ from .feature_extractor import FeatureExtractor
 
 
 class Spectrogram(FeatureExtractor):
-    ''' Spectrogram feature class '''
+    """ Spectrogram feature extractor.
+
+    Based in librosa.core.stft function.
+
+    Note:
+    -----
+    The spectrogram is calculated all over the file and then
+    it is separated in overlapped frames.
+
+    """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100, n_fft=1024):
@@ -33,6 +42,9 @@ class Spectrogram(FeatureExtractor):
         # Power
         spectrogram = np.abs(stft)**2
 
+        # Convert to db
+        spectrogram = librosa.power_to_db(spectrogram)
+
         # Transpose time and freq dims, shape
         spectrogram = spectrogram.T
 
@@ -54,7 +66,16 @@ class Spectrogram(FeatureExtractor):
 
 
 class MelSpectrogram(FeatureExtractor):
-    ''' MelSpectrogram feature class '''
+    """ MelSpectrogram feature extractor.
+
+    Based in librosa.core.stft and librosa.filters.mel.
+
+    Note:
+    -----
+    The mel-spectogram is calculated all over the file and then
+    it is separated in overlapped frames.
+
+    """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100,
@@ -115,8 +136,11 @@ class MelSpectrogram(FeatureExtractor):
 
 
 class Openl3(FeatureExtractor):
-    ''' Openl3 feature class '''
+    """ Openl3 feature extractor.
 
+    Based in openl3 library.
+
+    """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=512, sr=44100,
                  content_type="env", input_repr="mel256", embedding_size=512):

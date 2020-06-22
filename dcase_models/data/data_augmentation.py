@@ -8,24 +8,10 @@ from ..utils.files import list_wav_files
 
 class AugmentedDataset(Dataset):
     """
-    Class manage data augmentation. Includes functions for generating
+    Class manage data augmentation. Includes functions to generate
     data augmented instances of the audio files.
 
     Basically, its converts an instance of Dataset into an augmented one.
-
-    Attributes
-    ----------
-    dataset : Dataset
-        Instance of Dataset to be augmented.
-    augmentations_list : list
-        List of types and parameters of augmentations.
-        Dict of form: [{'type' : aug_type, 'param1': param1 ...} ...].
-        e.g. [
-            {'type': 'pitch_shift', 'n_semitones': -1},
-            {'type': 'time_stretching', 'factor': 1.05}
-        ]
-    sr : int
-        Sampling rate
 
     Methods
     -------
@@ -39,8 +25,7 @@ class AugmentedDataset(Dataset):
 
     def __init__(self, dataset, sr,
                  augmentations_list):
-        """
-        Initialize the AugmentedDataset.
+        """ Initialize the AugmentedDataset.
 
         Initialize sox Transformers for each type of augmentation.
 
@@ -83,8 +68,7 @@ class AugmentedDataset(Dataset):
         self.__dict__.update(dataset.__dict__)
 
     def generate_file_lists(self):
-        """
-        Create self.file_lists, a dict that includes a list of files per fold.
+        """ Create self.file_lists, a dict that includes a list of files per fold.
 
         Just call dataset.generate_file_lists() and copy the attribute.
 
@@ -93,8 +77,7 @@ class AugmentedDataset(Dataset):
         self.file_lists = self.dataset.file_lists.copy()
 
     def process(self):
-        """
-        Do the data augmentation for each file in dataset.
+        """ Do the data augmentation for each file in dataset.
 
         Replicate the folder structure of {DATASET_PATH}/audio/original
         into the folder of each augmentation folder.
@@ -129,8 +112,7 @@ class AugmentedDataset(Dataset):
                 )
 
     def get_audio_paths(self, sr=None):
-        """
-        Return paths to the folders that include the data augmented files.
+        """ Return paths to the folders that include the data augmented files.
 
         The folder of each augmentation is defined using its name and
         some parameters.

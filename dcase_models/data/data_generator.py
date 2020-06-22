@@ -10,59 +10,41 @@ from .dataset_base import Dataset
 
 
 class DataGenerator():
-    """
-    DataGenerator includes methods to load features files from DCASE datasets.
-
-    It's also used to calculate features in each file in the dataset.
+    """ Includes methods to load features files from DCASE datasets.
 
     Attributes
     ----------
-    dataset : Dataset or classes inherited from.
-        Instance of Dataset.
-    feature_extractor : FeatureExtractor or classes inherited from.
-        Instance of FeatureExtractor. This is only needed to use
-        functions related to feature extraction
-    features_folder : str
-        Name of to the folder with the features files,
-        default is 'features'.
-    use_validate_set : bool
-        If True, use validate set.
-    features_path : str
-        Path to features folder.
-    audio_path : str
-        Path to the audio folder.
+    features_file_list : list of str
+        List of features files to be loaded.
 
     Methods
     -------
     data_generation(list_files):
-        Returns features and annotations for all files in list_files.
-    load_data():
-        Creates self.data that contains features and annotations for all files
-        in all folds.
-    get_data_for_training(fold_test, upsampling=False,
-                          evaluation_mode='cross-validation'):
-        Returns arrays and lists for use in training process
-    get_data_for_testing(fold_test):
-        Returns lists to use to evaluate a model
-    get_one_example_per_file(fold_test)
-        Similar to get_data_for_training, but returns only one
-        example (sequence) for each file
+        Return features and annotations for all files in list_files.
+    get_data():
+        Return all data from features_file_list.
+    get_data_batch(index):
+        Return the data from rhe batch given by argument.
     convert_features_path_to_audio_path(features_file)
-        Convert the path to a feature file (or list of files)
-        to the path to the audio file.
-    convert_audio_path_to_features_path(audio_file)
-        Convert the path to an audio file (or list of files)
-        to the path to the feature file.
-    extract_features()
-        Calculate features for each file in the dataset.
-    check_if_features_extracted()
-        Check if the features were extracted before.
+        Convert features path(s) to audio path(s).
+    convert_audio_path_to_features_path(audio_file, subfolder='')
+        Convert audio path(s) to features path(s).
+    paths_remove_aug_subfolder(path)
+        Remove subfolder related to augmentation from path.
+    shuffle_list()
+        Shuffle features_file_list.
+    set_scaler(scaler)
+        Set scaler object.
+
     """
 
     def __init__(self, dataset, feature_extractor, folds,
                  batch_size=32, shuffle=True,
-                 train=True, scaler=None, **kwargs):
-        """ Initialize the DataGenerator
+                 train=True, scaler=None):
+        """ Initialize the DataGenerator.
+
+        Generate the features_file_list by concatenating all the files
+        from the folds pass as an argument.
 
         Parameters
         ----------
@@ -70,8 +52,23 @@ class DataGenerator():
             Path to the dataset fold
         feature_extractor : FeatureExtractor or classes inherited from.
             Instance of FeatureExtractor. This is only needed to use
-            functions related to feature extraction
-
+            functions related to feature extraction.
+        folds : list of str
+            List of folds to be loaded. Each fold has to be in
+            dataset.fold_list.
+            e.g. ['fold1', 'fold2', 'fold3', ...]
+        batch_size : int
+            Number of files loaded when call get_data_batch().
+        shuffle: bool
+            If True, the features_file_list is shuffled.
+        train : bool
+            If True, the data loaded is concatenated and converted
+            to a numpy array. If False, get_data() and get_data_batch()
+            returns a list, when each element are the features of each
+            file in the features_file_list.
+        scaler : Scaler or None
+            If is not None, the Scaler object is used to scale the data
+            after loading.
         """
         # General attributes
         self.dataset = dataset
@@ -81,11 +78,6 @@ class DataGenerator():
         self.shuffle = shuffle
         self.train = train
         self.scaler = scaler
-        self.features_folder = kwargs.get('features_folder', 'features')
-        self.use_validate_set = kwargs.get('use_validate_set', True)
-        self.evaluation_mode = kwargs.get(
-            'evaluation_mode', 'cross-validation'
-        )
 
         if (Dataset not in inspect.getmro(dataset.__class__)):
             raise AttributeError(
@@ -99,8 +91,6 @@ class DataGenerator():
         self.features_path = self.feature_extractor.get_features_path(
             dataset
         )
-
-        self.audio_path = self.dataset.get_audio_paths(feature_extractor.sr)
 
         self.features_file_list = []
         self.dataset.generate_file_lists()
@@ -122,19 +112,19 @@ class DataGenerator():
         self.data = {}
 
     def data_generation(self, list_files):
-        """ Returns features and annotations for all files in list_files
+        """ Return features and annotations for all files in list_files.
 
         Parameters
         ----------
-        list_IDs_temp : list
-            List of file names
+        list_files : list
+            List of file paths.
 
-        Return
-        ----------
+        Returns
+        -------
         features_list : list of ndarray
-            List of features for each file
+            List of features for each file.
         annotations : list of ndarray
-            List of annotations matrix for each file
+            List of annotations matrix for each file.
 
         """
         features_list = []
@@ -151,6 +141,20 @@ class DataGenerator():
         return features_list, annotations
 
     def get_data(self):
+        """ Return all data from the selected folds.
+
+        If train were set as True, the output is concatenated and
+        converted to a numpy array. Otherwise the outputs are list where
+        each element are the features of each file.
+
+        Returns
+        -------
+        X : list or ndarray
+            List or array of features for each file.
+        Y : list or ndarray
+            List or array of annotations for each file.
+
+        """
         X_list, Y_list = self.data_generation(self.features_file_list)
 
         if self.scaler is not None:
@@ -166,6 +170,20 @@ class DataGenerator():
         return X, Y
 
     def get_data_batch(self, index):
+        """ Return the data from the batch given by argument.
+
+        If train were set as True, the output is concatenated and
+        converted to a numpy array. Otherwise the outputs are list where
+        each element are the features of each file.
+
+        Returns
+        -------
+        X : list or ndarray
+            List or array of features for each file.
+        Y : list or ndarray
+            List or array of annotations for each file.
+
+        """
         list_file_batch = self.features_file_list[
             index*self.batch_size:(index+1)*self.batch_size
         ]
@@ -186,19 +204,17 @@ class DataGenerator():
         return X, Y
 
     def convert_features_path_to_audio_path(self, features_file):
-        """
-        Convert the path to a feature file (or list of files)
-        to the path to the audio file.
+        """ Convert features path(s) to audio path(s).
 
         Parameters
         ----------
         features_file : str or list of str
-            Path to the features file or files.
+            Path(s) to the features file(s).
 
-        Return
-        ----------
+        Returns
+        -------
         audio_file : str or list of str
-            Path to the audio file or files.
+            Path(s) to the audio file(s).
 
         """
 
@@ -218,19 +234,17 @@ class DataGenerator():
         return audio_file
 
     def convert_audio_path_to_features_path(self, audio_file, subfolder=''):
-        """
-        Convert the path to an audio file (or list of files)
-        to the path to the feature file.
+        """ Convert audio path(s) to features path(s).
 
         Parameters
         ----------
         audio_file : str or list of str
-            Path to the audio file or files.
+            Path(s) to the audio file(s).
 
-        Return
-        ----------
-        audio_file : str or list of str
-            Path to the features file or files.
+        Returns
+        -------
+        features_file : str or list of str
+            Path(s) to the features file(s).
 
         """
         features_path = os.path.join(self.features_path, subfolder)
@@ -251,6 +265,21 @@ class DataGenerator():
         return features_file
 
     def paths_remove_aug_subfolder(self, path):
+        """ Remove subfolder related to augmentation from path.
+
+        Convert DATASET_PATH/audio/original into DATASET_PATH/audio
+
+        Parameters
+        ----------
+        path : str or list of str
+            Path to be converted.
+
+        Returns
+        -------
+        features_file : str or list of str
+            Path(s) to the features file(s).
+
+        """
         audio_path, subfolders = self.dataset.get_audio_paths()
         new_path = None
         for subfolder in subfolders:
@@ -261,14 +290,26 @@ class DataGenerator():
         return new_path
 
     def shuffle_list(self):
-        'Updates indexes after each epoch'
+        """ Shuffle features_file_list.
+
+        Note
+        ----
+        Only shuffle the list if shuffle is True.
+
+        """
         if self.shuffle:
             random.shuffle(self.features_file_list)
 
     def __len__(self):
+        """ Get the number of batches.
+
+        """
         return int(np.ceil(len(self.features_file_list) / self.batch_size))
 
     def set_scaler(self, scaler):
+        """ Set scaler object.
+
+        """
         self.scaler = scaler
 
 

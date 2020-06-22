@@ -107,13 +107,13 @@ def main():
         features.extract(dataset)
         print('Done!')
 
-    # Set paths 
+    # Set paths
     if args.fine_tuning is None:
         dataset_path = args.dataset
     else:
         dataset_path = args.dataset + '_ft_' + args.fine_tuning
 
-    model_folder = os.path.join(args.models_path, args.model, dataset_path)        
+    model_folder = os.path.join(args.models_path, args.model, dataset_path)
     exp_folder = os.path.join(model_folder, args.fold_name)
 
     # Load scaler

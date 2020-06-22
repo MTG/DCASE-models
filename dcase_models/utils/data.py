@@ -38,7 +38,7 @@ def evaluation_setup(fold_test, folds, evaluation_mode,
         folds_val = [fold_val]
         folds_test = ['test']
     else:
-        raise AttributeError("Incorrect evaluation_mode %s" % evaluation_mode)    
+        raise AttributeError("Incorrect evaluation_mode %s" % evaluation_mode)
 
     return folds_train, folds_val, folds_test
 
