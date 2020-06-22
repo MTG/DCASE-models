@@ -67,6 +67,9 @@ class AugmentedDataset(Dataset):
         # Copy attributes of dataset
         self.__dict__.update(dataset.__dict__)
 
+    def get_annotations(self, file_path, features):
+        return self.dataset.get_annotations(file_path, features)
+
     def generate_file_lists(self):
         """ Create self.file_lists, a dict that includes a list of files per fold.
 
@@ -88,7 +91,7 @@ class AugmentedDataset(Dataset):
 
         # Get path to the original audio files and list of
         # folders with augmented files.
-        _, sub_folders = self.get_audio_paths()
+        _, sub_folders = self.get_audio_paths(self.sr)
         path_original = sub_folders[0]
         paths_augments = sub_folders[1:]
 
@@ -139,7 +142,10 @@ class AugmentedDataset(Dataset):
             ]
 
         """
-        audio_path = self.audio_path + str(self.sr)
+        if sr is not None:
+            audio_path = self.audio_path + str(sr)
+        else:
+            audio_path = self.audio_path
         subfolders = [os.path.join(audio_path, 'original')]
 
         for augmentation in self.augmentations_list:

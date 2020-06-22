@@ -90,7 +90,7 @@ class Scaler():
             if len(self.scaler) > 0:
                 min_v = min(min_v, self.scaler[0])
                 max_v = max(max_v, self.scaler[1])
-  
+
             self.scaler = [min_v, max_v]
 
     def transform(self, X):
@@ -139,7 +139,7 @@ class Scaler():
             X = X_temp.reshape(X_dims)
         if self.normalizer == 'minmax':
             X = 2*((X-self.scaler[0]) /
-                (self.scaler[1]-self.scaler[0])-0.5)
+                   (self.scaler[1]-self.scaler[0])-0.5)
         return X
 
     def inverse_transform(self, X):

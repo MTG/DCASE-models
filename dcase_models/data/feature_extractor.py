@@ -204,8 +204,8 @@ class FeatureExtractor():
 
         for audio_folder in subfolders:
             subfolder_name = os.path.basename(audio_folder)
-            features_path = os.path.join(features_path, subfolder_name)
-            if not self.check_if_extracted_path(features_path):
+            features_path_sub = os.path.join(features_path, subfolder_name)
+            if not self.check_if_extracted_path(features_path_sub):
                 # Navigate in the structure of audio folder and extract
                 # features of the each wav file
                 for path_to_file_audio in list_wav_files(audio_folder):
@@ -213,7 +213,7 @@ class FeatureExtractor():
                         path_to_file_audio
                     )
                     path_to_features_file = path_to_file_audio.replace(
-                        audio_folder, features_path
+                        audio_path, features_path
                     )
                     path_to_features_file = path_to_features_file.replace(
                         'wav', 'npy'
@@ -221,7 +221,7 @@ class FeatureExtractor():
                     np.save(path_to_features_file, features_array)
 
                 # Save parameters.json for future checking
-                self.set_as_extracted(features_path)
+                self.set_as_extracted(features_path_sub)
 
     def check_if_extracted_path(self, path):
         """ Check if the features saved in path were calculated.

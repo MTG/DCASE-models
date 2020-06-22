@@ -16,6 +16,7 @@ from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
+from dcase_models.data.data_augmentation import AugmentedDataset
 from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import load_json
 from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
@@ -57,7 +58,12 @@ def main():
         help='path to save the trained model',
         default='../trained_models'
     )
+    parser.add_argument('--aug', dest='augmentation', action='store_true')
+    parser.add_argument('--no-aug', dest='augmentation', action='store_false')
+    parser.set_defaults(augmentation=False)
     args = parser.parse_args()
+
+    print(args.augmentation)
 
     print(__doc__)
 
@@ -88,6 +94,21 @@ def main():
 
     if args.fold_name not in dataset.fold_list:
         raise AttributeError('Fold not available')
+
+    # Data augmentation
+    if args.augmentation:
+        # Define the augmentations
+        augmentations = params['data_augmentations']
+
+        # Initialize AugmentedDataset
+        dataset = AugmentedDataset(
+            dataset, params['features']['sr'], augmentations
+        )
+
+        # Process all files
+        print('Doing data augmentation ...')
+        dataset.process()
+        print('Done!')
 
     # Get and init feature class
     features_class = get_available_features()[args.features]

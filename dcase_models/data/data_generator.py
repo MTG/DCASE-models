@@ -7,6 +7,7 @@ from keras.utils import Sequence
 
 from .feature_extractor import FeatureExtractor
 from .dataset_base import Dataset
+from .data_augmentation import AugmentedDataset
 
 
 class DataGenerator():
@@ -97,6 +98,9 @@ class DataGenerator():
         audio_path, subfolders = self.dataset.get_audio_paths(
             self.feature_extractor.sr
         )
+        # If not train, don't use augmentation
+        if not train:
+            subfolders = [subfolders[0]]
         for fold in folds:
             for subfolder in subfolders:
                 subfolder_name = os.path.basename(subfolder)
@@ -133,7 +137,12 @@ class DataGenerator():
         for file_name in list_files:
             features = np.load(file_name)
             features_list.append(features)
-            file_audio = self.convert_features_path_to_audio_path(file_name)
+            if type(self.dataset) is AugmentedDataset:
+                file_audio = self.convert_features_path_to_audio_path(
+                    file_name)
+            else:
+                file_audio = self.convert_features_path_to_audio_path(
+                    file_name)
             file_audio = self.paths_remove_aug_subfolder(file_audio)
             y = self.dataset.get_annotations(file_audio, features)
             annotations.append(y)
@@ -187,10 +196,8 @@ class DataGenerator():
         list_file_batch = self.features_file_list[
             index*self.batch_size:(index+1)*self.batch_size
         ]
-
         # Generate data
         X_list, Y_list = self.data_generation(list_file_batch)
-
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
 
@@ -203,7 +210,7 @@ class DataGenerator():
 
         return X, Y
 
-    def convert_features_path_to_audio_path(self, features_file):
+    def convert_features_path_to_audio_path(self, features_file, sr=None):
         """ Convert features path(s) to audio path(s).
 
         Parameters
@@ -217,17 +224,18 @@ class DataGenerator():
             Path(s) to the audio file(s).
 
         """
+        audio_path, _ = self.dataset.get_audio_paths(sr=sr)
 
         if type(features_file) is str:
             audio_file = features_file.replace(
-                self.features_path, self.dataset.audio_path
+                self.features_path, audio_path
             )
             audio_file = audio_file.replace('.npy', '.wav')
         elif type(features_file) is list:
             audio_file = []
             for j in range(len(features_file)):
                 audio_file_j = features_file[j].replace(
-                    self.features_path, self.dataset.audio_path
+                    self.features_path, audio_path
                 )
                 audio_file_j = audio_file_j.replace('.npy', '.wav')
                 audio_file.append(audio_file_j)
@@ -267,7 +275,7 @@ class DataGenerator():
     def paths_remove_aug_subfolder(self, path):
         """ Remove subfolder related to augmentation from path.
 
-        Convert DATASET_PATH/audio/original into DATASET_PATH/audio
+        Convert DATASET_PATH/audio/original/... into DATASET_PATH/audio/...
 
         Parameters
         ----------
@@ -281,6 +289,7 @@ class DataGenerator():
 
         """
         audio_path, subfolders = self.dataset.get_audio_paths()
+        audio_path_sr, subfolders_sr = self.dataset.get_audio_paths()
         new_path = None
         for subfolder in subfolders:
             if subfolder in path:
