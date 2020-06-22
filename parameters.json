@@ -107,6 +107,7 @@
     },
     "data_augmentations": [
         {"type": "pitch_shift", "n_semitones": -1},
-        {"type": "time_stretching", "factor": 1.05}       
+        {"type": "time_stretching", "factor": 1.05},
+        {"type": "white_noise", "snr": 60}  
     ]
 }

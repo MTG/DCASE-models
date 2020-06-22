@@ -1,9 +1,72 @@
 import os
 import sox
+import soundfile as sf
+import numpy as np
+from librosa.core import db_to_power, power_to_db
 
 from .dataset_base import Dataset
 from ..utils.files import duplicate_folder_structure
 from ..utils.files import list_wav_files
+
+
+class WhiteNoise():
+    """ Implement white noise augmentation.
+
+    The structure is similar than sox.Transformer to keep
+    compatibility with sox.
+
+    Methods
+    -------
+    build(file_origin, file_destination)
+        Add noise to the file_origin and save the result in file_destination.
+
+    """
+    def __init__(self, snr):
+        """ Initialize the WhiteNoise.
+
+        Parameters
+        ----------
+        snr : float
+            Signal to noise ratio.
+
+        """
+        self.snr = snr
+
+    def build(self, file_origin, file_destination):
+        """ Add noise to the file_origin and save the result in file_destination.
+
+        Parameters
+        ----------
+        file_origin : str
+            Path to the source file.
+        file_destination : str
+            Path to the destination file.
+
+        """
+        audio, sr = sf.read(file_origin)
+        # Calculate signal mean power
+        s_power = np.mean(audio**2)
+        s_db = power_to_db(s_power)
+
+        # Get noise power
+        n_db = s_db - self.snr
+        n_power = db_to_power(n_db)
+
+        # Define noise signal
+        noise = np.random.normal(
+            loc=0.0, scale=np.sqrt(n_power), size=audio.shape
+        )
+
+        # Sum noise
+        aug_audio = audio + noise
+
+        # Check if the new singal clipped
+        if np.any(aug_audio > 1.0):
+            # TODO: check this solution
+            aug_audio = aug_audio/np.amax(aug_audio)
+
+        # Save result to file
+        sf.write(file_destination, aug_audio, sr)
 
 
 class AugmentedDataset(Dataset):
@@ -62,6 +125,8 @@ class AugmentedDataset(Dataset):
             if aug_type == 'time_stretching':
                 tfm.tempo(augmentation['factor'])
                 # tfm.stretch(augmentation['factor'])
+            if aug_type == 'white_noise':
+                tfm = WhiteNoise(augmentation['snr'])
             augmentations_list[index]['transformer'] = tfm
 
         # Copy attributes of dataset
@@ -154,6 +219,8 @@ class AugmentedDataset(Dataset):
                 aug_folder = 'pitch_shift_%d' % augmentation['n_semitones']
             if aug_type == 'time_stretching':
                 aug_folder = 'time_stretching_%2.2f' % augmentation['factor']
+            if aug_type == 'white_noise':
+                aug_folder = 'white_noise_%2.2f' % augmentation['snr']
             subfolders.append(os.path.join(audio_path, aug_folder))
 
         return audio_path, subfolders
