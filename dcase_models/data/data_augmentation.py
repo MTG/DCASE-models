@@ -152,7 +152,9 @@ class AugmentedDataset(Dataset):
 
         """
         if not self.dataset.check_sampling_rate(self.sr):
+            print("Changing sampling rate ...")
             self.dataset.change_sampling_rate(self.sr)
+            print('Done!')
 
         # Get path to the original audio files and list of
         # folders with augmented files.
@@ -167,7 +169,6 @@ class AugmentedDataset(Dataset):
             # Replicate folder structure of the original files into
             # the augmented folder.
             duplicate_folder_structure(path_original, path_augmented)
-
             # Process each file in path_original
             for path_to_file in list_wav_files(path_original):
                 path_to_destination = path_to_file.replace(

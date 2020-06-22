@@ -1,8 +1,26 @@
-import os
-# import numpy as np
-
-
 def get_fold_val(fold_test, fold_list):
+    """ Get the validation fold given the test fold.
+
+    Useful for cross-validation evaluation mode.
+
+    Return the next fold in a circular way.
+    e.g. if the fold_list is ['fold1', 'fold2',...,'fold10'] and
+    the fold_test is 'fold1', then return 'fold2'.
+    If the fold_test is 'fold10', return 'fold1'.
+
+    Parameters
+    ----------
+    fold_test : str
+        Fold used for model testing.
+    fold_list : list of str
+        Fold list.
+
+    Returns
+    -------
+    str
+        Validation fold.
+
+    """
     N_folds = len(fold_list)
     fold_test_ix = [k for k, v in enumerate(fold_list) if v == fold_test][0]
     # sum(divmod(fold_test_ix+1,N_folds))
@@ -13,6 +31,34 @@ def get_fold_val(fold_test, fold_list):
 
 def evaluation_setup(fold_test, folds, evaluation_mode,
                      use_validate_set=True):
+    """ Return a evaluation setup given by the evaluation_mode.
+
+    Return fold list for training, validatin and testing the model.
+
+    Each evaluation_mode return different lists.
+
+    Parameters
+    ----------
+    fold_test : str
+        Fold used for model testing.
+    folds : list of str
+        Fold list.
+    evaluation_mode : str
+        Evaluation mode ('cross-validation', 'train-validate-test',
+        'cross-validation-with-test', 'train-test')
+    use_validate_set : bool
+        If not, the validation set is the same as the train set.
+
+    Returns
+    -------
+    list
+        List of folds for training
+    list
+        List of folds for validating
+    list
+        List of folds for testing
+
+    """
     if evaluation_mode == 'cross-validation':
         fold_val = get_fold_val(fold_test, folds)
         folds_train = folds.copy()  # list(range(1,N_folds+1))
@@ -41,12 +87,3 @@ def evaluation_setup(fold_test, folds, evaluation_mode,
         raise AttributeError("Incorrect evaluation_mode %s" % evaluation_mode)
 
     return folds_train, folds_val, folds_test
-
-
-def check_model_exists(path):
-    file_weights = os.path.join(path, "best_weights.hdf5")
-    file_json = os.path.join(path, "model.json")
-    file_scaler = os.path.join(path, "scaler.pickle")
-    return (os.path.exists(file_weights) &
-            os.path.exists(file_json) &
-            os.path.exists(file_scaler))

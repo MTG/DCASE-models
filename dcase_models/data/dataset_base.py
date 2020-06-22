@@ -223,7 +223,7 @@ class Dataset():
             Sampling rate.
 
         Returns
-        ----------
+        -------
         bool
             True if the dataset was resampled before.
 
@@ -241,7 +241,6 @@ class Dataset():
             # TODO: check if the audio file was resampled correctly,
             # not only if exists.
             if not os.path.exists(path_to_destination):
-                print(path_to_destination)
                 return False
         return True
 

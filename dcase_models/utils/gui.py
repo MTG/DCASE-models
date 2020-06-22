@@ -5,6 +5,21 @@ import numpy as np
 
 
 def encode_audio(data, sr):
+    """ Encode an audio signal for web applications.
+
+    Parameters
+    ----------
+    data : array
+        Audio signal.
+    sr : int
+        Sampling rate
+
+    Returns
+    -------
+    str
+        Encoded audio signal.
+
+    """
     import base64
     if len(data.shape) == 1:
         n_channels = 1

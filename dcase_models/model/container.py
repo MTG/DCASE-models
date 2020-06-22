@@ -15,8 +15,7 @@ from ..data.data_generator import DataGenerator, KerasDataGenerator
 
 
 class ModelContainer():
-    """
-    Abstract base class to store and manage models.
+    """ Abstract base class to store and manage models.
 
     Attributes
     ----------
@@ -55,7 +54,8 @@ class ModelContainer():
     def __init__(self, model=None, model_path=None,
                  model_name="ModelContainer",
                  metrics=['accuracy']):
-        """
+        """ Initialize ModelContainer
+
         Parameters
         ----------
         model : keras model or similar
@@ -66,6 +66,7 @@ class ModelContainer():
             Model name
         metrics : list of str
             List of metrics used for evaluation
+
         """
         self.model = model
         self.model_path = model_path
@@ -345,6 +346,7 @@ class KerasModelContainer(ModelContainer):
         ----------
         weights_folder : str
             Path to save the weights file
+
         """
         weights_file = 'best_weights.hdf5'
         weights_path = os.path.join(weights_folder, weights_file)
@@ -359,6 +361,7 @@ class KerasModelContainer(ModelContainer):
         ----------
         weights_folder : str
             Path to load the weights file
+
         """
         basepath = os.path.dirname(__file__)
         weights_file = self.model_name + '.hdf5'
@@ -372,14 +375,16 @@ class KerasModelContainer(ModelContainer):
         return trainable_count
 
     def check_if_model_exists(self, folder, **kwargs):
-        """
-        Save model parameters to parameters.json file in
-        the given folder path.
+        """ Check if the model already exits in the path.
+
+        Check if the folder/model.json file exists and includes
+        the same model than self.model.
 
         Parameters
         ----------
         folder : str
-            Path to the folder to save model.json file
+            Path to the folder to check.
+
         """
         json_file = os.path.join(folder, 'model.json')
         if not os.path.exists(json_file):
@@ -401,6 +406,19 @@ class KerasModelContainer(ModelContainer):
         return models_are_same
 
     def cut_network(self, layer_where_to_cut):
+        """ Cut the network in the layer passed as argument.
+
+        Parameters
+        ----------
+        layer_where_to_cut : str or int
+            Layer name (str) or index (int) where cut the model.
+
+        Returns
+        -------
+        keras.models.Model
+            Cutted model.
+
+        """
         if type(layer_where_to_cut) == str:
             last_layer = self.model.get_layer(layer_where_to_cut)
         elif type(layer_where_to_cut) == int:
@@ -416,9 +434,9 @@ class KerasModelContainer(ModelContainer):
     def fine_tuning(self, layer_where_to_cut, new_number_of_classes=10,
                     new_activation='softmax',
                     freeze_source_model=True, new_model=None):
-        """
-        Create a new model for fine-tuning. Cut the model in
-        the layer_where_to_cut layer
+        """ Create a new model for fine-tuning.
+
+        Cut the model in the layer_where_to_cut layer
         and add a new fully-connected layer.
 
         Parameters
@@ -441,6 +459,7 @@ class KerasModelContainer(ModelContainer):
             If is not None, this model is added after the cut model.
             This is useful if you want add more than
             a fully-connected layer.
+
         """
         # cut last layer
         model_without_last_layer = self.cut_network(layer_where_to_cut)
@@ -464,10 +483,31 @@ class KerasModelContainer(ModelContainer):
             'source_model').trainable = not freeze_source_model
 
     def get_available_intermediate_outputs(self):
+        """ Return a list of available intermediate outputs.
+
+        Return a list of model's layers.
+
+        Returns
+        -------
+        list of str
+            List of layers names.
+
+        """
         layer_names = [layer.name for layer in self.model.layers]
         return layer_names
 
     def get_intermediate_output(self, output_ix_name, inputs):
+        """ Return the output of the model in a given layer.
+
+        Cut the model in the given layer and predict the output
+        for the given inputs.
+
+        Returns
+        -------
+        ndarray
+            Output of the model in the given layer.
+
+        """
         if output_ix_name in self.get_available_intermediate_outputs():
             cut_model = self.cut_network(output_ix_name)
             output = cut_model.predict(inputs)

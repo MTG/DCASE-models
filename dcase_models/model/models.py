@@ -18,9 +18,9 @@ from .container import KerasModelContainer
 
 
 class MLP(KerasModelContainer):
-    '''
-    Multi-layer Perceptron Network (Fully connected).
-    '''
+    """ KerasModelContainer for a generic MLP model.
+
+    """
 
     def __init__(self, model=None, model_path=None,
                  metrics=['accuracy'], n_classes=10,
@@ -96,9 +96,13 @@ class MLP(KerasModelContainer):
 
 
 class SB_CNN(KerasModelContainer):
-    """
-    Class inherits from DCASEModelContainer with specific attributes
-    and methods for SB-CNN model.
+    """ KerasModelContainer for SB_CNN model.
+
+    J. Salamon and J. P. Bello.
+    "Deep Convolutional Neural Networks and Data Augmentation
+    For Environmental Sound Classification".
+​    IEEE Signal Processing Letters, 24(3), pages 279 - 283.
+    2017.
 
     """
 
@@ -108,11 +112,6 @@ class SB_CNN(KerasModelContainer):
                  large_cnn=False, n_dense_cnn=64, n_channels=0):
         """
         Initialization of the SB-CNN [1] model.
-
-        [1] ​Deep Convolutional Neural Networks and Data Augmentation
-            For Environmental Sound Classification
-​            J. Salamon and J. P. Bello
-            IEEE Signal Processing Letters, 24(3), pages 279 - 283, 2017.
 
         ----------
         model : keras Model
@@ -210,9 +209,13 @@ class SB_CNN(KerasModelContainer):
 
 
 class SB_CNN_SED(KerasModelContainer):
-    """
-    Class inherits from DCASEModelContainer with specific
-    attributes and methods to implement a SB-CNN-SED model.
+    """ KerasModelContainer for SB_CNN_SED model.
+
+    J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello.
+    "Scaper: A Library for Soundscape Synthesis and Augmentation".
+    IEEE Workshop on Applications of Signal Processing to
+    Audio and Acoustics (WASPAA).
+    New Paltz, NY, USA, Oct. 2017
 
     """
 
@@ -222,12 +225,7 @@ class SB_CNN_SED(KerasModelContainer):
                  large_cnn=False, n_dense_cnn=64,
                  n_filters_cnn=64, n_chanels=0):
         """
-        Initialization of the SB-CNN-SED [2] model.
-
-        [2] Scaper: A Library for Soundscape Synthesis and Augmentation
-            J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello.
-            In IEEE Workshop on Applications of Signal Processing to
-            Audio and Acoustics (WASPAA), New Paltz, NY, USA, Oct. 2017
+        Initialization of the SB-CNN-SED model.
 
         ----------
         model : keras Model
@@ -317,6 +315,15 @@ class SB_CNN_SED(KerasModelContainer):
 
 
 class A_CRNN(KerasModelContainer):
+    """ KerasModelContainer for A_CRNN model.
+
+    S. Adavanne, P. Pertilä, T. Virtanen
+    "Sound event detection using spatial features and
+    convolutional recurrent neural network"
+    International Conference on Acoustics, Speech, and Signal Processing.
+    2017.
+
+    """
 
     def __init__(self, model=None, model_path=None, metrics=['accuracy'],
                  n_classes=10, n_frames_cnn=64,
@@ -326,11 +333,6 @@ class A_CRNN(KerasModelContainer):
                  final_activation='softmax', sed=False,
                  bidirectional=False):
         '''
-        Sound event detection using spatial features and
-        convolutional recurrent neural network
-        S Adavanne, P Pertilä, T Virtanen
-        ICASSP 2017
-
         # based on https://github.com/sharathadavanne/sed-crnn
         # ref https://arxiv.org/pdf/1706.02291.pdf
 
@@ -409,17 +411,16 @@ class A_CRNN(KerasModelContainer):
 
 
 class VGGish(KerasModelContainer):
+    """ KerasModelContainer for VGGish model
 
-    '''
-
+    Jort F. Gemmeke et al.
     Audio Set: An ontology and human-labeled dataset for audio events
-    Jort F. Gemmeke Daniel P. W. Ellis Dylan Freedman Aren Jansen Wade
-    Lawrence R. Channing Moore Manoj Plakal Marvin Ritter
-    Proc. IEEE ICASSP 2017, New Orleans, LA
+    International Conference on Acoustics, Speech, and Signal Processing.
+    New Orleans, LA, 2017.
 
     https://research.google.com/audioset/
     based on vggish-keras https://pypi.org/project/vggish-keras/
-    '''
+    """
 
     def __init__(self, model=None, model_path=None, metrics=['accuracy'],
                  n_frames_cnn=96, n_freq_cnn=64, n_classes=10,
@@ -504,23 +505,18 @@ class VGGish(KerasModelContainer):
 
 
 class DCASE2020Task5Baseline(KerasModelContainer):
-    '''
-
-    Baseline of Urban Sound Tagging with Spatiotemporal Context
+    """ Baseline of Urban Sound Tagging with Spatiotemporal Context
     DCASE 2020 Challenge - Task 5
 
-    Mark Cartwright, Ana Elisa Mendez Mendez, Jason Cramer,
-    Vincent Lostanlen, Graham Dove,
-    Ho-Hsiang Wu, Justin Salamon, Oded Nov, and Juan Bello.
+    Mark Cartwright et al.
     SONYC urban sound tagging (SONYC-UST): a multilabel dataset
     from an urban acoustic sensor network.
     In Proceedings of the Workshop on Detection and Classification of
     Acoustic Scenes and Events (DCASE), 35–39. October 2019
 
-
     based on https://github.com/sonyc-project/
              dcase2020task5-uststc-baseline/blob/master/src/classify.py
-    '''
+    """
 
     def __init__(self, model=None, model_path=None,
                  metrics=['microAUPRC', 'macroAUPRC'], n_frames_cnn=96,

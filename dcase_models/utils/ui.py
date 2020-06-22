@@ -2,6 +2,9 @@ import sys
 
 
 def progressbar(it, prefix="", size=60, file=sys.stdout):
+    """ Iterable progress bar.
+
+    """
     count = len(it)
 
     def show(j):

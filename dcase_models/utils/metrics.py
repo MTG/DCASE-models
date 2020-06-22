@@ -11,6 +11,23 @@ eps = 1e-6
 
 
 def predictions_temporal_integration(Y_predicted, type='sum'):
+    """ Integrate temporal dimension.
+
+    Parameters
+    ----------
+    Y_predicted : ndarray
+        Signal to be integrated.
+        e.g. shape (N_times, N_classes)
+    type : str
+        Type of integration ('sum', 'mean', 'autopool')
+
+    Returns
+    -------
+    array
+        Integrated signal.
+        e.g. shape (N_classes,)
+
+    """
     if type == 'sum':
         Y_predicted = np.sum(Y_predicted, axis=0)
     if type == 'max':
@@ -22,8 +39,7 @@ def predictions_temporal_integration(Y_predicted, type='sum'):
 
 
 def evaluate_metrics(model, data, metrics, **kwargs):
-    """
-    Calculates metrics over files with different length
+    """ Calculate metrics over files with different length
 
     Parameters
     ----------
@@ -41,8 +57,20 @@ def evaluate_metrics(model, data, metrics, **kwargs):
             Each element in the list is a 1D array with
             the annotations (one hot encoding).
             Shape of each element (N_classes,)
-    """
+    metrics : list
+        List of metrics to apply.
+        Each element can be a metric name or a function.
 
+    Returns
+    -------
+    dict
+        Dict with the results information.
+        {'annotations' : [Y0, Y1, ...],
+         'predictions' : [Yp0, Yp1, ...],
+         metrics[0]: 0.1,
+         metrics[1]: 0.54}
+
+    """
     predictions = []
     annotations = []
     results = {}
@@ -90,6 +118,30 @@ def evaluate_metrics(model, data, metrics, **kwargs):
 
 def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
         metric_resolution_sec=1.0, label_list=[]):
+    """ Calculate metrics for Sound Event Detection
+
+    Parameters
+    ----------
+    Y_val : ndarray
+        2D array with the ground-truth event roll
+        shape: (N_times, N_classes)
+    Y_predicted : ndarray
+        2D array with the predicted event roll
+        shape: (N_times, N_classes)
+    sequence_time_sec : float
+        Resolution of Y_val and Y_predicted.
+    metric_resolution_sec : float
+        Resolution of the metrics.
+    label_list:
+        Label list.
+
+    Returns
+    -------
+    sef_eval.sound_events.SegmentBasedMetrics
+        Object with the SED results
+
+    """
+
     seg_metrics = SegmentBasedMetrics(
         label_list, time_resolution=metric_resolution_sec
     )
@@ -112,6 +164,25 @@ def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
 
 
 def classification(Y_val, Y_predicted, label_list=[]):
+    """ Calculate metrics for Audio Classification
+
+    Parameters
+    ----------
+    Y_val : ndarray
+        2D array with the ground-truth event roll
+        shape: (N_times, N_classes)
+    Y_predicted : ndarray
+        2D array with the predicted event roll
+        shape: (N_times, N_classes)
+    label_list:
+        Label list.
+
+    Returns
+    -------
+    sef_eval.scenes.SceneClassificationMetrics
+        Object with the classification results
+
+    """
     acc_metrics = SceneClassificationMetrics(label_list)
 
     n_files = len(Y_val)
@@ -130,6 +201,25 @@ def classification(Y_val, Y_predicted, label_list=[]):
 
 
 def tagging(Y_val, Y_predicted, label_list=[]):
+    """ Calculate metrics for Audio Tagging
+
+    Parameters
+    ----------
+    Y_val : ndarray
+        2D array with the ground-truth event roll
+        shape: (N_times, N_classes)
+    Y_predicted : ndarray
+        2D array with the predicted event roll
+        shape: (N_times, N_classes)
+    label_list:
+        Label list.
+
+    Returns
+    -------
+    sef_eval.scenes.AudioTaggingMetrics
+        Object with the tagging results
+
+    """
     tagging_metrics = AudioTaggingMetrics(label_list)
 
     n_files = len(Y_val)

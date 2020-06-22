@@ -63,8 +63,6 @@ def main():
     parser.set_defaults(augmentation=False)
     args = parser.parse_args()
 
-    print(args.augmentation)
-
     print(__doc__)
 
     if args.dataset not in get_available_datasets():

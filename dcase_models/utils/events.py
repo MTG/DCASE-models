@@ -43,6 +43,26 @@ def contiguous_regions(act):
 
 
 def event_roll_to_event_list(event_roll, event_label_list, time_resolution):
+    """ Convert a event roll matrix to a event list.
+
+    Parameters
+    ----------
+    event_roll : ndarray
+        Shape (N_times, N_classes)
+    event_label_list : list of str
+        Label list
+    time_resolution : float
+        Time resolution of the event_roll.
+
+    Returns
+    -------
+    list
+        List of dicts with events information.
+        e.g. [{'event_onset': 0.1,
+              'event_offset': 1.5,
+              'event_label' : 'dog'}, ...]
+
+    """
     event_list = []
     for event_id, event_label in enumerate(event_label_list):
         event_activity = event_roll[:, event_id]
@@ -58,6 +78,24 @@ def event_roll_to_event_list(event_roll, event_label_list, time_resolution):
 
 def tag_probabilities_to_tag_list(tag_probabilities, label_list,
                                   threshold=0.5):
+    """ Convert a tag probabilites matrix to a tag list.
+
+    Parameters
+    ----------
+    tag_probabilities : ndarray
+        Shape (N_times, N_classes)
+    label_list : list of str
+        Label list
+    threshold : float
+        Threshold to decide if a tag is present.
+
+    Returns
+    -------
+    list
+        List of tags.
+        e.g. ['dog', 'cat', ...]
+
+    """
     tag_binary = (tag_probabilities > threshold).astype(int)
     tag_indexes = np.argwhere(tag_binary == 1)
     tag_list = [label_list[index[0]] for index in tag_indexes]
