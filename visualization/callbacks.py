@@ -9,6 +9,7 @@ from dcase_models.utils.misc import get_default_args_of_function
 from dcase_models.data.scaler import Scaler
 from dcase_models.utils.files import save_pickle, load_pickle
 from dcase_models.utils.files import mkdir_if_not_exists, load_training_log
+from dcase_models.utils.data import evaluation_setup
 
 from .layout import params
 from .layout import options_datasets, options_features
@@ -18,6 +19,7 @@ from .figures import generate_figure2D, generate_figure_mel
 from .figures import generate_figure_training
 from .figures import generate_figure2D_eval
 from .figures import generate_figure_features
+from .figures import generate_figure_metrics
 
 import os
 import numpy as np
@@ -34,7 +36,9 @@ from dash.dependencies import Input, Output, State
 
 dataset = Dataset("")
 feature_extractor = FeatureExtractor()
-data_generator = DataGenerator(dataset, feature_extractor)
+data_generator_train = DataGenerator(dataset, feature_extractor, [])
+data_generator_val = DataGenerator(dataset, feature_extractor, [])
+data_generator_test = DataGenerator(dataset, feature_extractor, [])
 
 X_pca = np.zeros((1, 4))
 X = np.zeros((1, 128, 64))
@@ -54,9 +58,11 @@ mkdir_if_not_exists(conv_path('models'))
 
 
 @app.callback(
-    [Output('plot_mel', 'figure'), Output('audio-player', 'overrideProps')],
+    [Output('plot_mel', 'figure'),
+     Output('audio-player', 'overrideProps')],
     [Input('plot2D', 'selectedData')],
-    [State('x_select', 'value'), State('y_select', 'value')])
+    [State('x_select', 'value'),
+     State('y_select', 'value')])
 def click_on_plot2d(clickData, x_select, y_select):
     if clickData is None:
         figure_mel = generate_figure_mel(X[0])
@@ -67,8 +73,7 @@ def click_on_plot2d(clickData, x_select, y_select):
         distances_to_data = np.sum(
             np.power(X_pca[:, [x_select, y_select]] - point, 2), axis=-1)
         min_distance_index = np.argmin(distances_to_data)
-        audio_file = data_generator.convert_features_path_to_audio_path(
-            file_names[min_distance_index])
+        audio_file = file_names[min_distance_index]
         audio_data, sr = sf.read(audio_file)
         figure_mel = generate_figure_mel(X[min_distance_index])
 
@@ -84,38 +89,63 @@ def click_on_plot2d(clickData, x_select, y_select):
     [Input('samples_per_class', 'value'),
      Input('x_select', 'value'),
      Input('y_select', 'value'),
-     Input("tabs", "active_tab"),
+     Input("run_visualization", "n_clicks"),
      Input('output_select', 'value')],
     [State('fold_name', 'value'),
-     State('model_path', 'value')]
+     State('model_path', 'value'),
+     State('dataset_name', 'value'),
+     State('sr', 'value')]
 )
 def update_plot2D(samples_per_class, x_select, y_select,
-                  active_tab, output_select, fold_ix, model_path):
+                  n_clicks, output_select, fold_ix, model_path, dataset_ix, sr):
     global X
     global X_pca
     global Y
     global file_names
-    if (active_tab == 'tab_visualization') & (output_select is not None):
-        if len(data_generator.data) == 0:
-            data_generator.load_data()
+    global feature_extractor
+    print('start visualization')
+    if (n_clicks is not None) & (output_select is not None):
         fold_name = dataset.fold_list[fold_ix]
-        X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
-
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
-        X = scaler.transform(X)
 
+        dataset_name = options_datasets[dataset_ix]['label']
+        params_dataset = params['datasets'][dataset_name]
+        folds_train, folds_val, _ = evaluation_setup(
+            fold_name, dataset.fold_list,
+            params_dataset['evaluation_mode']
+        )
+        print(feature_extractor)
+        data_gen_train = DataGenerator(
+            dataset, feature_extractor, folds=folds_train,
+            batch_size=params['train']['batch_size'],
+            shuffle=True, train=False, scaler=scaler
+        )
+        X_list, Y_list = data_gen_train.get_data()
+        file_names = data_gen_train.features_file_list
+        file_names = data_gen_train.convert_features_path_to_audio_path(
+            file_names, sr=sr)
+        Xt = []
+        Yt = []
+        for j in range(len(X_list)):
+            ix = int(len(X_list[j])/2) if len(X_list[j]) > 1 else 0
+            Xj = np.expand_dims(X_list[j][ix], 0)
+            Yj = np.expand_dims(Y_list[j][ix], 0)
+            Xt.append(Xj)
+            Yt.append(Yj)
+        X = np.concatenate(Xt, axis=0)
+        Yt = np.concatenate(Yt, axis=0)
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold)
-            X_emb = model_container.get_intermediate_output(output_select, X)
-            print(X.shape, X_emb.shape)
+            X_emb = model_container.get_intermediate_output(-2, X) #output_select
 
         pca = PCA(n_components=4)
         pca.fit(X_emb)
         X_pca = pca.transform(X_emb)
-
-    figure2D = generate_figure2D(X_pca, Y, dataset.label_list,
+        
+    print('pca', X_pca.shape, Yt.shape)
+    figure2D = generate_figure2D(X_pca, Yt, dataset.label_list,
                                  pca_components=[x_select, y_select],
                                  samples_per_class=samples_per_class)
     return [figure2D]
@@ -215,9 +245,8 @@ def do_features_extraction(status_features, feature_ix, sequence_time,
             'danger'
         ]
 
-    data_generator = DataGenerator(dataset, feature_extractor)
     print('Extracting features...')
-    data_generator.extract_features()
+    feature_extractor.extract(dataset)
     print('Done!')
 
     return [True, 'Features extracted', 'success', 'True']
@@ -316,6 +345,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
 
     global model_container
     global feature_extractor
+    global data_generator_train
 
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -349,13 +379,8 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
         dataset = dataset_class(dataset_path)
         if dataset.check_if_downloaded():
             checks.append('dataset')
-        params_dataset = params['datasets'][dataset_name]
         if feature_ix is not None:
-            data_generator = DataGenerator(
-                dataset, feature_extractor,
-                evaluation_mode=params_dataset['evaluation_mode']
-            )
-            features_extracted = data_generator.check_if_features_extracted()
+            features_extracted = feature_extractor.check_if_extracted(dataset)
 
             if features_extracted:
                 checks.append('features')
@@ -447,7 +472,7 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
                  audio_win, sr, specific_parameters, dataset_path,
                  audio_folder, features_folder, model_path):
     global model_container
-    global data_generator
+    global feature_extractor
     global dataset
 
     ctx = dash.callback_context
@@ -491,10 +516,6 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
         dataset = dataset_class(dataset_path, **kwargs)
 
         params_dataset = params['datasets'][dataset_name]
-        data_generator = DataGenerator(
-            dataset, feature_extractor,
-            evaluation_mode=params_dataset['evaluation_mode']
-        )
 
         n_classes = len(dataset.label_list)
 
@@ -610,7 +631,7 @@ def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
             else:
                 figure_training = generate_figure_training(
                     training_log['epoch'],
-                    training_log['Acc'],
+                    training_log['accuracy'],
                     training_log['loss']
                 )
         return figure_training
@@ -681,26 +702,53 @@ def start_training(status, fold_ix, normalizer, model_path,
                    epochs, early_stopping, optimizer_ix, learning_rate,
                    batch_size, considered_improvement,
                    n_clicks_train, dataset_ix):
+    global data_generator_train
+    global data_generator_val
+
     if status == 'TRAINING':
         if fold_ix is None:
             return [True, 'Please select a Fold', 'danger', ""]
         if optimizer_ix is None:
             return [True, 'Please select an Optimizer', 'danger', ""]
 
+        dataset_name = options_datasets[dataset_ix]['label']
         fold_name = dataset.fold_list[fold_ix]
+        params_dataset = params['datasets'][dataset_name]
         optimizer = options_optimizers[optimizer_ix]['label']
 
-        data_generator.load_data()
-        X_train, Y_train, X_val, Y_val = data_generator.get_data_for_training(
-            fold_name
+        use_validate_set = True
+        if dataset_name in ['TUTSoundEvents2017', 'ESC50', 'ESC10']:
+            # When have less data, don't use validation set.
+            use_validate_set = False
+
+        folds_train, folds_val, _ = evaluation_setup(
+            fold_name, dataset.fold_list,
+            params_dataset['evaluation_mode'],
+            use_validate_set=use_validate_set
+        )
+        data_generator_train = DataGenerator(
+            dataset, feature_extractor, folds=folds_train,
+            batch_size=params['train']['batch_size'],
+            shuffle=True, train=True, scaler=None
         )
 
         scaler = Scaler(normalizer=normalizer)
-        scaler.fit(X_train)
-        X_train = scaler.transform(X_train)
-        X_val = scaler.transform(X_val)
+        print('Fitting scaler ...')
+        scaler.fit(data_generator_train)
+        print('Done!')
+
+        # Pass scaler to data_gen_train to be used when data
+        # loading
+        data_generator_train.set_scaler(scaler)
+
+        data_generator_val = DataGenerator(
+            dataset, feature_extractor, folds=folds_val,
+            batch_size=batch_size,
+            shuffle=False, train=False, scaler=scaler
+        )
+        
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
-        mkdir_if_not_exists(exp_folder_fold)
+        mkdir_if_not_exists(exp_folder_fold, parents=True)
 
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         save_pickle(scaler, scaler_path)
@@ -712,8 +760,9 @@ def start_training(status, fold_ix, normalizer, model_path,
             'considered_improvement': considered_improvement
         }
         with graph.as_default():
-            model_container.train(X_train, Y_train, X_val, Y_val,
+            model_container.train(data_generator_train, data_generator_val,
                                   weights_path=exp_folder_fold,
+                                  label_list=dataset.label_list,
                                   **train_arguments)
             model_container.load_model_weights(exp_folder_fold)
         return [True, "Model trained", 'success', 'True']
@@ -736,67 +785,106 @@ def manage_button_train(n_intervals, status):
     return button_train
 
 
+# @app.callback(
+#     [Output("plot2D_eval", "figure"),
+#      Output("accuracy", "children")],
+#     [Input("tabs", "active_tab")],
+#     [State('fold_name', 'value'),
+#      State('model_path', 'value')]
+# )
 @app.callback(
-    [Output("plot2D_eval", "figure"),
-     Output("accuracy", "children")],
-    [Input("tabs", "active_tab")],
+    [Output("results", "children"),
+     Output("figure_metrics", "figure")],
+    [Input("run_evaluation", "n_clicks")],
     [State('fold_name', 'value'),
      State('model_path', 'value')]
 )
-def evaluate_model(active_tab, fold_ix, model_path):
+def evaluate_model(n_clicks, fold_ix, model_path):
     global X_test
     global X_pca_test
     global file_names_test
     global Y_test
     global predictions
-    if (active_tab == "tab_evaluation") and (fold_ix is not None):
-        # load data if needed
-        if len(data_generator.data) == 0:
-            data_generator.load_data()
+    global data_generator_test
+    print('Change tab evaluation')
+    #if (active_tab == "tab_evaluation") and (fold_ix is not None):
+    if (n_clicks is not None) and (fold_ix is not None):
+        print('Start evaluation')
         fold_name = dataset.fold_list[fold_ix]
-        X, Y, file_names = data_generator.get_one_example_per_file(fold_name)
-
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
         scaler = load_pickle(scaler_path)
-        X = scaler.transform(X)
 
+        data_generator_test = DataGenerator(
+            dataset, feature_extractor, folds=[fold_name],
+            batch_size=params['train']['batch_size'],
+            shuffle=True, train=False, scaler=scaler
+        )
+        print('Loading data...')
+        X_test, Y_test = data_generator_test.get_data()
+        print('Done')
+        print(len(X_test), len(Y_test))
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold)
-            model_embeddings = model_container.cut_network(-2)
-            X_emb = model_embeddings.predict(X)
+            results = model_container.evaluate((X_test, Y_test), label_list=dataset.label_list)
+        results = results['classification'].results()
 
-        pca = PCA(n_components=4)
-        pca.fit(X_emb)
+        accuracy = results['overall']['accuracy']
+        class_wise = results['class_wise']
+        metrics = []
+        for label in dataset.label_list:
+            metrics.append(class_wise[label]['accuracy']['accuracy'])
+        print(metrics)
+        figure_metrics = generate_figure_metrics(dataset.label_list, metrics)
+        msg = "Accuracy in fold %s is %1.2f" % (fold_name, accuracy)
+        return [msg, figure_metrics]
 
-        X_test, Y_test = data_generator.get_data_for_testing(fold_name)
-        X_test = scaler.transform(X_test)
-        with graph.as_default():
-            results = model_container.evaluate(X_test, Y_test)
+        # fold_name = dataset.fold_list[fold_ix]
+        # exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
+        # scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+        # scaler = load_pickle(scaler_path)
 
-        (X_test, Y_test,
-         file_names_test) = data_generator.get_one_example_per_file(
-             fold_name, train=False
-            )
-        X_test = scaler.transform(X_test)
+        # data_generator_test = DataGenerator(
+        #     dataset, feature_extractor, folds=['fold_name'],
+        #     batch_size=params['train']['batch_size'],
+        #     shuffle=True, train=False, scaler=scaler
+        # )
+        # X, Y = data_generator_train.get_data()
 
-        with graph.as_default():
-            X_emb = model_embeddings.predict(X_test)
+        # with graph.as_default():
+        #     model_container.load_model_weights(exp_folder_fold)
+        #     model_embeddings = model_container.cut_network(-2)
+        #     X_emb = model_embeddings.predict(X)
 
-        predictions = np.zeros_like(Y_test)
-        for j in range(len(predictions)):
-            predictions[j] = np.mean(results['predictions'][j], axis=0)
-            Y_test[j] = results['annotations'][j][0]
+        # pca = PCA(n_components=4)
+        # pca.fit(X_emb)
 
-        X_pca_test = pca.transform(X_emb)
+        # X_test, Y_test = data_generator_test.get_data_for_testing(fold_name)
+        # file_names_test = data_generator_test.features_file_list
+        # X_test = scaler.transform(X_test)
+        # with graph.as_default():
+        #     results = model_container.evaluate((X_test, Y_test))
 
-        figure2d = generate_figure2D_eval(
-            X_pca_test, predictions, Y_test, dataset.label_list
-        )
-        return [figure2d,
-                "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
+        # # TODO: Convert to one sequence per file.
 
-    raise dash.exceptions.PreventUpdate
+        # with graph.as_default():
+        #     X_emb = model_embeddings.predict(X_test)
+
+        # predictions = np.zeros_like(Y_test)
+        # for j in range(len(predictions)):
+        #     predictions[j] = np.mean(results['predictions'][j], axis=0)
+        #     Y_test[j] = results['annotations'][j][0]
+
+        # X_pca_test = pca.transform(X_emb)
+
+        # figure2d = generate_figure2D_eval(
+        #     X_pca_test, predictions, Y_test, dataset.label_list
+        # )
+        # return [figure2d,
+        #         "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
+
+    return ['Pa']
+    # raise dash.exceptions.PreventUpdate
 
 
 @app.callback(
@@ -814,7 +902,7 @@ def click_on_plot2d_eval(clickData):
         distances_to_data = np.sum(
             np.power(X_pca_test[:, [0, 1]] - point, 2), axis=-1)
         min_distance_index = np.argmin(distances_to_data)
-        audio_file = data_generator.convert_features_path_to_audio_path(
+        audio_file = data_generator_train.convert_features_path_to_audio_path(
             file_names_test[min_distance_index])
         audio_data, sr = sf.read(audio_file)
         figure_mel = generate_figure_mel(X_test[min_distance_index])
@@ -834,19 +922,50 @@ def click_on_plot2d_eval(clickData):
     [Output('plot_features', 'figure'),
      Output('audio-player-demo', 'overrideProps'),
      Output('demo_file_label', 'children')],
-    [Input("tabs", "active_tab"),
+    [#Input("tabs", "active_tab"),
      Input("btn_run_demo", "n_clicks"),
      Input('upload-data', 'contents')],
     [State('fold_name', 'value'),
      State('model_path', 'value'),
      State('plot2D_eval', 'selectedData'),
      State('upload-data', 'filename'),
-     State('upload-data', 'last_modified')])
-def generate_demo(active_tab, n_clicks, list_of_contents, fold_ix,
+     State('upload-data', 'last_modified'),
+     State('sr', 'value')])
+def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab, 
                   model_path, selectedData,
-                  list_of_names, list_of_dates):
+                  list_of_names, list_of_dates, sr):
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    print('demo', button_id)
+    if button_id == 'btn_run_demo-data':
+        n_files = len(data_generator_test.features_file_list)
+
+        ix = np.random.randint(n_files)
+
+        fold_name = dataset.fold_list[fold_ix]
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
+
+        X_features, Y_file = data_generator_test.get_data_of_file(ix)
+
+        with graph.as_default():
+            model_container.load_model_weights(exp_folder_fold)
+            Y_features = model_container.model.predict(X_features)
+
+        fig_demo = generate_figure_features(
+            X_features, Y_features, dataset.label_list)
+
+        features_file = data_generator_test.features_file_list[ix]
+        audio_file = data_generator_test.convert_features_path_to_audio_path(
+            features_file, sr=sr)
+        audio_data, sr = sf.read(audio_file)
+
+        class_ix = np.argmax(Y_file[0])
+        file_label = dataset.label_list[class_ix]
+        return [
+            fig_demo,
+            {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
+            file_label
+        ]       
 
     if button_id == 'upload-data':
         fold_name = dataset.fold_list[fold_ix]

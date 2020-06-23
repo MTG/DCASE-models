@@ -2,6 +2,7 @@ from .figures import generate_figure2D
 from .figures import generate_figure_mel
 from .figures import generate_figure_training
 from .figures import generate_figure_features
+from .figures import generate_figure_metrics
 
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
@@ -439,13 +440,16 @@ tab_train = html.Div([
     html.Div("", id='end_training', style={'display': 'none'})
 ])
 
+run_visualization = html.Div([dbc.Button("Run", id="run_visualization",
+                              color="primary", className="mr-1")])
 # Define Tab Visualization (3)
 tab_visualization = html.Div([
     dbc.Row(
         [
             dbc.Col(html.Div([plot2D]), width=8),
-            dbc.Col([dbc.Row([plot_mel], align='center'), dbc.Row(
-                [audio_player], align='center')], width=4),
+            dbc.Col([dbc.Row([plot_mel], align='center'),
+                     dbc.Row([audio_player], align='center'),
+                     dbc.Row([run_visualization], align='center')], width=4),
         ]
     ),
     dbc.Row(
@@ -482,19 +486,53 @@ audio_player_eval = dash_audio_components.DashAudioComponents(
 )
 
 # Define Tab Evaluation (4)
+# tab_evaluation = html.Div([
+#     dbc.Row(
+#         [
+#             dbc.Col(html.Div([plot2D_eval]), width=8),
+#             dbc.Col([
+#                 dbc.Row([plot_mel_eval], align='center'), 
+#                 dbc.Row([audio_player_eval], align='center'),
+#                 dbc.Row([html.Div("", id="accuracy")], align='center'),
+#                 dbc.Row([html.Div("", id="predicted")], align='center')
+#             ], width=4),
+#         ]
+#     ),
+# ])
+
+fold_selector_eval = dbc.FormGroup(
+    [
+        dbc.Label("Fold", html_for="dropdown", width=2),
+        dbc.Col(dcc.Dropdown(id="fold_name_eval", options=options_folds), width=10),
+    ],
+    row=True,
+)
+figure_metrics = generate_figure_metrics([], [])
+plot_metrics = dcc.Graph(
+    id="figure_metrics",
+    figure=figure_metrics,
+    style={"width": "90%", "display": "inline-block", 'float': 'left'}
+)
 tab_evaluation = html.Div([
     dbc.Row(
         [
-            dbc.Col(html.Div([plot2D_eval]), width=8),
-            dbc.Col([
-                dbc.Row([plot_mel_eval], align='center'), 
-                dbc.Row([audio_player_eval], align='center'),
-                dbc.Row([html.Div("", id="accuracy")], align='center'),
-                dbc.Row([html.Div("", id="predicted")], align='center')
-            ], width=4),
+            dbc.Col(html.Div([
+                dbc.Button("Evaluate", id="run_evaluation", className="ml-auto")
+            ]), width=2),
+            
+           # fold_selector_eval,
+            dbc.Col(html.Div([""], id='results'), width=2),
         ]
     ),
+    dbc.Row(
+        [
+            dbc.Col(html.Div([plot_metrics]), width=10)
+        ]
+    ),
+    
 ])
+#tab_evaluation = html.Div([""], id='results')
+
 
 X_feat = np.zeros((10, 128, 64))
 Y_t = np.zeros((10, 10))

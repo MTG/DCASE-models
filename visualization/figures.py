@@ -191,3 +191,16 @@ def generate_figure_features(X_features, Y_pred, label_list):
        # fig.add_trace(go.Bar(x=label_list, y=Y_pred[j]), row=2, col=j+1)
 
     return fig
+
+
+def generate_figure_metrics(label_list, metrics):
+    figure = go.Figure([go.Bar(x=label_list, y=metrics)], layout=go.Layout(
+        title=go.layout.Title(text="A Bar Chart")))
+    figure.update_layout(
+        title="Class-wise metrics",
+        yaxis_title="Accuracy",
+        margin={'l': 0, 'b': 0, 't': 40, 'r': 10},
+        width=800,
+        height=400
+    )
+    return figure

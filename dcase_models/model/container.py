@@ -53,7 +53,7 @@ class ModelContainer():
 
     def __init__(self, model=None, model_path=None,
                  model_name="ModelContainer",
-                 metrics=['accuracy']):
+                 metrics=['classification']):
         """ Initialize ModelContainer
 
         Parameters
@@ -139,7 +139,7 @@ class KerasModelContainer(ModelContainer):
 
     def __init__(self, model=None, model_path=None,
                  model_name="DCASEModelContainer",
-                 metrics=['accuracy'], **kwargs):
+                 metrics=['classification'], **kwargs):
         """
         Parameters
         ----------
@@ -221,6 +221,7 @@ class KerasModelContainer(ModelContainer):
 
         file_weights = os.path.join(weights_path, 'best_weights.hdf5')
         file_log = os.path.join(weights_path, 'training.log')
+
         if self.metrics[0] == 'classification':
             metrics_callback = ClassificationCallback(
                 data_val, file_weights=file_weights,
@@ -508,9 +509,14 @@ class KerasModelContainer(ModelContainer):
             Output of the model in the given layer.
 
         """
-        if output_ix_name in self.get_available_intermediate_outputs():
+        if type(output_ix_name) == int:
             cut_model = self.cut_network(output_ix_name)
             output = cut_model.predict(inputs)
-            return output
+        else:
+            if output_ix_name in self.get_available_intermediate_outputs():
+                cut_model = self.cut_network(output_ix_name)
+                output = cut_model.predict(inputs)
+            else:
+                return None
 
-        return None
+        return output

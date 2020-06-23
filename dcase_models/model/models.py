@@ -23,7 +23,7 @@ class MLP(KerasModelContainer):
     """
 
     def __init__(self, model=None, model_path=None,
-                 metrics=['accuracy'], n_classes=10,
+                 metrics=['classification'], n_classes=10,
                  n_frames_cnn=64, n_freq_cnn=12,
                  hidden_layers_size=[128, 64],
                  dropout_rates=[0.5, 0.5], hidden_activation='relu',
@@ -106,7 +106,7 @@ class SB_CNN(KerasModelContainer):
 
     """
 
-    def __init__(self, model=None, model_path=None, metrics=['accuracy'],
+    def __init__(self, model=None, model_path=None, metrics=['classification'],
                  n_classes=10, n_frames_cnn=64,
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
                  large_cnn=False, n_dense_cnn=64, n_channels=0):
@@ -219,7 +219,7 @@ class SB_CNN_SED(KerasModelContainer):
 
     """
 
-    def __init__(self, model=None, model_path=None, metrics=['accuracy'],
+    def __init__(self, model=None, model_path=None, metrics=['sed'],
                  n_classes=10, n_frames_cnn=64,
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
                  large_cnn=False, n_dense_cnn=64,
@@ -325,7 +325,7 @@ class A_CRNN(KerasModelContainer):
 
     """
 
-    def __init__(self, model=None, model_path=None, metrics=['accuracy'],
+    def __init__(self, model=None, model_path=None, metrics=['sed'],
                  n_classes=10, n_frames_cnn=64,
                  n_freq_cnn=128, cnn_nb_filt=128,
                  cnn_pool_size=[5, 2, 2], rnn_nb=[32, 32],
@@ -422,7 +422,7 @@ class VGGish(KerasModelContainer):
     based on vggish-keras https://pypi.org/project/vggish-keras/
     """
 
-    def __init__(self, model=None, model_path=None, metrics=['accuracy'],
+    def __init__(self, model=None, model_path=None, metrics=['classification'],
                  n_frames_cnn=96, n_freq_cnn=64, n_classes=10,
                  n_channels=0, embedding_size=128, pooling='avg',
                  include_top=False, compress=False):
@@ -519,7 +519,7 @@ class DCASE2020Task5Baseline(KerasModelContainer):
     """
 
     def __init__(self, model=None, model_path=None,
-                 metrics=['microAUPRC', 'macroAUPRC'], n_frames_cnn=96,
+                 metrics=['tagging'], n_frames_cnn=96,
                  n_freq_cnn=64, n_classes=10, hidden_layer_size=128,
                  num_hidden_layers=1, l2_reg=1e-5):
 

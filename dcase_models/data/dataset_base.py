@@ -85,7 +85,7 @@ class Dataset():
         """
 
         # Creates an empty dict
-        self.file_lists = {[] for fold in self.fold_list}
+        self.file_lists = {fold: [] for fold in self.fold_list}
 
     def get_annotations(self, file_path, features):
         """ Return the annotations of the file in file_path.
