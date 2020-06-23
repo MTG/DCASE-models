@@ -16,7 +16,7 @@ from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
-from dcase_models.utils.files import load_json, load_pickle
+from dcase_models.util.files import load_json, load_pickle
 
 sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
 tagging_datasets = ['SONYC_UST', 'FSDKaggle2018']

@@ -7,7 +7,7 @@ from .figures import generate_figure_metrics
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
-from dcase_models.utils.files import load_json
+from dcase_models.util.files import load_json
 
 import numpy as np
 import json

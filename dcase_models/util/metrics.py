@@ -1,8 +1,8 @@
 # from scipy import interpolate
 import numpy as np
 from scipy.stats import mode
-from dcase_models.utils.events import event_roll_to_event_list
-from dcase_models.utils.events import tag_probabilities_to_tag_list
+from dcase_models.util.events import event_roll_to_event_list
+from dcase_models.util.events import tag_probabilities_to_tag_list
 from sed_eval.sound_event import SegmentBasedMetrics
 from sed_eval.scene import SceneClassificationMetrics
 from sed_eval.audio_tag import AudioTaggingMetrics

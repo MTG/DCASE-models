@@ -1,9 +1,9 @@
 import os
 import sox
 
-from ..utils.files import download_files_and_unzip
-from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files, list_all_files
+from ..util.files import download_files_and_unzip
+from ..util.files import duplicate_folder_structure
+from ..util.files import list_wav_files, list_all_files
 
 
 class Dataset():

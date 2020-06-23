@@ -17,9 +17,9 @@ from dcase_models.data.features import get_available_features
 from dcase_models.model.models import get_available_models
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.data.scaler import Scaler
-from dcase_models.utils.files import load_json
-from dcase_models.utils.files import mkdir_if_not_exists, save_pickle
-from dcase_models.utils.data import evaluation_setup
+from dcase_models.util.files import load_json
+from dcase_models.util.files import mkdir_if_not_exists, save_pickle
+from dcase_models.util.data import evaluation_setup
 
 sed_datasets = ['URBAN_SED', 'TUTSoundEvents2017', 'MAVD']
 

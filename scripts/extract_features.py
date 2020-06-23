@@ -14,7 +14,7 @@ import argparse
 
 from dcase_models.data.datasets import get_available_datasets
 from dcase_models.data.features import get_available_features
-from dcase_models.utils.files import load_json
+from dcase_models.util.files import load_json
 
 
 def main():

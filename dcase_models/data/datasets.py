@@ -8,8 +8,8 @@ from sed_eval.util.event_roll import event_list_to_event_roll
 from librosa.util import fix_length
 
 from .dataset_base import Dataset
-from ..utils.files import move_all_files_to_parent, move_all_files_to
-from ..utils.files import mkdir_if_not_exists, list_wav_files
+from ..util.files import move_all_files_to_parent, move_all_files_to
+from ..util.files import mkdir_if_not_exists, list_wav_files
 
 import inspect
 

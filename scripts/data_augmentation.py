@@ -13,7 +13,7 @@ import os
 import argparse
 
 from dcase_models.data.datasets import get_available_datasets
-from dcase_models.utils.files import load_json
+from dcase_models.util.files import load_json
 from dcase_models.data.data_augmentation import AugmentedDataset
 
 

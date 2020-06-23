@@ -7,10 +7,10 @@ from keras.callbacks import CSVLogger
 from keras.models import model_from_json, Model
 from keras.layers import Dense, Input
 
-from ..utils.files import save_json
-from ..utils.metrics import evaluate_metrics
-from ..utils.callbacks import ClassificationCallback, SEDCallback
-from ..utils.callbacks import TaggingCallback
+from ..util.files import save_json
+from ..util.metrics import evaluate_metrics
+from ..util.callbacks import ClassificationCallback, SEDCallback
+from ..util.callbacks import TaggingCallback
 from ..data.data_generator import DataGenerator, KerasDataGenerator
 
 

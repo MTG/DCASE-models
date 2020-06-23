@@ -4,12 +4,12 @@ from dcase_models.model.models import get_available_models
 from dcase_models.data.dataset_base import Dataset
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.data.feature_extractor import FeatureExtractor
-from dcase_models.utils.gui import encode_audio
-from dcase_models.utils.misc import get_default_args_of_function
+from dcase_models.util.gui import encode_audio
+from dcase_models.util.misc import get_default_args_of_function
 from dcase_models.data.scaler import Scaler
-from dcase_models.utils.files import save_pickle, load_pickle
-from dcase_models.utils.files import mkdir_if_not_exists, load_training_log
-from dcase_models.utils.data import evaluation_setup
+from dcase_models.util.files import save_pickle, load_pickle
+from dcase_models.util.files import mkdir_if_not_exists, load_training_log
+from dcase_models.util.data import evaluation_setup
 
 from .layout import params
 from .layout import options_datasets, options_features

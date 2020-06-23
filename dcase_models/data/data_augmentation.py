@@ -5,8 +5,8 @@ import numpy as np
 from librosa.core import db_to_power, power_to_db
 
 from .dataset_base import Dataset
-from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files
+from ..util.files import duplicate_folder_structure
+from ..util.files import list_wav_files
 
 
 class WhiteNoise():
@@ -71,7 +71,7 @@ class WhiteNoise():
 
 class AugmentedDataset(Dataset):
     """
-    Class manage data augmentation. Includes functions to generate
+    Class that manage data augmentation. Includes functions to generate
     data augmented instances of the audio files.
 
     Basically, its converts an instance of Dataset into an augmented one.

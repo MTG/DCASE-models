@@ -1,4 +1,4 @@
-from dcase_models.utils.files import load_json
+from dcase_models.util.files import load_json
 from dcase_models.model.models import SB_CNN, A_CRNN
 from dcase_models.data.features import MelSpectrogram, Spectrogram
 from dcase_models.data.data_generator import DataGenerator

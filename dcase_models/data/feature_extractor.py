@@ -4,9 +4,9 @@ import librosa
 import soundfile as sf
 import json
 
-from ..utils.files import load_json, mkdir_if_not_exists
-from ..utils.files import duplicate_folder_structure
-from ..utils.files import list_wav_files
+from ..util.files import load_json, mkdir_if_not_exists
+from ..util.files import duplicate_folder_structure
+from ..util.files import list_wav_files
 
 
 class FeatureExtractor():
