@@ -89,22 +89,22 @@ def click_on_plot2d(clickData, x_select, y_select):
     [Input('samples_per_class', 'value'),
      Input('x_select', 'value'),
      Input('y_select', 'value'),
-     Input("run_visualization", "n_clicks"),
-     Input('output_select', 'value')],
+     Input("run_visualization", "n_clicks")],
+   #  Input('output_select', 'value')],
     [State('fold_name', 'value'),
      State('model_path', 'value'),
      State('dataset_name', 'value'),
      State('sr', 'value')]
 )
 def update_plot2D(samples_per_class, x_select, y_select,
-                  n_clicks, output_select, fold_ix, model_path, dataset_ix, sr):
+                  n_clicks,  fold_ix, model_path, dataset_ix, sr): #output_select,
     global X
     global X_pca
     global Y
     global file_names
     global feature_extractor
     print('start visualization')
-    if (n_clicks is not None) & (output_select is not None):
+    if (n_clicks is not None): #& (output_select is not None):
         fold_name = dataset.fold_list[fold_ix]
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
@@ -161,7 +161,7 @@ def update_output_select(active_tab):
         layers = model_container.get_available_intermediate_outputs()
         options = [{'label': x, 'value': x} for x in layers]
         return [options, layers[-1]]
-    return []
+    return [[],'']
 
 # MODEL TAB
 
@@ -609,34 +609,32 @@ def create_model_path(dataset_ix, model_ix):
 
 @app.callback(
     Output("plot_training", "figure"),
-    [Input("tabs", "active_tab"),
+    [#Input("tabs", "active_tab"),
      Input("fold_name", "value"),
      Input('interval-component', 'n_intervals')],
     [State('model_path', 'value')]
 )
 # TRAINING
-def update_figure_training(active_tab, fold_ix, n_intervals, model_path):
-    if active_tab == "tab_train":
-        if fold_ix is not None:
-            fold_name = dataset.fold_list[fold_ix]
-            training_log = load_training_log(
-                conv_path(os.path.join(model_path, fold_name)))
-        else:
-            training_log = load_training_log(conv_path(model_path))
-        if (training_log is None):
+def update_figure_training(fold_ix, n_intervals, model_path): #active_tab
+#    if active_tab == "tab_train":
+    figure_training = generate_figure_training([], [], [])
+    if fold_ix is not None:
+        fold_name = dataset.fold_list[fold_ix]
+        training_log = load_training_log(
+            conv_path(os.path.join(model_path, fold_name)))
+    else:
+        training_log = load_training_log(conv_path(model_path))
+    if (training_log is None):
+        figure_training = generate_figure_training([], [], [])
+    else:
+        if (len(training_log) == 0):
             figure_training = generate_figure_training([], [], [])
         else:
-            if (len(training_log) == 0):
-                figure_training = generate_figure_training([], [], [])
-            else:
-                figure_training = generate_figure_training(
-                    training_log['epoch'],
-                    training_log['accuracy'],
-                    training_log['loss']
-                )
-        return figure_training
-
-    figure_training = generate_figure_training([], [], [])
+            figure_training = generate_figure_training(
+                training_log['epoch'],
+                training_log['accuracy'],
+                training_log['loss']
+            )
     return figure_training
 
 
@@ -917,7 +915,6 @@ def click_on_plot2d_eval(clickData):
             predicted_text
         ]
 
-
 @app.callback(
     [Output('plot_features', 'figure'),
      Output('audio-player-demo', 'overrideProps'),
@@ -927,17 +924,18 @@ def click_on_plot2d_eval(clickData):
      Input('upload-data', 'contents')],
     [State('fold_name', 'value'),
      State('model_path', 'value'),
-     State('plot2D_eval', 'selectedData'),
      State('upload-data', 'filename'),
      State('upload-data', 'last_modified'),
-     State('sr', 'value')])
-def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab, 
-                  model_path, selectedData,
-                  list_of_names, list_of_dates, sr):
+     State('sr', 'value')]
+)
+def generate_demo(n_clicks, list_of_contents, fold_ix,
+                   model_path,
+                   list_of_names, list_of_dates, sr):
+    print('generate demo')
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print('demo', button_id)
-    if button_id == 'btn_run_demo-data':
+    print(button_id, n_clicks)
+    if (n_clicks is not None) & (button_id == 'btn_run_demo'):
         n_files = len(data_generator_test.features_file_list)
 
         ix = np.random.randint(n_files)
@@ -945,7 +943,7 @@ def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab,
         fold_name = dataset.fold_list[fold_ix]
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
 
-        X_features, Y_file = data_generator_test.get_data_of_file(ix)
+        X_features, Y_file = data_generator_test.get_data_from_file(ix)
 
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold)
@@ -961,10 +959,11 @@ def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab,
 
         class_ix = np.argmax(Y_file[0])
         file_label = dataset.label_list[class_ix]
+
         return [
             fig_demo,
             {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
-            file_label
+            'ground-truth: %s' % file_label
         ]       
 
     if button_id == 'upload-data':
@@ -990,43 +989,125 @@ def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab,
             {'autoPlay': False, 'src': list_of_contents}, ""
         ]
 
-    if active_tab == 'tab_demo':
-        fold_name = dataset.fold_list[fold_ix]
-        if (button_id == 'tabs') and (selectedData is not None):
-            point = np.array([selectedData['points'][0]['x'],
-                              selectedData['points'][0]['y']])
-            distances_to_data = np.sum(
-                np.power(X_pca_test[:, [0, 1]] - point, 2), axis=-1)
-            ix = np.argmin(distances_to_data)
-        else:
-            ix = np.random.randint(len(data_generator.data[fold_name]['X']))
+    X_feat = np.zeros((10, 128, 64))
+    Y_t = np.zeros((10, 10))
+    label_list= []*10
+    figure_features = generate_figure_features(X_feat, Y_t, label_list)
 
-        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
-        scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
-        scaler = load_pickle(scaler_path)
+    return [
+        figure_features,
+        {'autoPlay': False, 'src': ""}, ""
+    ]
 
-        X_features = data_generator.data[fold_name]['X'][ix]
-        X_features = scaler.transform(X_features)
+# @app.callback(
+#     [Output('plot_features', 'figure'),
+#      Output('audio-player-demo', 'overrideProps'),
+#      Output('demo_file_label', 'children')],
+#     [#Input("tabs", "active_tab"),
+#      Input("btn_run_demo", "n_clicks"),
+#      Input('upload-data', 'contents')],
+#     [State('fold_name', 'value'),
+#      State('model_path', 'value'),
+#      State('plot2D_eval', 'selectedData'),
+#      State('upload-data', 'filename'),
+#      State('upload-data', 'last_modified'),
+#      State('sr', 'value')])
+# def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab, 
+#                   model_path, selectedData,
+#                   list_of_names, list_of_dates, sr):
+#     ctx = dash.callback_context
+#     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+#     print('demo', button_id)
+#     if button_id == 'btn_run_demo-data':
+#         n_files = len(data_generator_test.features_file_list)
 
-        with graph.as_default():
-            model_container.load_model_weights(exp_folder_fold)
-            Y_features = model_container.model.predict(X_features)
+#         ix = np.random.randint(n_files)
 
-        fig_demo = generate_figure_features(
-            X_features, Y_features, dataset.label_list)
+#         fold_name = dataset.fold_list[fold_ix]
+#         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
 
-        features_file = dataset.file_lists[fold_name][ix]
-        audio_file = data_generator.convert_features_path_to_audio_path(
-            features_file)
-        audio_data, sr = sf.read(audio_file)
+#         X_features, Y_file = data_generator_test.get_data_of_file(ix)
 
-        Y_file = data_generator.data[fold_name]['Y'][ix][0]
-        class_ix = np.argmax(Y_file)
-        file_label = dataset.label_list[class_ix]
-        return [
-            fig_demo,
-            {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
-            file_label
-        ]
+#         with graph.as_default():
+#             model_container.load_model_weights(exp_folder_fold)
+#             Y_features = model_container.model.predict(X_features)
 
-    raise dash.exceptions.PreventUpdate
+#         fig_demo = generate_figure_features(
+#             X_features, Y_features, dataset.label_list)
+
+#         features_file = data_generator_test.features_file_list[ix]
+#         audio_file = data_generator_test.convert_features_path_to_audio_path(
+#             features_file, sr=sr)
+#         audio_data, sr = sf.read(audio_file)
+
+#         class_ix = np.argmax(Y_file[0])
+#         file_label = dataset.label_list[class_ix]
+#         return [
+#             fig_demo,
+#             {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
+#             file_label
+#         ]       
+
+#     if button_id == 'upload-data':
+#         fold_name = dataset.fold_list[fold_ix]
+#         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
+#         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+#         scaler = load_pickle(scaler_path)
+
+#         filename = conv_path('upload.wav')
+#         data = list_of_contents.encode("utf8").split(b";base64,")[1]
+#         with open(filename, "wb") as fp:
+#             fp.write(base64.decodebytes(data))
+
+#         X_feat = feature_extractor.calculate(filename)
+#         X_feat = scaler.transform(X_feat)
+#         with graph.as_default():
+#             Y_t = model_container.model.predict(X_feat)
+
+#         label_list = dataset.label_list
+#         figure_features = generate_figure_features(X_feat, Y_t, label_list)
+#         return [
+#             figure_features,
+#             {'autoPlay': False, 'src': list_of_contents}, ""
+#         ]
+
+#     if active_tab == 'tab_demo':
+#         fold_name = dataset.fold_list[fold_ix]
+#         if (button_id == 'tabs') and (selectedData is not None):
+#             point = np.array([selectedData['points'][0]['x'],
+#                               selectedData['points'][0]['y']])
+#             distances_to_data = np.sum(
+#                 np.power(X_pca_test[:, [0, 1]] - point, 2), axis=-1)
+#             ix = np.argmin(distances_to_data)
+#         else:
+#             ix = np.random.randint(len(data_generator.data[fold_name]['X']))
+
+#         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
+#         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+#         scaler = load_pickle(scaler_path)
+
+#         X_features = data_generator.data[fold_name]['X'][ix]
+#         X_features = scaler.transform(X_features)
+
+#         with graph.as_default():
+#             model_container.load_model_weights(exp_folder_fold)
+#             Y_features = model_container.model.predict(X_features)
+
+#         fig_demo = generate_figure_features(
+#             X_features, Y_features, dataset.label_list)
+
+#         features_file = dataset.file_lists[fold_name][ix]
+#         audio_file = data_generator.convert_features_path_to_audio_path(
+#             features_file)
+#         audio_data, sr = sf.read(audio_file)
+
+#         Y_file = data_generator.data[fold_name]['Y'][ix][0]
+#         class_ix = np.argmax(Y_file)
+#         file_label = dataset.label_list[class_ix]
+#         return [
+#             fig_demo,
+#             {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
+#             file_label
+#         ]
+
+#     raise dash.exceptions.PreventUpdate

@@ -151,6 +151,7 @@ def generate_figure_training(epochs, val, loss):
 
 def generate_figure_features(X_features, Y_pred, label_list):
     # X_features shape : (Nseqs, Nhops, Nfreqs)
+    print(X_features.shape)
     fig = make_subplots(
         rows=2, cols=len(X_features),
         specs=[[{}]*len(X_features),

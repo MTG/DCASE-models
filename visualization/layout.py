@@ -470,20 +470,20 @@ tab_visualization = html.Div([
 ])
 
 # Plot 2D graph
-plot2D_eval = dcc.Graph(id='plot2D_eval', figure=figure2D,
-                   style={"height": "100%", "width": "100%"})
+# plot2D_eval = dcc.Graph(id='plot2D_eval', figure=figure2D,
+#                    style={"height": "100%", "width": "100%"})
 
-# Plot mel-spectrogram
-plot_mel_eval = dcc.Graph(
-    id="plot_mel_eval",
-    figure=figure_mel,
-    style={"width": "90%", "display": "inline-block", 'float': 'left'}
-)
+# # Plot mel-spectrogram
+# plot_mel_eval = dcc.Graph(
+#     id="plot_mel_eval",
+#     figure=figure_mel,
+#     style={"width": "90%", "display": "inline-block", 'float': 'left'}
+# )
 
-# Audio controls
-audio_player_eval = dash_audio_components.DashAudioComponents(
-    id='audio-player-eval', src="", autoPlay=False, controls=True
-)
+# # Audio controls
+# audio_player_eval = dash_audio_components.DashAudioComponents(
+#     id='audio-player-eval', src="", autoPlay=False, controls=True
+# )
 
 # Define Tab Evaluation (4)
 # tab_evaluation = html.Div([
@@ -500,26 +500,25 @@ audio_player_eval = dash_audio_components.DashAudioComponents(
 #     ),
 # ])
 
-fold_selector_eval = dbc.FormGroup(
-    [
-        dbc.Label("Fold", html_for="dropdown", width=2),
-        dbc.Col(dcc.Dropdown(id="fold_name_eval", options=options_folds), width=10),
-    ],
-    row=True,
-)
+# fold_selector_eval = dbc.FormGroup(
+#     [
+#         dbc.Label("Fold", html_for="dropdown", width=2),
+#         dbc.Col(dcc.Dropdown(id="fold_name_eval", options=options_folds), width=10),
+#     ],
+#     row=True,
+# )
 figure_metrics = generate_figure_metrics([], [])
 plot_metrics = dcc.Graph(
     id="figure_metrics",
     figure=figure_metrics,
     style={"width": "90%", "display": "inline-block", 'float': 'left'}
 )
+button_eval = html.Div([dbc.Button("Evaluate", id="run_evaluation", className="ml-auto", color="primary")])
+
 tab_evaluation = html.Div([
     dbc.Row(
         [
-            dbc.Col(html.Div([
-                dbc.Button("Evaluate", id="run_evaluation", className="ml-auto")
-            ]), width=2),
-            
+            dbc.Col(html.Div([button_eval]), width=2),
            # fold_selector_eval,
             dbc.Col(html.Div([""], id='results'), width=2),
         ]
@@ -528,8 +527,7 @@ tab_evaluation = html.Div([
         [
             dbc.Col(html.Div([plot_metrics]), width=10)
         ]
-    ),
-    
+    )  
 ])
 #tab_evaluation = html.Div([""], id='results')
 
@@ -544,7 +542,7 @@ plot_features = dcc.Graph(id='plot_features', figure=figure_features,
 audio_player_demo = dash_audio_components.DashAudioComponents(
     id='audio-player-demo', src="", autoPlay=False, controls=True
 )
-btn_run_demo = dbc.Button("Run Demo", id="btn_run_demo", className="ml-auto")
+btn_run_demo = dbc.Button("Get new predictions", id="btn_run_demo", className="ml-auto", color="primary")
 
 upload_file = dcc.Upload([
         'Drag and Drop or ',
@@ -589,7 +587,7 @@ tabs = dbc.Tabs(
                 tab_id='tab_visualization'),
         dbc.Tab(tab_evaluation, label="Evaluate model",
                 tab_id='tab_evaluation'),
-        dbc.Tab(tab_demo, label="Demo",
+        dbc.Tab(tab_demo, label="Visualize predictions",
                 tab_id='tab_demo'),
     ], id='tabs'
 )

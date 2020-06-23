@@ -210,7 +210,7 @@ class DataGenerator():
 
         return X, Y
 
-    def get_data_of_file(self, file_index):
+    def get_data_from_file(self, file_index):
         """ Return the data from the file index given by argument.
 
         Returns
@@ -222,10 +222,10 @@ class DataGenerator():
 
         """
         # Generate data
-        X, Y = self.data_generation(self.features_file_list[file_index])
+        X, Y = self.data_generation([self.features_file_list[file_index]])
         if self.scaler is not None:
             X = self.scaler.transform(X)
-        return X.copy(), Y.copy()
+        return X[0].copy(), Y[0].copy()
 
     def convert_features_path_to_audio_path(self, features_file, sr=None):
         """ Convert features path(s) to audio path(s).
