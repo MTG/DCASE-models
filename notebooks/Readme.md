@@ -17,7 +17,7 @@ This folder contains [IPython](http://ipython.org/) / [Jupyter](http://jupyter.o
 	- [Data Augmentation](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/basics/data_augmentation.ipynb)
 	- [Training and evaluating a model](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/basics/Model_Train_and_evaluate.ipynb)
 - [Challenges](https://github.com/pzinemanas/DCASE-models/tree/master/notebooks/challenges):   DCASE challenge examples.
-	 - [2020 Task 1](http://dcase.community/challenge2020/task-acoustic-scene-classification)(http://dcase.community/challenge2020/index). *Acoustic scene clasification.* This notebook also shows how to define a model.
+	 - [2020 Task 1](http://dcase.community/challenge2020/task-acoustic-scene-classification). *Acoustic scene clasification.* This notebook also shows how to define a model.
  -  [Papers](https://github.com/pzinemanas/DCASE-models/tree/master/notebooks/papers): replicating paper results.
 	 - [SB_CNN](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/papers/SB_CNN%20example.ipynb) *Deep Convolutional Neural Networks and Data Augmentation For Environmental Sound Classification* J. Salamon and J. P. Bello IEEE Signal Processing Letters, 24(3), pages 279 - 283, 2017. This notebook includes  data augmentation.
 	  - [SB_CNN_SED](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/papers/SB_CNN_SED.ipynb) *Scaper: A Library for Soundscape Synthesis and Augmentation* J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello. In IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (WASPAA), New Paltz, NY, USA, Oct. 2017. 
