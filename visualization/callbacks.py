@@ -17,7 +17,7 @@ from .layout import options_models, options_optimizers
 from .app import app
 from .figures import generate_figure2D, generate_figure_mel
 from .figures import generate_figure_training
-from .figures import generate_figure2D_eval
+# from .figures import generate_figure2D_eval
 from .figures import generate_figure_features
 from .figures import generate_figure_metrics
 
@@ -89,22 +89,22 @@ def click_on_plot2d(clickData, x_select, y_select):
     [Input('samples_per_class', 'value'),
      Input('x_select', 'value'),
      Input('y_select', 'value'),
-     Input("run_visualization", "n_clicks")],
-   #  Input('output_select', 'value')],
+     Input("tabs", "active_tab")],
     [State('fold_name', 'value'),
      State('model_path', 'value'),
      State('dataset_name', 'value'),
      State('sr', 'value')]
 )
+# Input('output_select', 'value')],
 def update_plot2D(samples_per_class, x_select, y_select,
-                  n_clicks,  fold_ix, model_path, dataset_ix, sr): #output_select,
+                  active_tab,  fold_ix, model_path, dataset_ix, sr):
     global X
     global X_pca
     global Y
     global file_names
     global feature_extractor
     print('start visualization')
-    if (n_clicks is not None): #& (output_select is not None):
+    if (active_tab == 'tab_visualization'):
         fold_name = dataset.fold_list[fold_ix]
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
@@ -138,12 +138,13 @@ def update_plot2D(samples_per_class, x_select, y_select,
         Yt = np.concatenate(Yt, axis=0)
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold)
-            X_emb = model_container.get_intermediate_output(-2, X) #output_select
+            X_emb = model_container.get_intermediate_output(-2, X)
+            # output_select
 
         pca = PCA(n_components=4)
         pca.fit(X_emb)
         X_pca = pca.transform(X_emb)
-        
+
     print('pca', X_pca.shape, Yt.shape)
     figure2D = generate_figure2D(X_pca, Yt, dataset.label_list,
                                  pca_components=[x_select, y_select],
@@ -161,7 +162,7 @@ def update_output_select(active_tab):
         layers = model_container.get_available_intermediate_outputs()
         options = [{'label': x, 'value': x} for x in layers]
         return [options, layers[-1]]
-    return [[],'']
+    return [[], '']
 
 # MODEL TAB
 
@@ -351,7 +352,7 @@ def check_pipeline(feature_ix, sequence_time, sequence_hop_time, audio_hop,
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     # if was trigger by end_features_extraction and
-    # the feautres were already calculated
+    # the features were already calculated
     if button_id == 'end_features_extraction' and \
        status_features == 'NOT_EXTRACTING':
         raise dash.exceptions.PreventUpdate
@@ -515,8 +516,6 @@ def create_model(n_clicks_create_model, n_clicks_load_model, model_ix,
             kwargs = {'sequence_hop_time': sequence_hop_time}
         dataset = dataset_class(dataset_path, **kwargs)
 
-        params_dataset = params['datasets'][dataset_name]
-
         n_classes = len(dataset.label_list)
 
         model_class = get_available_models()[model_name]
@@ -609,14 +608,13 @@ def create_model_path(dataset_ix, model_ix):
 
 @app.callback(
     Output("plot_training", "figure"),
-    [#Input("tabs", "active_tab"),
-     Input("fold_name", "value"),
+    [Input("fold_name", "value"),
      Input('interval-component', 'n_intervals')],
     [State('model_path', 'value')]
 )
+# Input("tabs", "active_tab"),
 # TRAINING
-def update_figure_training(fold_ix, n_intervals, model_path): #active_tab
-#    if active_tab == "tab_train":
+def update_figure_training(fold_ix, n_intervals, model_path):
     figure_training = generate_figure_training([], [], [])
     if fold_ix is not None:
         fold_name = dataset.fold_list[fold_ix]
@@ -744,7 +742,7 @@ def start_training(status, fold_ix, normalizer, model_path,
             batch_size=batch_size,
             shuffle=False, train=False, scaler=scaler
         )
-        
+
         exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
         mkdir_if_not_exists(exp_folder_fold, parents=True)
 
@@ -805,7 +803,7 @@ def evaluate_model(n_clicks, fold_ix, model_path):
     global predictions
     global data_generator_test
     print('Change tab evaluation')
-    #if (active_tab == "tab_evaluation") and (fold_ix is not None):
+    # if (active_tab == "tab_evaluation") and (fold_ix is not None):
     if (n_clicks is not None) and (fold_ix is not None):
         print('Start evaluation')
         fold_name = dataset.fold_list[fold_ix]
@@ -824,7 +822,8 @@ def evaluate_model(n_clicks, fold_ix, model_path):
         print(len(X_test), len(Y_test))
         with graph.as_default():
             model_container.load_model_weights(exp_folder_fold)
-            results = model_container.evaluate((X_test, Y_test), label_list=dataset.label_list)
+            results = model_container.evaluate(
+                (X_test, Y_test), label_list=dataset.label_list)
         results = results['classification'].results()
 
         accuracy = results['overall']['accuracy']
@@ -878,8 +877,9 @@ def evaluate_model(n_clicks, fold_ix, model_path):
         # figure2d = generate_figure2D_eval(
         #     X_pca_test, predictions, Y_test, dataset.label_list
         # )
-        # return [figure2d,
-        #         "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
+        # return [
+        #   figure2d,
+        #   "Accuracy in fold %s is %f" % (fold_name, results['accuracy'])]
 
     return ['Pa']
     # raise dash.exceptions.PreventUpdate
@@ -915,12 +915,12 @@ def click_on_plot2d_eval(clickData):
             predicted_text
         ]
 
+
 @app.callback(
     [Output('plot_features', 'figure'),
      Output('audio-player-demo', 'overrideProps'),
      Output('demo_file_label', 'children')],
-    [#Input("tabs", "active_tab"),
-     Input("btn_run_demo", "n_clicks"),
+    [Input("btn_run_demo", "n_clicks"),
      Input('upload-data', 'contents')],
     [State('fold_name', 'value'),
      State('model_path', 'value'),
@@ -928,9 +928,10 @@ def click_on_plot2d_eval(clickData):
      State('upload-data', 'last_modified'),
      State('sr', 'value')]
 )
+# Input("tabs", "active_tab"),
 def generate_demo(n_clicks, list_of_contents, fold_ix,
-                   model_path,
-                   list_of_names, list_of_dates, sr):
+                  model_path, list_of_names,
+                  list_of_dates, sr):
     print('generate demo')
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -964,7 +965,7 @@ def generate_demo(n_clicks, list_of_contents, fold_ix,
             fig_demo,
             {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
             'ground-truth: %s' % file_label
-        ]       
+        ]
 
     if button_id == 'upload-data':
         fold_name = dataset.fold_list[fold_ix]
@@ -991,7 +992,7 @@ def generate_demo(n_clicks, list_of_contents, fold_ix,
 
     X_feat = np.zeros((10, 128, 64))
     Y_t = np.zeros((10, 10))
-    label_list= []*10
+    label_list = []*10
     figure_features = generate_figure_features(X_feat, Y_t, label_list)
 
     return [
@@ -1012,7 +1013,7 @@ def generate_demo(n_clicks, list_of_contents, fold_ix,
 #      State('upload-data', 'filename'),
 #      State('upload-data', 'last_modified'),
 #      State('sr', 'value')])
-# def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab, 
+# def generate_demo(n_clicks, list_of_contents, fold_ix, #active_tab,
 #                   model_path, selectedData,
 #                   list_of_names, list_of_dates, sr):
 #     ctx = dash.callback_context
@@ -1046,7 +1047,7 @@ def generate_demo(n_clicks, list_of_contents, fold_ix,
 #             fig_demo,
 #             {'autoPlay': False, 'src': encode_audio(audio_data, sr)},
 #             file_label
-#         ]       
+#         ]
 
 #     if button_id == 'upload-data':
 #         fold_name = dataset.fold_list[fold_ix]

@@ -169,6 +169,78 @@ class Openl3(FeatureExtractor):
         return emb
 
 
+class RawAudio(FeatureExtractor):
+    """ RawAudio feature extractor.
+
+    Only load audio and create sequences (overlapped windows)
+
+    """
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
+                 audio_win=1024, audio_hop=512, sr=44100):
+
+        super().__init__(sequence_time=sequence_time,
+                         sequence_hop_time=sequence_hop_time,
+                         audio_win=audio_win, audio_hop=audio_hop,
+                         sr=sr)
+
+        self.sequence_samples = audio_hop * self.sequence_frames
+        self.sequence_hop_samples = audio_hop * self.sequence_hop
+
+    def calculate(self, file_name):
+        audio = self.load_audio(file_name, change_sampling_rate=False)
+
+        audio = librosa.util.fix_length(
+            audio,
+            audio.shape[0]+self.sequence_samples,
+            axis=0, mode='constant'
+        )
+
+        audio = np.ascontiguousarray(audio)
+        audio_seqs = librosa.util.frame(
+            audio, self.sequence_samples, self.sequence_hop_samples, axis=0
+        )
+
+        return audio_seqs
+
+
+class FramesAudio(FeatureExtractor):
+    """ RawAudio feature extractor.
+
+    Only load audio and create sequences (overlapped windows)
+
+    """
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
+                 audio_win=1024, audio_hop=512, sr=44100):
+
+        super().__init__(sequence_time=sequence_time,
+                         sequence_hop_time=sequence_hop_time,
+                         audio_win=audio_win, audio_hop=audio_hop,
+                         sr=sr)
+
+        self.sequence_samples = audio_hop * self.sequence_frames
+        self.sequence_hop_samples = audio_hop * self.sequence_hop
+
+    def calculate(self, file_name):
+        audio = self.load_audio(file_name, change_sampling_rate=False)
+
+        audio = np.ascontiguousarray(audio)
+        audio_frames = librosa.util.frame(
+            audio, self.audio_win, self.audio_hop, axis=0
+        )
+
+        audio_frames = librosa.util.fix_length(
+            audio_frames,
+            audio_frames.shape[0]+self.sequence_frames,
+            axis=0, mode='constant'
+        )
+
+        audio_seqs = librosa.util.frame(
+            audio_frames, self.sequence_frames, self.sequence_hop, axis=0
+        )
+
+        return audio_seqs
+
+
 def get_available_features():
     available_features = {m[0]: m[1] for m in inspect.getmembers(
         sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}

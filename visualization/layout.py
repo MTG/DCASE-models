@@ -10,15 +10,14 @@ from dcase_models.model.models import get_available_models
 from dcase_models.util.files import load_json
 
 import numpy as np
-import json
-import os 
 
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_audio_components
 
-#params = load_json(os.path.join(os.path.dirname(__file__), 'parameters.json'))
+# params = load_json(
+#   os.path.join(os.path.dirname(__file__), 'parameters.json'))
 params = load_json('parameters.json')
 # params_dataset = params["datasets"][args.dataset]
 params_features = params["features"]
@@ -40,7 +39,7 @@ plot2D = dcc.Graph(id='plot2D', figure=figure2D,
                    style={"height": "100%", "width": "100%"})
 
 # Plot mel-spectrogram
-X = np.zeros((128, 64))
+X = np.zeros((64, 64))
 figure_mel = generate_figure_mel(X)
 plot_mel = dcc.Graph(
     id="plot_mel",
@@ -61,7 +60,7 @@ y_select = dcc.Dropdown(id='y_select', options=options_pca,
                         value=1, style={'width': '100%'})
 
 output_select = dcc.Dropdown(id='output_select', options=[],
-                        value=1, style={'width': '100%'})
+                             value=1, style={'width': '100%'})
 
 # Slider to select number of instances
 slider_samples = html.Div(
@@ -117,8 +116,8 @@ audio_win_input = dbc.FormGroup(
 # FFT number of samples and sampling rate inputs
 sr_input = dbc.FormGroup(
     [
-        #dbc.Label("N FFT", html_for="example-email-row", width=2),
-        #dbc.Col(dbc.Input(type="number", id="n_fft", placeholder="n_fft",
+        # dbc.Label("N FFT", html_for="example-email-row", width=2),
+        # dbc.Col(dbc.Input(type="number", id="n_fft", placeholder="n_fft",
         #                  value=params_features['n_fft']), width=4,),
         dbc.Label("sampling rate", html_for="example-email-row", width=2),
         dbc.Col(dbc.Input(type="number", id="sr", placeholder="sr",
@@ -440,16 +439,19 @@ tab_train = html.Div([
     html.Div("", id='end_training', style={'display': 'none'})
 ])
 
-run_visualization = html.Div([dbc.Button("Run", id="run_visualization",
-                              color="primary", className="mr-1")])
+# run_visualization = html.Div([dbc.Button("Run", id="run_visualization",
+#                              color="primary", className="mr-1")])
 # Define Tab Visualization (3)
 tab_visualization = html.Div([
     dbc.Row(
         [
             dbc.Col(html.Div([plot2D]), width=8),
-            dbc.Col([dbc.Row([plot_mel], align='center'),
-                     dbc.Row([audio_player], align='center'),
-                     dbc.Row([run_visualization], align='center')], width=4),
+            dbc.Col(
+                [
+                    dbc.Row([plot_mel], align='center'),
+                    dbc.Row([audio_player], align='center'),
+                    # dbc.Row([run_visualization], align='center')
+                ], width=3),
         ]
     ),
     dbc.Row(
@@ -491,7 +493,7 @@ tab_visualization = html.Div([
 #         [
 #             dbc.Col(html.Div([plot2D_eval]), width=8),
 #             dbc.Col([
-#                 dbc.Row([plot_mel_eval], align='center'), 
+#                 dbc.Row([plot_mel_eval], align='center'),
 #                 dbc.Row([audio_player_eval], align='center'),
 #                 dbc.Row([html.Div("", id="accuracy")], align='center'),
 #                 dbc.Row([html.Div("", id="predicted")], align='center')
@@ -500,26 +502,21 @@ tab_visualization = html.Div([
 #     ),
 # ])
 
-# fold_selector_eval = dbc.FormGroup(
-#     [
-#         dbc.Label("Fold", html_for="dropdown", width=2),
-#         dbc.Col(dcc.Dropdown(id="fold_name_eval", options=options_folds), width=10),
-#     ],
-#     row=True,
-# )
 figure_metrics = generate_figure_metrics([], [])
 plot_metrics = dcc.Graph(
     id="figure_metrics",
     figure=figure_metrics,
     style={"width": "90%", "display": "inline-block", 'float': 'left'}
 )
-button_eval = html.Div([dbc.Button("Evaluate", id="run_evaluation", className="ml-auto", color="primary")])
+button_eval = html.Div([
+    dbc.Button("Evaluate", id="run_evaluation",
+               className="ml-auto", color="primary")
+])
 
 tab_evaluation = html.Div([
     dbc.Row(
         [
             dbc.Col(html.Div([button_eval]), width=2),
-           # fold_selector_eval,
             dbc.Col(html.Div([""], id='results'), width=2),
         ]
     ),
@@ -527,22 +524,23 @@ tab_evaluation = html.Div([
         [
             dbc.Col(html.Div([plot_metrics]), width=10)
         ]
-    )  
+    )
 ])
-#tab_evaluation = html.Div([""], id='results')
+# tab_evaluation = html.Div([""], id='results')
 
 
 X_feat = np.zeros((10, 128, 64))
 Y_t = np.zeros((10, 10))
-label_list= []*10
+label_list = []*10
 figure_features = generate_figure_features(X_feat, Y_t, label_list)
 plot_features = dcc.Graph(id='plot_features', figure=figure_features,
-                   style={"height": "100%", "width": "100%"})
+                          style={"height": "100%", "width": "100%"})
 # Audio controls
 audio_player_demo = dash_audio_components.DashAudioComponents(
     id='audio-player-demo', src="", autoPlay=False, controls=True
 )
-btn_run_demo = dbc.Button("Get new predictions", id="btn_run_demo", className="ml-auto", color="primary")
+btn_run_demo = dbc.Button("Get new predictions", id="btn_run_demo",
+                          className="ml-auto", color="primary")
 
 upload_file = dcc.Upload([
         'Drag and Drop or ',
@@ -559,12 +557,14 @@ upload_file = dcc.Upload([
 
 # Define Tab Demo (4)
 tab_demo = html.Div([
-    dbc.Row([
+    dbc.Row(
+        [
             dbc.Col(html.Div([upload_file]), width=5),
             dbc.Col(html.Div([""], id='demo_output'), width=5),
         ]
     ),
-    dbc.Row([
+    dbc.Row(
+        [
             dbc.Col(html.Div([btn_run_demo]), width=2),
             dbc.Col(html.Div([audio_player_demo]), width=3),
             dbc.Col(html.Div("", id='demo_file_label'), width=3)
@@ -581,13 +581,13 @@ tab_demo = html.Div([
 # Define Tabs
 tabs = dbc.Tabs(
     [
-        dbc.Tab(tab_model, label="Model", tab_id='tab_model'),
-        dbc.Tab(tab_train, label="Train model", tab_id='tab_train'),
-        dbc.Tab(tab_visualization, label="Visualize model",
+        dbc.Tab(tab_model, label="Model definition", tab_id='tab_model'),
+        dbc.Tab(tab_train, label="Model training", tab_id='tab_train'),
+        dbc.Tab(tab_visualization, label="Data visualization",
                 tab_id='tab_visualization'),
-        dbc.Tab(tab_evaluation, label="Evaluate model",
+        dbc.Tab(tab_evaluation, label="Model evaluation",
                 tab_id='tab_evaluation'),
-        dbc.Tab(tab_demo, label="Visualize predictions",
+        dbc.Tab(tab_demo, label="Prediction visualization",
                 tab_id='tab_demo'),
     ], id='tabs'
 )

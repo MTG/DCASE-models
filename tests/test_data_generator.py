@@ -28,7 +28,7 @@ class TestDataset(Dataset):
 
     def generate_file_lists(self):
         """
-        Create self.file_lists, a dict thath includes a list of files per fold.
+        Create self.file_lists, a dict that includes a list of files per fold.
 
         Each dataset has a different way of organizing the files. This
         function defines the dataset structure.

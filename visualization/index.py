@@ -1,9 +1,5 @@
-import sys
-sys.path.append('../')
-
 from .app import app
 from .layout import layout
-from . import callbacks
 
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"

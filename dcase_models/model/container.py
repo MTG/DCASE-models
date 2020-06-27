@@ -3,7 +3,7 @@ import os
 import json
 
 import keras.backend as K
-from keras.callbacks import CSVLogger
+from keras.callbacks import CSVLogger, ModelCheckpoint
 from keras.models import model_from_json, Model
 from keras.layers import Dense, Input
 
@@ -229,7 +229,7 @@ class KerasModelContainer(ModelContainer):
                 considered_improvement=considered_improvement,
                 label_list=label_list
             )
-        if self.metrics[0] == 'sed':
+        elif self.metrics[0] == 'sed':
             metrics_callback = SEDCallback(
                 data_val, file_weights=file_weights,
                 early_stopping=early_stopping,
@@ -238,13 +238,21 @@ class KerasModelContainer(ModelContainer):
                 metric_resolution_sec=metric_resolution_sec,
                 label_list=label_list
             )
-        if self.metrics[0] == 'tagging':
+        elif self.metrics[0] == 'tagging':
             metrics_callback = TaggingCallback(
                 data_val, file_weights=file_weights,
                 early_stopping=early_stopping,
                 considered_improvement=considered_improvement,
                 label_list=label_list
             )
+        else:
+            metrics_callback = ModelCheckpoint(
+                filepath=file_weights,
+                save_weights_only=True,
+                monitor='val_loss',
+                mode='min',
+                save_best_only=True)
+
         log = CSVLogger(file_log)
 
         if type(data_train) in [list, tuple]:

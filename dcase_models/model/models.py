@@ -7,6 +7,7 @@ from keras.layers import TimeDistributed, Activation, Reshape
 from keras.layers import GlobalAveragePooling2D
 from keras.layers import GlobalMaxPooling2D
 from keras.layers import Input, Lambda, Conv2D, MaxPooling2D
+from keras.layers import Conv1D
 from keras.layers import Dropout, Dense, Flatten
 from keras.layers import BatchNormalization
 from keras.models import Model
@@ -559,6 +560,141 @@ class DCASE2020Task5Baseline(KerasModelContainer):
         # Create model
         self.model = Model(inputs=inputs, outputs=y, name='model')
 
+        super().build()
+
+
+class SMel(KerasModelContainer):
+    """ KerasModelContainer for SMel model.
+
+    P. Zinemanas, P. Cancela, M. Rocamora.
+    "End–to–end Convolutional Neural Networks for Sound Event Detection
+    in Urban Environments"
+    Proceedings of the 24th Conference of Open Innovations Association FRUCT,
+    3rd IEEE FRUCT International Workshop on Semantic Audio
+    and the Internet of Things.
+    Moscow, Russia, April 2019.
+
+    """
+
+    def __init__(self, model=None, model_path=None,
+                 metrics=['mean_squared_error'],
+                 mel_bands=64, n_seqs=64,
+                 audio_win=1024, audio_hop=512,
+                 alpha=1, scaler=None, amin=1e-10):
+        self.mel_bands = mel_bands
+        self.n_seqs = n_seqs
+        self.audio_win = audio_win
+        self.audio_hop = audio_hop
+        self.alpha = alpha
+        self.scaler = scaler
+        self.amin = amin
+
+        super().__init__(model=model, model_path=model_path,
+                         model_name='SMel', metrics=metrics)
+
+    def build(self):
+        x = Input(shape=(self.n_seqs, self.audio_win, 1), dtype='float32')
+
+        y = TimeDistributed(
+            Conv1D(
+                self.mel_bands, 1024, strides=16, padding='same', use_bias=True
+            ))(x)
+
+        y = Lambda(lambda x: x*x)(y)
+
+        y = Lambda(lambda x: self.audio_win*K.mean(x, axis=2))(y)
+
+        y = Lambda(
+            lambda x: 10*K.log(K.maximum(self.amin, x*self.alpha))/K.log(10.)
+        )(y)
+
+        if self.scaler is not None:
+            y = Lambda(
+                lambda x: 2*((x-self.scaler[0]) /
+                             (self.scaler[1]-self.scaler[0])-0.5)
+            )(y)
+
+        self.model = Model(inputs=x, outputs=y)
+
+        super().build()
+
+
+class MST(KerasModelContainer):
+    """ KerasModelContainer for MST model.
+
+    T. M. S. Tax, J. L. D. Antich, H. Purwins, and L. Maaløe.
+    “Utilizing domain knowledge in end-to-end audio processing”
+    31st Conference on Neural Information Processing Systems (NIPS).
+    Long Beach, CA, USA, 2017.
+
+    """
+
+    def __init__(self, model=None, model_path=None,
+                 metrics=['mean_squared_error'],
+                 mel_bands=128, sequence_samples=22050,
+                 audio_win=1024, audio_hop=512):
+        self.mel_bands = mel_bands
+        self.sequence_samples = sequence_samples
+        self.audio_win = audio_win
+        self.audio_hop = audio_hop
+
+        super().__init__(model=model, model_path=model_path,
+                         model_name='MST', metrics=metrics)
+
+    def build(self):
+        x = Input(shape=(self.sequence_samples, ), dtype='float32')
+
+        y = Lambda(lambda x: K.expand_dims(x, -1), name='lambda')(x)
+
+        y = Conv1D(512, self.audio_win,
+                   strides=self.audio_hop, padding='same')(y)
+        y = BatchNormalization()(y)
+        y = Activation('relu')(y)
+
+        y = Conv1D(256, 3, strides=1, padding='same')(y)
+        y = BatchNormalization()(y)
+        y = Activation('relu')(y)
+
+        y = Conv1D(self.mel_bands, 3, strides=1, padding='same')(y)
+        y = BatchNormalization()(y)
+        y = Activation('tanh')(y)
+
+        self.model = Model(inputs=x, outputs=y)
+
+        super().build()
+
+
+class ConcatenatedModel(KerasModelContainer):
+    """ KerasModelContainer for concatenating models.
+
+    """
+
+    def __init__(self, model_list, model_path=None,
+                 model_name='ConcatenatedModel', metrics=['sed'],
+                 use_batch_norm=False):
+        """ Initialization of ConcatenatedModel.
+
+        """
+        self.model_list = model_list
+        self.use_batch_norm = use_batch_norm
+
+        super().__init__(model=None, model_path=model_path,
+                         model_name=model_name, metrics=metrics)
+
+    def build(self):
+        input_shape = self.model_list[0].model.input_shape
+        print(input_shape)
+        x = Input(shape=input_shape[1:], dtype='float32')
+        for j in range(len(self.model_list)):
+            if j == 0:
+                y = x
+            print(y.shape)
+            y = self.model_list[j].model(y)
+            print(y.shape)
+            if self.use_batch_norm and (j < len(self.model_list) - 1):
+                y = BatchNormalization()(y)
+
+        self.model = Model(inputs=x, outputs=y)
         super().build()
 
 

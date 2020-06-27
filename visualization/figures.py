@@ -31,7 +31,10 @@ def generate_figure2D(X, Y, label_list, pca_components=[0, 1],
         fig.add_trace(
             go.Scatter(
                 x=x_coord, y=y_coord, name=label_list[j], mode='markers',
-                marker={'size': size, 'symbol': 'circle', 'color': colors[j % len(colors)]}
+                marker={
+                    'size': size, 'symbol': 'circle',
+                    'color': colors[j % len(colors)]
+                }
             ), row=1, col=1
         )
 
@@ -52,7 +55,7 @@ def generate_figure2D(X, Y, label_list, pca_components=[0, 1],
 
 
 def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
-                      samples_per_class=1000):
+                           samples_per_class=1000):
 
     fig = make_subplots(rows=1, cols=1)  # , column_widths=[0.8, 0.2])
     size = 6
@@ -62,16 +65,19 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
 
     n_classes = len(label_list)
     for j in range(n_classes):
-        X_class_correct = X[(Y==j) & (Y_pred==j)] 
-        X_class_incorrect = X[(Y==j) & (Y_pred!=j)]
-        #s = min(samples_per_class, len(X_class_j))
+        X_class_correct = X[(Y == j) & (Y_pred == j)]
+        X_class_incorrect = X[(Y == j) & (Y_pred != j)]
+        # s = min(samples_per_class, len(X_class_j))
         x_coord = X_class_correct[:, pca_components[0]]
         y_coord = X_class_correct[:, pca_components[1]]
 
         fig.add_trace(
             go.Scatter(
                 x=x_coord, y=y_coord, name=label_list[j], mode='markers',
-                marker={'size': size, 'symbol': 'circle', 'color': colors[j% len(colors)]}
+                marker={
+                    'size': size, 'symbol': 'circle',
+                    'color': colors[j % len(colors)]
+                }
             ), row=1, col=1
         )
         x_coord = X_class_incorrect[:, pca_components[0]]
@@ -80,10 +86,12 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
         fig.add_trace(
             go.Scatter(
                 x=x_coord, y=y_coord, name=label_list[j], mode='markers',
-                marker={'size': size, 'symbol': 'x', 'color': colors[j% len(colors)]}
+                marker={
+                    'size': size, 'symbol': 'x',
+                    'color': colors[j % len(colors)]
+                }
             ), row=1, col=1
         )
-
 
     components_dict = {0: 'First', 1: 'Second', 2: 'Third', 3: 'Fourth'}
 
@@ -99,7 +107,6 @@ def generate_figure2D_eval(X, Y_pred, Y, label_list, pca_components=[0, 1],
         height=600,
     )
     return fig
-    
 
 
 def generate_figure_mel(mel_spec):
@@ -131,11 +138,11 @@ def generate_figure_training(epochs, val, loss):
     )
     figure_training.add_trace(
         go.Scatter(
-            x=epochs, y=loss, name='loss', mode='markers', 
+            x=epochs, y=loss, name='loss', mode='markers',
             marker={'size': size, 'symbol': 'circle', 'color': colors[1]}
         ), row=2, col=1
     )
-    
+
     figure_training.update_xaxes(title_text="epochs", row=2, col=1)
     figure_training.update_yaxes(title_text="Accuracy (%)", row=1, col=1)
     figure_training.update_yaxes(title_text="Loss", row=2, col=1, type='log')
@@ -154,18 +161,21 @@ def generate_figure_features(X_features, Y_pred, label_list):
     print(X_features.shape)
     fig = make_subplots(
         rows=2, cols=len(X_features),
-        specs=[[{}]*len(X_features),
-           [{"colspan": len(X_features)}] + [None]*(len(X_features)-1)]
-        ) 
-    fig.add_trace(go.Heatmap(z=Y_pred.T, colorbar=dict(len=0.4, y=0.2)), row=2, col=1) 
-    fig.update_yaxes(dict(
-            tickmode = 'array',
-            tickvals = np.arange(0, len(label_list)),
-            ticktext = label_list
+        specs=[
+            [{}]*len(X_features),
+            [{"colspan": len(X_features)}] + [None]*(len(X_features)-1)
+        ]
+        )
+    fig.add_trace(
+        go.Heatmap(z=Y_pred.T, colorbar=dict(len=0.4, y=0.2)), row=2, col=1)
+    fig.update_yaxes(
+        dict(
+            tickmode='array',
+            tickvals=np.arange(0, len(label_list)),
+            ticktext=label_list
         ),
         title_text="yaxis 3 title", row=2, col=1
     )
-
 
     fig.update_layout(
         # title="2D space (PCA)",
@@ -179,17 +189,11 @@ def generate_figure_features(X_features, Y_pred, label_list):
         height=600,
     )
     for j in range(len(X_features)):
-        fig_mel = generate_figure_mel(X_features[j])
-
-        fig.add_trace(go.Heatmap(z=X_features[j].T, 
+        fig.add_trace(go.Heatmap(z=X_features[j].T,
                                  colorbar=dict(len=0.4, y=0.8),
                                  zmin=np.amin(X_features),
                                  zmax=np.amax(X_features),
                                  ), row=1, col=j+1)
-        
-        #fig.update_traces(dict(showscale=False, 
-         #              coloraxis=None), selector={'type':'heatmap'}, row=1, col=j+1)     #colorscale='gray'
-       # fig.add_trace(go.Bar(x=label_list, y=Y_pred[j]), row=2, col=j+1)
 
     return fig
 

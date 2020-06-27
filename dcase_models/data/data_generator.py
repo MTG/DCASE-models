@@ -41,7 +41,8 @@ class DataGenerator():
 
     def __init__(self, dataset, feature_extractor, folds,
                  batch_size=32, shuffle=True,
-                 train=True, scaler=None):
+                 train=True, scaler=None,
+                 features_as_annotations=None, scaler_annotations=None):
         """ Initialize the DataGenerator.
 
         Generate the features_file_list by concatenating all the files
@@ -79,6 +80,8 @@ class DataGenerator():
         self.shuffle = shuffle
         self.train = train
         self.scaler = scaler
+        self.features_as_annotations = features_as_annotations
+        self.scaler_annotations = scaler_annotations
 
         if (Dataset not in inspect.getmro(dataset.__class__)):
             raise AttributeError(
@@ -88,6 +91,9 @@ class DataGenerator():
         if FeatureExtractor not in inspect.getmro(feature_extractor.__class__):
             raise AttributeError('''feature_extractor has to be an
                                     instance of FeatureExtractor or similar''')
+
+        if features_as_annotations is not None:
+            assert features_as_annotations.sr == feature_extractor.sr
 
         self.features_path = self.feature_extractor.get_features_path(
             dataset
@@ -134,19 +140,34 @@ class DataGenerator():
         features_list = []
         annotations = []
 
-        for file_name in list_files:
-            features = np.load(file_name)
-            features_list.append(features)
-            if type(self.dataset) is AugmentedDataset:
+        if not self.features_as_annotations:
+            for file_name in list_files:
+                features = np.load(file_name)
+                features_list.append(features)
+                if type(self.dataset) is AugmentedDataset:
+                    file_audio = self.convert_features_path_to_audio_path(
+                        file_name)
+                else:
+                    file_audio = self.convert_features_path_to_audio_path(
+                        file_name)
+                file_audio = self.paths_remove_aug_subfolder(file_audio)
+                y = self.dataset.get_annotations(file_audio, features)
+                annotations.append(y)
+        else:
+            feat_out_path = self.features_as_annotations.get_features_path(
+                self.dataset
+            )
+            for file_name in list_files:
+                features_input = np.load(file_name)
                 file_audio = self.convert_features_path_to_audio_path(
-                    file_name)
-            else:
-                file_audio = self.convert_features_path_to_audio_path(
-                    file_name)
-            file_audio = self.paths_remove_aug_subfolder(file_audio)
-            y = self.dataset.get_annotations(file_audio, features)
-            annotations.append(y)
-
+                        file_name)
+                file_features_output = file_name.replace(
+                    self.features_path, feat_out_path
+                )
+                features_output = np.load(file_features_output)
+                features_list.append(features_input)
+                annotations.append(features_output)
+                # print(features_input.shape, features_output.shape)
         return features_list, annotations
 
     def get_data(self):
@@ -168,6 +189,8 @@ class DataGenerator():
 
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
+        if self.scaler_annotations is not None:
+            Y_list = self.scaler_annotations.transform(Y_list)
 
         if self.train:
             X = np.concatenate(X_list, axis=0)
@@ -200,6 +223,8 @@ class DataGenerator():
         X_list, Y_list = self.data_generation(list_file_batch)
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
+        if self.scaler_annotations is not None:
+            Y_list = self.scaler_annotations.transform(Y_list)
 
         if self.train:
             X = np.concatenate(X_list, axis=0)
@@ -225,6 +250,9 @@ class DataGenerator():
         X, Y = self.data_generation([self.features_file_list[file_index]])
         if self.scaler is not None:
             X = self.scaler.transform(X)
+        if self.scaler_annotations is not None:
+            Y = self.scaler_annotations.transform(Y)
+
         return X[0].copy(), Y[0].copy()
 
     def convert_features_path_to_audio_path(self, features_file, sr=None):
