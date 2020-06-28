@@ -11,12 +11,12 @@
 
 This folder contains Python scripts to demonstrate `DCASE-models`. It includes 6 scripts that implement different functionalities around the pipeline of a DCASE related system.
 
-- [Dataset downloading](scripts/download_dataset.py)
-- [Data augmentation](scripts/data_augmentation.py)
-- [Feature extraction](scripts/feature_extraction.py)
-- [Model training](scripts/train_model.py)
-- [Model evaluation](scripts/evaluate_model.py)
-- [Fine tuning](scripts/fine_tuning.py)
+- [Dataset downloading](download_dataset.py)
+- [Data augmentation](data_augmentation.py)
+- [Feature extraction](feature_extraction.py)
+- [Model training](train_model.py)
+- [Model evaluation](evaluate_model.py)
+- [Fine tuning](fine_tuning.py)
 
 ## Usage
 
@@ -33,7 +33,7 @@ First let's start by downloading a dataset. For instance to download ESC-50 data
 python download_dataset.py -d ESC50
 ```
 
-> Note that the dataset will be downloaded in `DCASE-models/datasets/ESC50` following the path set in [`parameters.json`](`parameters.json`). You can use other `parameters.json` by passing its path in -p/--path argument.
+> Note that the dataset will be downloaded in `../datasets/ESC50` following the path set in [`parameters.json`](`../parameters.json`). You can use other `parameters.json` by passing its path in -p/--path argument.
 
 ### Data augmentation
 If you wan to use data augmentation techniques, you can run the following script.
@@ -47,7 +47,7 @@ Now, you can extract the features for each file in the dataset by:
 python extract_features.py -d ESC50 -f MelSpectrogram
 ```
 
-> See that you have to pass the features name as an argument. Available features representations are in [features.py](dcase_models/data/features.py).
+> See that you have to pass the features name as an argument. Available features representations are in [features.py](../dcase_models/data/features.py).
 
 ### Model training
 To train the model is also very easy. For instance, to train `SB_CNN` model on ESC-50 dataset with the `MelSpectrogram` features extracted before:
