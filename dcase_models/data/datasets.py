@@ -406,8 +406,9 @@ class _TAUUrbanAcousticScenes(Dataset):
         y[:, class_ix] = 1
         return y
 
-    def download(self, force_download=False):
-        pass
+    def download(self, zenodo_url, zenodo_files, force_download=False):
+        super().download(zenodo_url, zenodo_files,
+                         force_download=force_download)
 
 
 class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
