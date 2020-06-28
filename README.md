@@ -8,10 +8,10 @@
 </pre>
 
 # DCASE-models
-DCASE-models is a python library that aims to be a general structure to define, train and evaluate models for DCASE related problems. The idea is to have a modular and easy-to-use library to rapid prototype experiments. Regarding this, we create a class based structure for the differente stages related to a classifier of audio signals: feature extractor, data generator, scaler and the model itself. The library uses librosa for feature extraction and keras for the classifier, but given the modularity, the user can use other platforms.
+DCASE-models is a python library that aims to be a general structure to define, train and evaluate models for [DCASE](http://dcase.community/) related problems. The idea is to have a modular and easy-to-use library to rapid prototype experiments. Regarding this, we create a class based structure for the different stages related to a classifier of audio signals: feature extractor, data generator, scaler and the model itself. The library uses librosa for feature extraction and keras for the classifier, but given the modularity, the user can use other platforms.
 
 ## Installation instructions
-We recommend to install DCASE-models in a dedicated virtual environment. For instance, using anaconda:
+We recommend to install DCASE-models in a dedicated virtual environment. For instance, using [anaconda](https://www.anaconda.com/):
 ```
 conda create -n dcase python=3.6
 conda activate dcase
@@ -20,7 +20,7 @@ For GPU support:
 ```
 conda install cudatoolkit cudnn
 ```
-DCASE-models uses [SoX](http://sox.sourceforge.net/) for functions related to the datasets. You can install it in your conda environemnt by:
+DCASE-models uses [SoX](http://sox.sourceforge.net/) for functions related to the datasets. You can install it in your conda environment by:
 ```
 conda install -c conda-forge sox
 ```
@@ -39,10 +39,10 @@ pip install .[visualization]
 There are several ways to use this library. In this repository there are examples of three types:
 
 ### Python scripts
-The folder `scripts` includes python scripts for data downloading, feature extraction, model training and testing. These examples show how to use DCASE-models within a python script.
+The folder `scripts` includes python scripts for data downloading, feature extraction, model training and testing, and fine-tuning. These examples show how to use DCASE-models within a python script.
 
 ### Jupyter notebooks
-The folder `notebooks` includes a list of notebooks that replicate experiments using DCASE-models.
+The folder `notebooks` includes a list of notebooks that replicate scientific experiments using DCASE-models.
 
 ### Web applications
 The folder `visualization` includes a user interface to define, train and visualize the models defined in this library.
@@ -51,4 +51,7 @@ Go to DCASE-models folder and run:
 ```
 python -m visualization.index
 ```
-
+Then, open your browser and navigate to:
+```
+http://localhost:8050/
+```
