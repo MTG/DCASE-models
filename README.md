@@ -20,13 +20,17 @@ For GPU support:
 ```
 conda install cudatoolkit cudnn
 ```
+DCASE-models uses [SoX](http://sox.sourceforge.net/) for functions related to the datasets. You can install it in your conda environemnt by:
+```
+conda install -c conda-forge sox
+```
 Then to install the package:
 ```
 git clone https://github.com/pzinemanas/DCASE-models.git
 cd DCASE-models
 pip install .
 ```
-To include visualization related dependencies, run:
+To include visualization related dependencies, run the following instead:
 ```
 pip install .[visualization]
 ```
