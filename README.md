@@ -36,16 +36,18 @@ pip install .[visualization]
 ```
 
 ## Usage
-There are several ways to use this library. In this repository there are examples of three types:
+There are several ways to use this library. In this repository, we accompany the library with three types of examples.
+
+> Note that the default parameters for each model, dataset and feature representation, are stored in `parameters.json` on the root directory.
 
 ### Python scripts
-The folder `scripts` includes python scripts for data downloading, feature extraction, model training and testing, and fine-tuning. These examples show how to use DCASE-models within a python script.
+The folder [`scripts`](https://github.com/pzinemanas/DCASE-models/tree/master/scripts) includes python scripts for data downloading, feature extraction, model training and testing, and fine-tuning. These examples show how to use DCASE-models within a python script.
 
 ### Jupyter notebooks
-The folder `notebooks` includes a list of notebooks that replicate scientific experiments using DCASE-models.
+The folder [`notebooks`](https://github.com/pzinemanas/DCASE-models/tree/master/notebooks) includes a list of notebooks that replicate scientific experiments using DCASE-models.
 
 ### Web applications
-The folder `visualization` includes a user interface to define, train and visualize the models defined in this library.
+The folder [`visualization`](https://github.com/pzinemanas/DCASE-models/tree/master/visualization) includes a user interface to define, train and visualize the models defined in this library.
 
 Go to DCASE-models folder and run:
 ```
