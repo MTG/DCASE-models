@@ -63,12 +63,12 @@ Once the model is trained, you can evaluate the results in the test set:
 python evaluate_model.py -d ESC50 -f MelSpectrogram -m SB_CNN -fold fold1
 ```
 
-This scripts prints the results that we get from sed_eval library.
+This scripts prints the results that we get from `[sed_eval](https://tut-arg.github.io/sed_eval/)` library.
 
-Datasets should be stored on [`/datasets`](https://github.com/pzinemanas/DCASE-models/tree/master/datasets).
+### Fine-tuning
+Once you have a model trained in some dataset, you can fine-tune this model on other dataset. For instance to fine-tune the model trained before on MAVD dataset just:
+```
+python fine_tuning.py -od ESC50 -ofold fold1 -f MelSpectrogram -m SB_CNN -d MAVD -fold test
+```
 
-Notebooks are designed to be self-contained, but datasets can be downloaded beforehand  as shown on [`/basics/download_and_prepare_datasets.ipynb`](https://github.com/pzinemanas/DCASE-models/blob/master/notebooks/basics/download_and_prepare_datasets.ipynb).
-
-Basics notebooks can be run sequentially as a tutorial.
-
-Default parameters for each model/dataset are stored in [`parameters.json`](https://github.com/pzinemanas/DCASE-models/blob/master/parameters.json) on the root directory. Notebooks provide examples on how to modify these parameters.
+> Note that the information of the origin dataset is passed in -od and -ofold arguments. Besides -d and -fold are the destination dataset and the fold test for this dataset.
