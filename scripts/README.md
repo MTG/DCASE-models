@@ -9,7 +9,7 @@
 
 # Scripts
 
-This folder contains Python scripts to demonstrate `DCASE-models`. It includes 6 scripts that implement different functionalities around the pipeline of a DCASE related system.
+This folder contains Python scripts to demonstrate `DCASE-models`. It includes 6 scripts that implement functionalities for the different parts of a DCASE related system.
 
 - [Dataset downloading](download_dataset.py)
 - [Data augmentation](data_augmentation.py)
@@ -20,9 +20,9 @@ This folder contains Python scripts to demonstrate `DCASE-models`. It includes 6
 
 ## Usage
 
-First, note that the default parameters are stored in [`parameters.json`](`parameters.json`) file.
+First, note that the default parameters are stored in [`parameters.json`](`parameters.json`) file. You can use other `parameters.json` by passing its path in -p (or --path) argument of each script.
 
-In the next, we show an example of the complete development pipeline using these scripts. For further usage information of each script you can access to its instructions by:
+In the next, we show examples on how to use these scripts for the complete development pipeline. For further usage information you can access to each script instructions by:
 ```
 python download_dataset.py --help
 ```
@@ -33,7 +33,7 @@ First let's start by downloading a dataset. For instance to download ESC-50 data
 python download_dataset.py -d ESC50
 ```
 
-> Note that the dataset will be downloaded in `../datasets/ESC50` following the path set in [`parameters.json`](`../parameters.json`). You can use other `parameters.json` by passing its path in -p/--path argument.
+> Note that the dataset will be downloaded in `../datasets/ESC50` following the path set in [`parameters.json`](`../parameters.json`). 
 
 ### Data augmentation
 If you wan to use data augmentation techniques, you can run the following script.
@@ -58,7 +58,7 @@ python train_model.py -d ESC50 -f MelSpectrogram -m SB_CNN -fold fold1
 > In this case, you have to pass the model name and a fold name. This is considered to be the fold for testing, meaning that this fold will not be used during training.
 
 ### Model evaluation
-Once the model is trained, you can evaluate the results in the test set:
+Once the model is trained, you can evaluate the model in the test set:
 ```
 python evaluate_model.py -d ESC50 -f MelSpectrogram -m SB_CNN -fold fold1
 ```
@@ -71,4 +71,4 @@ Once you have a model trained in some dataset, you can fine-tune this model on o
 python fine_tuning.py -od ESC50 -ofold fold1 -f MelSpectrogram -m SB_CNN -d MAVD -fold test
 ```
 
-> Note that the information of the origin dataset is passed in -od and -ofold arguments. Besides -d and -fold are the destination dataset and the fold test for this dataset.
+> Note that the information of the origin dataset is passed in -od and -ofold arguments. Besides -d and -fold are the destination dataset and the fold test respectively.
