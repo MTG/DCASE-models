@@ -20,7 +20,7 @@ This folder contains Python scripts to demonstrate `DCASE-models`. It includes 6
 
 ## Usage
 
-First, note that the default parameters are stored in [`parameters.json`](`parameters.json`) file. You can use other `parameters.json` by passing its path in -p (or --path) argument of each script.
+First, note that the default parameters are stored in [`parameters.json`](`../parameters.json`) file. You can use other `parameters.json` by passing its path in -p (or --path) argument of each script.
 
 In the next, we show examples on how to use these scripts for the complete development pipeline. For further usage information you can access to each script instructions by:
 ```
