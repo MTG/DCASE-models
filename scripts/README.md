@@ -20,7 +20,7 @@ This folder contains Python scripts to demonstrate `DCASE-models`. It includes 6
 
 ## Usage
 
-First, note that the default parameters are stored in [`parameters.json`](`../parameters.json`) file. You can use other `parameters.json` by passing its path in -p (or --path) argument of each script.
+First, note that the default parameters are stored in [`parameters.json`](../parameters.json) file. You can use other `parameters.json` by passing its path in -p (or --path) argument of each script.
 
 In the next, we show examples on how to use these scripts for the complete development pipeline. For further usage information you can access to each script instructions by:
 ```
@@ -33,7 +33,7 @@ First let's start by downloading a dataset. For instance to download ESC-50 data
 python download_dataset.py -d ESC50
 ```
 
-> Note that the dataset will be downloaded in `../datasets/ESC50` following the path set in [`parameters.json`](`../parameters.json`). 
+> Note that the dataset will be downloaded in `../datasets/ESC50` following the path set in [`parameters.json`](../parameters.json). 
 
 ### Data augmentation
 If you wan to use data augmentation techniques, you can run the following script.
