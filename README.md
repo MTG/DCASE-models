@@ -7,8 +7,7 @@
                                                                        
 </pre>
 
-# DCASE-models
-DCASE-models is a python library that aims to be a general structure to define, train and evaluate models for [DCASE](http://dcase.community/) related problems. The idea is to have a modular and easy-to-use library to rapid prototype experiments. Regarding this, we create a class based structure for the different stages related to a classifier of audio signals: feature extractor, data generator, scaler and the model itself. The library uses librosa for feature extraction and keras for the classifier, but given the modularity, the user can use other platforms.
+DCASE-models is an open-source Python library that provides classes useful for rapid prototyping solutions for [DCASE](http://dcase.community/) related problems, with a particular emphasis on deep--learning models. The library has a flat and light design that allows easy extension and integration with other existing tools. 
 
 ## Installation instructions
 We recommend to install DCASE-models in a dedicated virtual environment. For instance, using [anaconda](https://www.anaconda.com/):
