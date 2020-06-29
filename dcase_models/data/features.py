@@ -7,6 +7,10 @@ import sys
 from .feature_extractor import FeatureExtractor
 
 
+__all__ = ['Spectrogram', 'MelSpectrogram',
+           'Openl3', 'RawAudio', 'FramesAudio']
+
+
 class Spectrogram(FeatureExtractor):
     """ Spectrogram feature extractor.
 
@@ -204,7 +208,7 @@ class RawAudio(FeatureExtractor):
 
 
 class FramesAudio(FeatureExtractor):
-    """ RawAudio feature extractor.
+    """ FramesAudio feature extractor.
 
     Only load audio and create sequences (overlapped windows)
 

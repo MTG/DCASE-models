@@ -14,6 +14,12 @@ from ..util.files import mkdir_if_not_exists, list_wav_files
 import inspect
 
 
+__all__ = ['UrbanSound8k', 'ESC50', 'ESC10', 'URBAN_SED',
+           'SONYC_UST', 'TAUUrbanAcousticScenes2019',
+           'TAUUrbanAcousticScenes2020Mobile',
+           'TUTSoundEvents2017', 'FSDKaggle2018', 'MAVD']
+
+
 class UrbanSound8k(Dataset):
     """ UrbanSound8k dataset.
 

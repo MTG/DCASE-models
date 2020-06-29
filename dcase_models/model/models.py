@@ -18,6 +18,10 @@ from autopool import AutoPool1D
 from .container import KerasModelContainer
 
 
+__all__ = ['MLP', 'SB_CNN', 'SB_CNN_SED', 'A_CRNN',
+           'VGGish', 'SMel', 'MST']
+
+
 class MLP(KerasModelContainer):
     """ KerasModelContainer for a generic MLP model.
 
