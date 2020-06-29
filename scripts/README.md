@@ -63,7 +63,7 @@ Once the model is trained, you can evaluate the model in the test set:
 python evaluate_model.py -d ESC50 -f MelSpectrogram -m SB_CNN -fold fold1
 ```
 
-This scripts prints the results that we get from `[sed_eval](https://tut-arg.github.io/sed_eval/)` library.
+This scripts prints the results that we get from [`sed_eval`](https://tut-arg.github.io/sed_eval/) library.
 
 ### Fine-tuning
 Once you have a model trained in some dataset, you can fine-tune this model on other dataset. For instance to fine-tune the model trained before on MAVD dataset just:
