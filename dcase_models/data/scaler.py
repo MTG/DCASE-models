@@ -37,12 +37,17 @@ class Scaler():
 
         """
         self.normalizer = normalizer
-        if normalizer == 'standard':
-            self.scaler = StandardScaler()
-        if normalizer == 'minmax':
-            self.scaler = []
+        if type(normalizer) is not list:
+            self.normalizer = [normalizer]
+        
+        self.scaler = []
+        for norm in self.normalizer: 
+            if norm == 'standard':
+                self.scaler.append(StandardScaler())
+            if norm == 'minmax':
+                self.scaler.append([])
 
-    def fit(self, X):
+    def fit(self, X, inputs=True):
         """ Fit the Scaler.
 
         Parameters
@@ -53,21 +58,26 @@ class Scaler():
         """
         if (DataGenerator in inspect.getmro(X.__class__)):
             for batch_index in range(len(X)):
-                X_batch, _ = X.get_data_batch(batch_index)
+                if inputs:
+                    X_batch, _ = X.get_data_batch(batch_index)
+                else:
+                    _, X_batch = X.get_data_batch(batch_index)
                 self.partial_fit(X_batch)
             return True
+        else:
+            self.partial_fit(X)
 
-        if type(X) == list:
-            X = np.concatenate(X, axis=0)
+        # if type(X) == list:
+        #     X = np.concatenate(X, axis=0)
 
-        if self.normalizer == 'standard':
-            X_bands = X.shape[-1]
-            self.scaler.fit(np.reshape(X, (-1, X_bands)))
-            assert len(self.scaler.mean_) == X_bands
-        if self.normalizer == 'minmax':
-            min_v = np.amin(X)  # ,axis=(0,2))
-            max_v = np.amax(X)  # ,axis=(0,2))
-            self.scaler = [min_v, max_v]
+        # if self.normalizer == 'standard':
+        #     X_bands = X.shape[-1]
+        #     self.scaler.fit(np.reshape(X, (-1, X_bands)))
+        #     assert len(self.scaler.mean_) == X_bands
+        # if self.normalizer == 'minmax':
+        #     min_v = np.amin(X)  # ,axis=(0,2))
+        #     max_v = np.amax(X)  # ,axis=(0,2))
+        #     self.scaler = [min_v, max_v]
 
     def partial_fit(self, X):
         """ Fit the Scaler in one batch.
@@ -78,20 +88,29 @@ class Scaler():
             Data to be used in the fitting process.
 
         """
-        if type(X) == list:
-            X = np.concatenate(X, axis=0)
-        if self.normalizer == 'standard':
-            X_bands = X.shape[-1]
-            self.scaler.partial_fit(np.reshape(X, (-1, X_bands)))
-            assert len(self.scaler.mean_) == X_bands
-        if self.normalizer == 'minmax':
-            min_v = np.amin(X)
-            max_v = np.amax(X)
-            if len(self.scaler) > 0:
-                min_v = min(min_v, self.scaler[0])
-                max_v = max(max_v, self.scaler[1])
 
-            self.scaler = [min_v, max_v]
+        if (len(self.normalizer) == 1) and (type(X) != list):
+            X = [X]
+
+        assert type(X) == list
+        assert len(self.normalizer) == len(X)
+
+        for j in range(len(self.normalizer)):
+            Xj = X[j]
+            if type(Xj) == list:
+                Xj = np.concatenate(Xj, axis=0)
+            if self.normalizer[j] == 'standard':
+                X_bands = Xj.shape[-1]
+                self.scaler[j].partial_fit(np.reshape(Xj, (-1, X_bands)))
+                assert len(self.scaler[j].mean_) == X_bands
+            if self.normalizer[j] == 'minmax':
+                min_v = np.amin(Xj)
+                max_v = np.amax(Xj)
+                if len(self.scaler[j]) > 0:
+                    min_v = min(min_v, self.scaler[j][0])
+                    max_v = max(max_v, self.scaler[j][1])
+
+                self.scaler[j] = [min_v, max_v]
 
     def transform(self, X):
         """ Scale X using the scaler.
@@ -108,14 +127,23 @@ class Scaler():
             of the input.
 
         """
-        if type(X) == list:
-            for j in range(len(X)):
-                X[j] = self._apply_transform(X[j])
-        else:
-            X = self._apply_transform(X)
+        return_list = True
+        if (len(self.normalizer) == 1) and (type(X) != list):
+            X = [X]
+            return_list = False
+
+        for j in range(len(self.normalizer)):
+            if type(X[j]) == list:
+                for k in range(len(X[j])):
+                    X[j][k] = self._apply_transform(X[j][k], j)
+            else:
+                X[j] = self._apply_transform(X[j], j)
+        
+        if not return_list:
+            X = X[0]
         return X
 
-    def _apply_transform(self, X):
+    def _apply_transform(self, X, scaler_ix):
         """ Helper of transform()
 
         Parameters
@@ -130,16 +158,16 @@ class Scaler():
             of the input.
 
         """
-        if self.normalizer == 'standard':
+        if self.normalizer[scaler_ix] == 'standard':
             X_dims = X.shape
             X_bands = X.shape[-1]
             # times = X.shape[0]*X.shape[1]
             X_temp = np.reshape(X, (-1, X_bands))
-            X_temp = self.scaler.transform(X_temp)
+            X_temp = self.scaler[scaler_ix].transform(X_temp)
             X = X_temp.reshape(X_dims)
-        if self.normalizer == 'minmax':
-            X = 2*((X-self.scaler[0]) /
-                   (self.scaler[1]-self.scaler[0])-0.5)
+        if self.normalizer[scaler_ix] == 'minmax':
+            X = 2*((X-self.scaler[scaler_ix][0]) /
+                   (self.scaler[scaler_ix][1]-self.scaler[scaler_ix][0])-0.5)
         return X
 
     def inverse_transform(self, X):

@@ -251,14 +251,22 @@ class KerasModelContainer(ModelContainer):
                 save_weights_only=True,
                 monitor='val_loss',
                 mode='min',
-                save_best_only=True)
+                save_best_only=True,
+                verbose=1)
 
         log = CSVLogger(file_log)
 
+        validation_data = None
+        if metrics_callback.__class__ is ModelCheckpoint:
+            if data_val.__class__ is DataGenerator:
+                validation_data = KerasDataGenerator(data_val)
+            else:
+                validation_data = data_val
         if type(data_train) in [list, tuple]:
             self.model.fit(
                 x=data_train[0], y=data_train[1], shuffle=shuffle,
                 callbacks=[metrics_callback, log],
+                validation_data=validation_data,
                 **kwargs_keras_fit
             )
         else:
@@ -268,6 +276,7 @@ class KerasModelContainer(ModelContainer):
             self.model.fit_generator(
                 generator=data_train,
                 callbacks=[metrics_callback, log],
+                validation_data=validation_data,
                 **kwargs_keras_fit
                 # use_multiprocessing=True,
                 # workers=6)

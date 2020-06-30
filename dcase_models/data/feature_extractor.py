@@ -7,6 +7,7 @@ import json
 from ..util.files import load_json, mkdir_if_not_exists
 from ..util.files import duplicate_folder_structure
 from ..util.files import list_wav_files
+from ..util.ui import progressbar
 
 
 class FeatureExtractor():
@@ -93,10 +94,13 @@ class FeatureExtractor():
         self.audio_win = audio_win
         self.sr = sr
 
-        self.sequence_frames = int(np.round(sequence_time*sr/float(audio_hop)))
-        self.sequence_hop = int(
-            np.round(sequence_hop_time * sr / float(audio_hop))
-        )
+        # self.sequence_frames = int(np.round(sequence_time*sr/float(audio_hop)))
+        # self.sequence_hop = int(
+        #     np.round(sequence_hop_time * sr / float(audio_hop))
+        # )
+
+        self.sequence_frames = librosa.core.time_to_frames(sequence_time, sr=sr)
+        self.sequence_hop = librosa.core.time_to_frames(sequence_hop_time, sr=sr)
 
         self.features_folder = kwargs.get('features_folder', 'features')
 
@@ -201,14 +205,13 @@ class FeatureExtractor():
 
         # Duplicate folder structure of audio in features folder
         duplicate_folder_structure(audio_path, features_path)
-
         for audio_folder in subfolders:
             subfolder_name = os.path.basename(audio_folder)
             features_path_sub = os.path.join(features_path, subfolder_name)
             if not self.check_if_extracted_path(features_path_sub):
                 # Navigate in the structure of audio folder and extract
                 # features of the each wav file
-                for path_to_file_audio in list_wav_files(audio_folder):
+                for path_to_file_audio in progressbar(list_wav_files(audio_folder)):
                     features_array = self.calculate(
                         path_to_file_audio
                     )
@@ -246,7 +249,7 @@ class FeatureExtractor():
         parameters_features_folder = load_json(json_features_folder)
         for key in parameters_features_folder.keys():
             if parameters_features_folder[key] != self.params[key]:
-                print(key, parameters_features_folder[key],  self.params[key])
+                # print(key, parameters_features_folder[key],  self.params[key])
                 return False
         return True
 

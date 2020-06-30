@@ -105,6 +105,14 @@ class MelSpectrogram(FeatureExtractor):
         # if len(audio) < self.audio_win:
         #     return None
 
+        # Pad audio signal
+        audio = librosa.util.fix_length(
+            audio,
+            audio.shape[0] + librosa.core.frames_to_samples(
+                self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
+            axis=0, mode='constant'
+        )
+
         # Get the spectrogram, shape (N_freqs, N_frames)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
                                  hop_length=self.audio_hop,
@@ -123,11 +131,11 @@ class MelSpectrogram(FeatureExtractor):
         mel_spectrogram = mel_spectrogram.T
 
         # Pad the mel_spectrogram, shape (N_frames', N_bands)
-        mel_spectrogram = librosa.util.fix_length(
-            mel_spectrogram,
-            mel_spectrogram.shape[0]+self.sequence_frames,
-            axis=0, mode='reflect'
-        )
+        # mel_spectrogram = librosa.util.fix_length(
+        #     mel_spectrogram,
+        #     mel_spectrogram.shape[0]+self.sequence_frames,
+        #     axis=0, mode='reflect'
+        # )
 
         # Convert to sequences (frames),
         # shape (N_sequences, N_sequence_frames, N_bands)
@@ -187,15 +195,15 @@ class RawAudio(FeatureExtractor):
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
-        self.sequence_samples = audio_hop * self.sequence_frames
-        self.sequence_hop_samples = audio_hop * self.sequence_hop
+        self.sequence_samples = librosa.core.frames_to_samples(self.sequence_frames, audio_hop)
+        self.sequence_hop_samples = librosa.core.frames_to_samples(self.sequence_hop, audio_hop)
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
 
         audio = librosa.util.fix_length(
             audio,
-            audio.shape[0]+self.sequence_samples,
+            audio.shape[0] + self.sequence_samples,
             axis=0, mode='constant'
         )
 
@@ -214,30 +222,33 @@ class FramesAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100):
+                 audio_win=1024, audio_hop=512, sr=44100, n_fft=1024):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
-        self.sequence_samples = audio_hop * self.sequence_frames
-        self.sequence_hop_samples = audio_hop * self.sequence_hop
+        self.n_fft = n_fft
+        self.sequence_samples = librosa.core.frames_to_samples(self.sequence_frames, audio_hop, n_fft)
+        self.sequence_hop_samples = librosa.core.frames_to_samples(self.sequence_hop, audio_hop, n_fft)
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
+
+        audio = librosa.util.fix_length(
+            audio,
+            audio.shape[0] + self.sequence_samples,
+            axis=0, mode='constant'
+        )
 
         audio = np.ascontiguousarray(audio)
         audio_frames = librosa.util.frame(
             audio, self.audio_win, self.audio_hop, axis=0
         )
+        # TODO: ADD WINDOWING
 
-        audio_frames = librosa.util.fix_length(
-            audio_frames,
-            audio_frames.shape[0]+self.sequence_frames,
-            axis=0, mode='constant'
-        )
-
+        audio_frames = np.ascontiguousarray(audio_frames)
         audio_seqs = librosa.util.frame(
             audio_frames, self.sequence_frames, self.sequence_hop, axis=0
         )

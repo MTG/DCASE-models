@@ -7,7 +7,7 @@ from keras.utils import Sequence
 
 from .feature_extractor import FeatureExtractor
 from .dataset_base import Dataset
-from .data_augmentation import AugmentedDataset
+# from .data_augmentation import AugmentedDataset
 
 
 class DataGenerator():
@@ -38,11 +38,10 @@ class DataGenerator():
         Set scaler object.
 
     """
-
-    def __init__(self, dataset, feature_extractor, folds,
+    def __init__(self, dataset, inputs, folds,
+                 outputs='annotations',
                  batch_size=32, shuffle=True,
-                 train=True, scaler=None,
-                 features_as_annotations=None, scaler_annotations=None):
+                 train=True, scaler=None, scaler_outputs=None):
         """ Initialize the DataGenerator.
 
         Generate the features_file_list by concatenating all the files
@@ -52,13 +51,18 @@ class DataGenerator():
         ----------
         dataset_path : str
             Path to the dataset fold
-        feature_extractor : FeatureExtractor or classes inherited from.
-            Instance of FeatureExtractor. This is only needed to use
-            functions related to feature extraction.
+        inputs : FeatureExtractor or classes inherited from.
+            Instance of FeatureExtractor.
+            For multi-input, pass a list of FeatureExtractor instances.
         folds : list of str
             List of folds to be loaded. Each fold has to be in
             dataset.fold_list.
             e.g. ['fold1', 'fold2', 'fold3', ...]
+        outputs : str, FeatureExtractor or list
+            If str, use this to get annotations from dataset.
+            If FeatureExtractor the output will be obtained from this
+            feature extractor.
+            For multi-output, pass a list of FeatureExtractor and/or str.
         batch_size : int
             Number of files loaded when call get_data_batch().
         shuffle: bool
@@ -71,50 +75,72 @@ class DataGenerator():
         scaler : Scaler or None
             If is not None, the Scaler object is used to scale the data
             after loading.
+        scaler_outputs : Scaler or None
+            Same as scaler but for the system outputs.
         """
         # General attributes
         self.dataset = dataset
-        self.feature_extractor = feature_extractor
+        self.inputs = inputs
+        if type(inputs) != list:
+            self.inputs = [inputs]
         self.folds = folds
+        self.outputs = outputs
+        if type(outputs) != list:
+            self.outputs = [outputs]
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.train = train
         self.scaler = scaler
-        self.features_as_annotations = features_as_annotations
-        self.scaler_annotations = scaler_annotations
+        self.scaler_outputs = scaler_outputs
 
         if (Dataset not in inspect.getmro(dataset.__class__)):
             raise AttributeError(
                 'dataset has to be an instance of Dataset or similar'
             )
 
-        if FeatureExtractor not in inspect.getmro(feature_extractor.__class__):
-            raise AttributeError('''feature_extractor has to be an
-                                    instance of FeatureExtractor or similar''')
+        for inp in self.inputs:
+            if ((FeatureExtractor not in inspect.getmro(inp.__class__)) and
+               (type(inp) is not str)):
+                raise AttributeError('''Each input has to be an
+                                        instance of FeatureExtractor
+                                        or similar''')
+            # TODO: Check if all inputs share sr
+            # TODO: Check if str is available in dataset
 
-        if features_as_annotations is not None:
-            assert features_as_annotations.sr == feature_extractor.sr
+            if FeatureExtractor in inspect.getmro(inp.__class__):
+                self.sr = inp.sr
 
-        self.features_path = self.feature_extractor.get_features_path(
-            dataset
-        )
+        for output in self.outputs:
+            if ((FeatureExtractor not in inspect.getmro(output.__class__)) and
+               (type(output) is not str)):
+                raise AttributeError('''Each input has to be an
+                                        instance of FeatureExtractor
+                                        or similar''')
 
-        self.features_file_list = []
+        # self.features_file_list = []
+        self.audio_file_list = []
+
+        # Get audio paths
         self.dataset.generate_file_lists()
         audio_path, subfolders = self.dataset.get_audio_paths(
-            self.feature_extractor.sr
+            self.sr
         )
-        # If not train, don't use augmentation
+
         if not train:
+            # If not train, don't use augmentation
             subfolders = [subfolders[0]]
         for fold in folds:
             for subfolder in subfolders:
                 subfolder_name = os.path.basename(subfolder)
                 files_audio = self.dataset.file_lists[fold]
-                file_features = self.convert_audio_path_to_features_path(
-                    files_audio, subfolder=subfolder_name
-                )
-                self.features_file_list.extend(file_features)
+                for file_audio in files_audio:
+                    self.audio_file_list.append(
+                        {'file_original': file_audio,
+                         'sub_folder': subfolder_name})
+                # file_features = self.convert_audio_path_to_features_path(
+                #     files_audio, subfolder=subfolder_name
+                # )
+                # self.features_file_list.extend(file_features)
 
         if shuffle:
             self.shuffle_list()
@@ -137,38 +163,39 @@ class DataGenerator():
             List of annotations matrix for each file.
 
         """
-        features_list = []
-        annotations = []
+        inputs_lists = [[] for _ in range(len(self.inputs))]
+        outputs_lists = [[] for _ in range(len(self.outputs))]
 
-        if not self.features_as_annotations:
-            for file_name in list_files:
-                features = np.load(file_name)
-                features_list.append(features)
-                if type(self.dataset) is AugmentedDataset:
-                    file_audio = self.convert_features_path_to_audio_path(
-                        file_name)
+        for file_dict in list_files:
+            file_original = file_dict['file_original']
+            sub_folder = file_dict['sub_folder']
+
+            for j, input in enumerate(self.inputs):
+                if type(input) is not str:
+                    features_path = input.get_features_path(self.dataset)
+                    file_features = self.convert_audio_path_to_features_path(
+                        file_original, features_path, subfolder=sub_folder)
+                    features = np.load(file_features)
+                    inputs_lists[j].append(features)
                 else:
-                    file_audio = self.convert_features_path_to_audio_path(
-                        file_name)
-                file_audio = self.paths_remove_aug_subfolder(file_audio)
-                y = self.dataset.get_annotations(file_audio, features)
-                annotations.append(y)
-        else:
-            feat_out_path = self.features_as_annotations.get_features_path(
-                self.dataset
-            )
-            for file_name in list_files:
-                features_input = np.load(file_name)
-                file_audio = self.convert_features_path_to_audio_path(
-                        file_name)
-                file_features_output = file_name.replace(
-                    self.features_path, feat_out_path
-                )
-                features_output = np.load(file_features_output)
-                features_list.append(features_input)
-                annotations.append(features_output)
-                # print(features_input.shape, features_output.shape)
-        return features_list, annotations
+                    raise AttributeError('Not available')
+                    # TODO: ADD this option
+
+            for j, output in enumerate(self.outputs):
+                if type(output) is not str:
+                    features_path = output.get_features_path(self.dataset)
+                    file_features = self.convert_audio_path_to_features_path(
+                        file_original, features_path, subfolder=sub_folder)
+                    features = np.load(file_features)
+                    outputs_lists[j].append(features)
+                else:
+                    # TODO: Add option to other outputs
+                    y = self.dataset.get_annotations(
+                        file_original, inputs_lists[0][-1])
+                    outputs_lists[j].append(y)
+                    # TODO: Improve how we pass features array to get_ann..
+
+        return inputs_lists, outputs_lists
 
     def get_data(self):
         """ Return all data from the selected folds.
@@ -185,19 +212,28 @@ class DataGenerator():
             List or array of annotations for each file.
 
         """
-        X_list, Y_list = self.data_generation(self.features_file_list)
+        X_list, Y_list = self.data_generation(self.audio_file_list)
 
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
-        if self.scaler_annotations is not None:
-            Y_list = self.scaler_annotations.transform(Y_list)
+        if self.scaler_outputs is not None:
+            Y_list = self.scaler_outputs.transform(Y_list)
 
-        if self.train:
-            X = np.concatenate(X_list, axis=0)
-            Y = np.concatenate(Y_list, axis=0)
-        else:
-            X = X_list.copy()
-            Y = Y_list.copy()
+        X = [[] for _ in range(len(self.inputs))]
+        Y = [[] for _ in range(len(self.outputs))]
+
+        for j in range(len(self.inputs)):
+            if self.train:
+                X[j] = np.concatenate(X_list[j], axis=0)
+                Y[j] = np.concatenate(Y_list[j], axis=0)
+            else:
+                X[j] = X_list[j].copy()
+                Y[j] = Y_list[j].copy()
+
+        if len(X) == 1:
+            X = X[0]
+        if len(Y) == 1:
+            Y = Y[0]
 
         return X, Y
 
@@ -216,22 +252,32 @@ class DataGenerator():
             List or array of annotations for each file.
 
         """
-        list_file_batch = self.features_file_list[
+        list_file_batch = self.audio_file_list[
             index*self.batch_size:(index+1)*self.batch_size
         ]
         # Generate data
         X_list, Y_list = self.data_generation(list_file_batch)
+
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
-        if self.scaler_annotations is not None:
-            Y_list = self.scaler_annotations.transform(Y_list)
+        if self.scaler_outputs is not None:
+            Y_list = self.scaler_outputs.transform(Y_list)
 
-        if self.train:
-            X = np.concatenate(X_list, axis=0)
-            Y = np.concatenate(Y_list, axis=0)
-        else:
-            X = X_list.copy()
-            Y = Y_list.copy()
+        X = [[] for _ in range(len(self.inputs))]
+        Y = [[] for _ in range(len(self.outputs))]
+
+        for j in range(len(self.inputs)):
+            if self.train:
+                X[j] = np.concatenate(X_list[j], axis=0)
+                Y[j] = np.concatenate(Y_list[j], axis=0)
+            else:
+                X[j] = X_list[j].copy()
+                Y[j] = Y_list[j].copy()
+
+        if len(X) == 1:
+            X = X[0]
+        if len(Y) == 1:
+            Y = Y[0]
 
         return X, Y
 
@@ -247,7 +293,7 @@ class DataGenerator():
 
         """
         # Generate data
-        X, Y = self.data_generation([self.features_file_list[file_index]])
+        X, Y = self.data_generation([self.audio_file_list[file_index]])
         if self.scaler is not None:
             X = self.scaler.transform(X)
         if self.scaler_annotations is not None:
@@ -255,7 +301,8 @@ class DataGenerator():
 
         return X[0].copy(), Y[0].copy()
 
-    def convert_features_path_to_audio_path(self, features_file, sr=None):
+    def convert_features_path_to_audio_path(self, features_file,
+                                            features_path, sr=None):
         """ Convert features path(s) to audio path(s).
 
         Parameters
@@ -273,20 +320,21 @@ class DataGenerator():
 
         if type(features_file) is str:
             audio_file = features_file.replace(
-                self.features_path, audio_path
+                features_path, audio_path
             )
             audio_file = audio_file.replace('.npy', '.wav')
         elif type(features_file) is list:
             audio_file = []
             for j in range(len(features_file)):
                 audio_file_j = features_file[j].replace(
-                    self.features_path, audio_path
+                    features_path, audio_path
                 )
                 audio_file_j = audio_file_j.replace('.npy', '.wav')
                 audio_file.append(audio_file_j)
         return audio_file
 
-    def convert_audio_path_to_features_path(self, audio_file, subfolder=''):
+    def convert_audio_path_to_features_path(self, audio_file,
+                                            features_path, subfolder=''):
         """ Convert audio path(s) to features path(s).
 
         Parameters
@@ -300,7 +348,7 @@ class DataGenerator():
             Path(s) to the features file(s).
 
         """
-        features_path = os.path.join(self.features_path, subfolder)
+        features_path = os.path.join(features_path, subfolder)
         if type(audio_file) is str:
             features_file = audio_file.replace(
                 self.dataset.audio_path, features_path
@@ -352,19 +400,25 @@ class DataGenerator():
 
         """
         if self.shuffle:
-            random.shuffle(self.features_file_list)
+            random.shuffle(self.audio_file_list)
 
     def __len__(self):
         """ Get the number of batches.
 
         """
-        return int(np.ceil(len(self.features_file_list) / self.batch_size))
+        return int(np.ceil(len(self.audio_file_list) / self.batch_size))
 
     def set_scaler(self, scaler):
         """ Set scaler object.
 
         """
         self.scaler = scaler
+
+    def set_scaler_outputs(self, scaler_outputs):
+        """ Set scaler object.
+
+        """
+        self.scaler_outputs = scaler_outputs
 
 
 class KerasDataGenerator(Sequence):

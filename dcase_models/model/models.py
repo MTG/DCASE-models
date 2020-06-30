@@ -597,12 +597,14 @@ class SMel(KerasModelContainer):
                          model_name='SMel', metrics=metrics)
 
     def build(self):
-        x = Input(shape=(self.n_seqs, self.audio_win, 1), dtype='float32')
+        x = Input(shape=(self.n_seqs, self.audio_win), dtype='float32')
+
+        y = Lambda(lambda x: K.expand_dims(x, -1), name='lambda')(x)
 
         y = TimeDistributed(
             Conv1D(
                 self.mel_bands, 1024, strides=16, padding='same', use_bias=True
-            ))(x)
+            ))(y)
 
         y = Lambda(lambda x: x*x)(y)
 
