@@ -67,7 +67,7 @@ class FeatureExtractor():
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100, **kwargs):
+                 audio_win=1024, audio_hop=690, sr=22050, **kwargs):
         """
         Initialize the FeatureExtractor
 
@@ -94,13 +94,10 @@ class FeatureExtractor():
         self.audio_win = audio_win
         self.sr = sr
 
-        # self.sequence_frames = int(np.round(sequence_time*sr/float(audio_hop)))
-        # self.sequence_hop = int(
-        #     np.round(sequence_hop_time * sr / float(audio_hop))
-        # )
-
-        self.sequence_frames = librosa.core.time_to_frames(sequence_time, sr=sr)
-        self.sequence_hop = librosa.core.time_to_frames(sequence_hop_time, sr=sr)
+        self.sequence_frames = librosa.core.time_to_frames(
+            sequence_time, sr=sr)
+        self.sequence_hop = librosa.core.time_to_frames(
+            sequence_hop_time, sr=sr)
 
         self.features_folder = kwargs.get('features_folder', 'features')
 
@@ -211,11 +208,11 @@ class FeatureExtractor():
             if not self.check_if_extracted_path(features_path_sub):
                 # Navigate in the structure of audio folder and extract
                 # features of the each wav file
-                for path_to_file_audio in progressbar(list_wav_files(audio_folder)):
+                for path_audio in progressbar(list_wav_files(audio_folder)):
                     features_array = self.calculate(
-                        path_to_file_audio
+                        path_audio
                     )
-                    path_to_features_file = path_to_file_audio.replace(
+                    path_to_features_file = path_audio.replace(
                         audio_path, features_path
                     )
                     path_to_features_file = path_to_features_file.replace(
@@ -249,7 +246,6 @@ class FeatureExtractor():
         parameters_features_folder = load_json(json_features_folder)
         for key in parameters_features_folder.keys():
             if parameters_features_folder[key] != self.params[key]:
-                # print(key, parameters_features_folder[key],  self.params[key])
                 return False
         return True
 

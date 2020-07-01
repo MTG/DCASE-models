@@ -13,29 +13,122 @@ from .dataset_base import Dataset
 class DataGenerator():
     """ Includes methods to load features files from DCASE datasets.
 
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/UrbanSound8k).
+
+    inputs : instance or list of FeatureExtractor (or childs)
+        Instance(s) of FeatureExtractor. This are the feature extractor(s) used
+        to generate the features.
+        For multi-input, pass a list of FeatureExtractor instances.
+
+    folds : list of str
+        List of folds to be loaded. Each fold has to be in dataset.fold_list.
+        Note that, since the folds used at each stage of the pipeline
+        (training, validation, evaluation) are different, an instance of
+        DataGenerator, for each stage has to be created.
+        e.g. ['fold1', 'fold2', 'fold3', ...]
+
+    outputs : str, FeatureExtractor or list, default='annotations'
+        Instance(s) of FeatureExtractor used to generates the outputs.
+        To use the annotations obtained from Dataset, pass a string.
+        For multi-output, pass a list of FeatureExtractor and/or strings.
+
+    batch_size : int, default=32
+        Number of files loaded when call get_data_batch().
+        Note that the meaning of batch_size here is a bit different from what
+        it has in machine learning libraries like keras. In these libraries
+        batch_size means the number of instances (sequences in DCASE-models)
+        used in each training step. Here batch_size is the number of files,
+        and therefore, the number of sequences varies in each batch.
+
+    shuffle: bool, default=True
+        When training a model, it is typical to shuffle the dataset at the end
+        of each epoch. If shuffle is True (default), then the audio file list
+        is shuffled when the class is initialized and when shuffle_list()
+        method is called.
+
+    train : bool, default True
+        When training, it is typical to feed the model with a numpy array
+        that contains all the data concatenated. But, for validation and
+        testing, in order to do a file-wise evaluation, it is necessary to
+        have the features of each file separated.
+        Therefore, if train is True, the data loaded is concatenated and
+        converted to a numpy array. If train is False get_data() and
+        get_data_batch() returns a list, whose elements are the features
+        of each file in the audio_file_list.
+
+    scaler : Scaler or None, default=None
+        If is not None, the Scaler object is used to scale the data
+        after loading.
+
+    scaler_outputs : Scaler or None, default=None
+        Same as scaler but for the system outputs.
+
     Attributes
     ----------
-    features_file_list : list of str
-        List of features files to be loaded.
+    audio_file_list : list of dict
+        List of audio files from which the features will be loaded.
+        Each element in the list includes information of the original
+        audio file (important to get the annotations) and the subfolder where
+        is the resampled (and maybe augmented) audio file.
+        e.g: audio_file_list = [
+            {'file_original': 'audio/1.wav', 'sub_folder': 'original'},
+            {'file_original': 'audio/1.wav', 'sub_folder': 'pitch_shift_1'},
+            {'file_original': 'audio/2.wav', 'sub_folder': 'original'},
+            ...
+        ]
 
-    Methods
-    -------
-    data_generation(list_files):
-        Return features and annotations for all files in list_files.
-    get_data():
-        Return all data from features_file_list.
-    get_data_batch(index):
-        Return the data from rhe batch given by argument.
-    convert_features_path_to_audio_path(features_file)
-        Convert features path(s) to audio path(s).
-    convert_audio_path_to_features_path(audio_file, subfolder='')
-        Convert audio path(s) to features path(s).
-    paths_remove_aug_subfolder(path)
-        Remove subfolder related to augmentation from path.
-    shuffle_list()
-        Shuffle features_file_list.
-    set_scaler(scaler)
-        Set scaler object.
+
+    See Also
+    --------
+    Dataset : Dataset class
+
+    FeatureExtractor : FeatureExtractor class
+
+
+    Examples
+    --------
+    Create instances of Dataset and FeatureExtractor with default parameters
+
+    >>> from dcase_models.data.datasets import UrbanSound8k
+    >>> from dcase_models.data.features import MelSpectrogram
+    >>> from dcase_models.data.data_generator import DataGenerator
+    >>> dataset = UrbanSound8k('../datasets/UrbanSound8k')
+    >>> features = MelSpectrogram()
+
+    Assuming that the dataset was downloaded and features were extracted
+    already, we can initialize the data generators. Let's use fold1 and fold2
+    for training and fold3 for validation.
+
+    >>> data_gen_train = DataGenerator(
+        dataset, features, ['fold1', 'fold2'], train=True)
+    >>> data_gen_val = DataGenerator(
+        dataset, features, ['fold3'], train=False)
+
+    >>> X_train, Y_train = data_gen_train.get_data_batch(0)
+    >>> print(X_train.shape, Y_train.shape)
+        (212, 43, 64) (212, 10)
+
+    >>> X_val, Y_val = data_gen_val.get_data_batch(0)
+    >>> print(len(X_val), len(Y_val))
+        32 32
+    >>> print(X_val[0].shape, Y_val[0].shape)
+        (7, 43, 64) (7, 10)
+
+    >>> X_train, Y_train = data_gen_train.get_data()
+    >>> print(X_train.shape, Y_train.shape)
+        (11095, 43, 64) (11095, 10)
+
+    >>> X_val, Y_val = data_gen_val.get_data()
+    >>> print(len(X_val), len(Y_val))
+        925 925
+    >>> print(X_val[0].shape, Y_val[0].shape)
+        (7, 43, 64) (7, 10)
 
     """
     def __init__(self, dataset, inputs, folds,
@@ -44,39 +137,8 @@ class DataGenerator():
                  train=True, scaler=None, scaler_outputs=None):
         """ Initialize the DataGenerator.
 
-        Generate the features_file_list by concatenating all the files
+        Generate the audio_file_list by concatenating all the files
         from the folds pass as an argument.
-
-        Parameters
-        ----------
-        dataset_path : str
-            Path to the dataset fold
-        inputs : FeatureExtractor or classes inherited from.
-            Instance of FeatureExtractor.
-            For multi-input, pass a list of FeatureExtractor instances.
-        folds : list of str
-            List of folds to be loaded. Each fold has to be in
-            dataset.fold_list.
-            e.g. ['fold1', 'fold2', 'fold3', ...]
-        outputs : str, FeatureExtractor or list
-            If str, use this to get annotations from dataset.
-            If FeatureExtractor the output will be obtained from this
-            feature extractor.
-            For multi-output, pass a list of FeatureExtractor and/or str.
-        batch_size : int
-            Number of files loaded when call get_data_batch().
-        shuffle: bool
-            If True, the features_file_list is shuffled.
-        train : bool
-            If True, the data loaded is concatenated and converted
-            to a numpy array. If False, get_data() and get_data_batch()
-            returns a list, when each element are the features of each
-            file in the features_file_list.
-        scaler : Scaler or None
-            If is not None, the Scaler object is used to scale the data
-            after loading.
-        scaler_outputs : Scaler or None
-            Same as scaler but for the system outputs.
         """
         # General attributes
         self.dataset = dataset
@@ -98,14 +160,26 @@ class DataGenerator():
                 'dataset has to be an instance of Dataset or similar'
             )
 
-        for inp in self.inputs:
+        if not dataset.check_if_downloaded():
+            raise AttributeError(
+                ('The dataset was not downloaded. Please download it '
+                 'before using DataGenerator')
+            )
+
+        for j, inp in enumerate(self.inputs):
             if ((FeatureExtractor not in inspect.getmro(inp.__class__)) and
                (type(inp) is not str)):
-                raise AttributeError('''Each input has to be an
-                                        instance of FeatureExtractor
-                                        or similar''')
+                raise AttributeError(('Each input has to be an '
+                                      'instance of FeatureExtractor '
+                                      'or similar'))
             # TODO: Check if all inputs share sr
             # TODO: Check if str is available in dataset
+
+            if not inp.check_if_extracted(dataset):
+                raise AttributeError(
+                    ('Features were not extracted '
+                     'for input: %d - %s' % (j, inp.__class__.__name__))
+                )
 
             if FeatureExtractor in inspect.getmro(inp.__class__):
                 self.sr = inp.sr
@@ -147,12 +221,12 @@ class DataGenerator():
 
         self.data = {}
 
-    def data_generation(self, list_files):
+    def _data_generation(self, list_files):
         """ Return features and annotations for all files in list_files.
 
         Parameters
         ----------
-        list_files : list
+        list_files : list of str
             List of file paths.
 
         Returns
@@ -212,7 +286,7 @@ class DataGenerator():
             List or array of annotations for each file.
 
         """
-        X_list, Y_list = self.data_generation(self.audio_file_list)
+        X_list, Y_list = self._data_generation(self.audio_file_list)
 
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
@@ -256,7 +330,7 @@ class DataGenerator():
             index*self.batch_size:(index+1)*self.batch_size
         ]
         # Generate data
-        X_list, Y_list = self.data_generation(list_file_batch)
+        X_list, Y_list = self._data_generation(list_file_batch)
 
         if self.scaler is not None:
             X_list = self.scaler.transform(X_list)
@@ -293,7 +367,7 @@ class DataGenerator():
 
         """
         # Generate data
-        X, Y = self.data_generation([self.audio_file_list[file_index]])
+        X, Y = self._data_generation([self.audio_file_list[file_index]])
         if self.scaler is not None:
             X = self.scaler.transform(X)
         if self.scaler_annotations is not None:

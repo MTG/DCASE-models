@@ -24,7 +24,7 @@ class Spectrogram(FeatureExtractor):
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100, n_fft=1024):
+                 audio_win=1024, audio_hop=690, sr=22050, n_fft=1024):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -82,8 +82,8 @@ class MelSpectrogram(FeatureExtractor):
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100,
-                 n_fft=1024, mel_bands=128, fmax=None):
+                 audio_win=1024, audio_hop=690, sr=22050,
+                 n_fft=1024, mel_bands=64, fmax=None):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -154,7 +154,7 @@ class Openl3(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100,
+                 audio_win=1024, audio_hop=690, sr=22050,
                  content_type="env", input_repr="mel256", embedding_size=512):
 
         super().__init__(sequence_time=sequence_time,
@@ -188,15 +188,17 @@ class RawAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100):
+                 audio_win=1024, audio_hop=690, sr=22050):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
-        self.sequence_samples = librosa.core.frames_to_samples(self.sequence_frames, audio_hop)
-        self.sequence_hop_samples = librosa.core.frames_to_samples(self.sequence_hop, audio_hop)
+        self.sequence_samples = librosa.core.frames_to_samples(
+            self.sequence_frames, audio_hop)
+        self.sequence_hop_samples = librosa.core.frames_to_samples(
+            self.sequence_hop, audio_hop)
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
@@ -222,7 +224,7 @@ class FramesAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=512, sr=44100, n_fft=1024):
+                 audio_win=1024, audio_hop=690, sr=22050, n_fft=1024):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -230,8 +232,10 @@ class FramesAudio(FeatureExtractor):
                          sr=sr)
 
         self.n_fft = n_fft
-        self.sequence_samples = librosa.core.frames_to_samples(self.sequence_frames, audio_hop, n_fft)
-        self.sequence_hop_samples = librosa.core.frames_to_samples(self.sequence_hop, audio_hop, n_fft)
+        self.sequence_samples = librosa.core.frames_to_samples(
+            self.sequence_frames, audio_hop, n_fft)
+        self.sequence_hop_samples = librosa.core.frames_to_samples(
+            self.sequence_hop, audio_hop, n_fft)
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
