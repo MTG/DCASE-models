@@ -11,49 +11,68 @@ class Dataset():
 
     This class can be redefined by inheritance (see UrbanSound8k, ESC50)
 
-    Attributes
+    Parameters
     ----------
     dataset_path : str
-        Path to the dataset folder.
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/UrbanSound8k).
+
+    Attributes
+    ----------
     file_lists : dict
         This dictionary stores the list of files for each fold.
         Dict of form: {fold_name : list_of_files}.
         e.g. {'fold1' : [file1, file2 ...], 'fold2' : [file3, file4 ...],}.
     audio_path : str
         Path to the audio folder, i.e {self.dataset_path}/audio.
-        Define in build()
+        This attribute is defined in build()
     fold_list : list
-        List of fold names.
+        List of the pre-defined fold names.
         e.g. ['fold1', 'fold2', 'fold3', ...]
     label_list : list
-        List of class labels:
+        List of class labels.
         e.g. ['dog', 'siren', ...]
 
-    Methods
-    -------
-    build()
-        Define specific attributes of the dataset:
-        label_list, fold_list, meta_file, etc.
-    generate_file_lists()
-        Create self.file_lists, a dict that stores a list of files per fold.
-    get_annotations(file_name, features):
-        Return the annotations of the file in file_path.
-    download(self, zenodo_url, zenodo_files):
-        Download and decompress the dataset from zenodo.
-    set_as_downloaded():
-        Save a download.txt file in dataset_path as a downloaded flag
-    check_if_downloaded():
-        Check if the dataset was downloaded.
-        Just check if exists download.txt file.
-    get_audio_paths(sr=None)
-        Return path to the audio folder.
-        If sr is not None, return {audio_path}{sr}
-    change_sampling_rate(new_sr)
-        Changes sampling rate of each wav file in audio_path.
-    check_sampling_rate(new_sr)
-        Check if the dataset was resampled to new_sr.
-    convert_to_wav(remove_original=False):
-        Convert each file in the dataset to wav format.
+    Examples
+    --------
+    To create a new dataset, it is necessary to define a class that inherits
+    from Dataset. Then is required to define the build, generate_file_lists,
+    get_annotations and download (if online available) methods.
+
+    >>> from dcase_models.util import list_wav_files
+
+    >>> class TestDataset(Dataset):
+    >>>     def __init__(self, dataset_path):
+    >>>         super().__init__(dataset_path)
+
+    >>>     def build(self):
+    >>>         self.audio_path = os.path.join(self.dataset_path, 'audio')
+    >>>         self.fold_list = ["train", "validate", "test"]
+    >>>         self.label_list = ["cat", "dog"]
+
+    >>>     def generate_file_lists(self):
+    >>>         for fold in self.fold_list:
+    >>>             audio_folder = os.path.join(self.audio_path, fold)
+    >>>             self.file_lists[fold] = list_wav_files(audio_folder)
+
+    >>>     def get_annotations(self, file_path, features):
+    >>>         y = np.zeros((len(features), len(self.label_list)))
+    >>>         class_ix = int(os.path.basename(file_path).split('-')[1])
+    >>>         y[:, class_ix] = 1
+    >>>         return y
+
+    >>>     def download(self, force_download=False):
+    >>>         zenodo_url = "https://zenodo.org/record/123456/files"
+    >>>         zenodo_files = ["TestData.tar.gz"]
+    >>>         downloaded = super().download(
+    >>>             zenodo_url, zenodo_files, force_download
+    >>>         )
+    >>>         if downloaded:
+    >>>             move_all_files_to_parent(self.dataset_path, "TestData")
+    >>>             self.set_as_downloaded()
+
     """
     def __init__(self, dataset_path):
         """ Init Dataset
@@ -87,7 +106,7 @@ class Dataset():
         # Creates an empty dict
         self.file_lists = {fold: [] for fold in self.fold_list}
 
-    def get_annotations(self, file_path, features):
+    def get_annotations(self, file_path, features, time_resolution):
         """ Return the annotations of the file in file_path.
 
         Parameters
@@ -96,6 +115,8 @@ class Dataset():
             Path to the file
         features : ndarray
             nD array with the features of file_path
+        time_resolution : float
+            Time resolution of the features
 
         Returns
         -------

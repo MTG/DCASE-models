@@ -81,14 +81,10 @@ def main():
     params_features = params['features']
     params_model = params['models'][args.model]
 
-    kwargs = {}
-    if args.dataset in sed_datasets:
-        kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
-
     # Get and init dataset class
     dataset_class = get_available_datasets()[args.dataset]
     dataset_path = os.path.join(args.path, params_dataset['dataset_path'])
-    dataset = dataset_class(dataset_path, **kwargs)
+    dataset = dataset_class(dataset_path)
 
     if args.fold_name not in dataset.fold_list:
         raise AttributeError('Fold not available')

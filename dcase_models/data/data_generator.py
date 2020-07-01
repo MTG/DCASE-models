@@ -15,11 +15,11 @@ class DataGenerator():
 
     Parameters
     ----------
-    dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
-        complete dataset will be downloaded, decompressed and handled.
-        It is expected to use a folder name that represents the dataset
-        unambiguously (e.g. ../datasets/UrbanSound8k).
+    dataset : Dataset (or childs)
+        Instance of the Dataset used to load the data. Note that the dataset
+        has to be downloaded before initializing the DataGenerator.
+        Refer to dcase-models/data/datasets.py for a complete list of available
+        datasets.
 
     inputs : instance or list of FeatureExtractor (or childs)
         Instance(s) of FeatureExtractor. This are the feature extractor(s) used
@@ -183,6 +183,7 @@ class DataGenerator():
 
             if FeatureExtractor in inspect.getmro(inp.__class__):
                 self.sr = inp.sr
+                self.time_resolution = inp.sequence_hop_time
 
         for output in self.outputs:
             if ((FeatureExtractor not in inspect.getmro(output.__class__)) and
@@ -265,7 +266,8 @@ class DataGenerator():
                 else:
                     # TODO: Add option to other outputs
                     y = self.dataset.get_annotations(
-                        file_original, inputs_lists[0][-1])
+                        file_original, inputs_lists[0][-1],
+                        self.time_resolution)
                     outputs_lists[j].append(y)
                     # TODO: Improve how we pass features array to get_ann..
 

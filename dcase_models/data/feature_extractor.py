@@ -11,8 +11,7 @@ from ..util.ui import progressbar
 
 
 class FeatureExtractor():
-    """
-    Abstract base class for feature extraction.
+    """ Abstract base class for feature extraction.
 
     Includes methods to load audio files, calculates features and
     prepare sequences.
@@ -20,21 +19,24 @@ class FeatureExtractor():
     Inherit this class to define custom features
     (e.g. features.MelSpectrogram, features.Openl3).
 
-    Attributes
+    Parameters
     ----------
     sequence_time : float
-        Duration of the sequence analysis window (in seconds).
+        Duration of the sequence analysis window (in seconds)
     sequence_hop_time : float
-        Hop time of the sequence analysis windows (in seconds).
+        Hop time of the sequence analysis windows (in seconds)
     audio_win : int
         Number of samples of the audio frames.
     audio_hop : int
         Number of samples for the frame hop between adjacent
-        audio frames.
+        audio frames
     sr : int
         Sampling rate of the audio signals
         If the original audio is not sampled at this rate,
         it is re-sampled before feature extraction
+
+    Attributes
+    ----------
     sequence_frames : int
         Number of frames equivalent to the sequence_time.
     sequence_hop : int
@@ -43,27 +45,58 @@ class FeatureExtractor():
         Dictionary that stores important parameters.
         This is used to check if the features were extracted before.
 
-    Methods
-    -------
-    get_sequences(x, pad=True)
-        Extract sequences (windows) of a the feature representation.
-    load_audio(file_name, mono=True, change_sampling_rate=True)
-        Load an audio signal and convert to mono if needed.
-    calculate(file_name)
-        Load an audio file and calculate features.
-    set_as_extracted(path)
-        Save a json file with the params.
-    extract(dataset)
-        Extract features for each file in dataset.
-    check_if_extracted_path(path):
-        Check if the features in path were calculated before.
-    check_if_extracted(dataset):
-        Check if the features of each file in dataset was calculated.
-    get_shape(length_sec=10.0)
-        Run calculate with a dummy signal of length length_sec
-        and returns the shape of the feature representation.
-    get_features_path(dataset):
-        Return the path to the features folder.
+    Examples
+    --------
+    To create a new feature representation, it is necessary to define a class
+    that inherits from FeatureExtractor. Then is required to define the
+    calculate() method.
+
+    >>> class Chroma(FeatureExtractor):
+    >>>     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
+                         audio_win=1024, audio_hop=512, sr=44100,
+                         # Add here your custom parameters
+                        n_fft=1024, n_chroma=12):
+                 
+                # Don't forget this line
+    >>>         super().__init__(sequence_time=sequence_time,
+                                 sequence_hop_time=sequence_hop_time,
+                                 audio_win=audio_win,
+                                 audio_hop=audio_hop, sr=sr)
+
+                # Add your custom parameters to self.params
+    >>>         self.params['name'] = 'Chroma'
+    >>>         self.params['n_chroma'] = n_chroma
+    >>>         self.sequence_samples = librosa.core.frames_to_samples(
+                    self.sequence_frames,
+                    self.audio_hop,
+                    n_fft=self.n_fft
+                )
+
+    >>>     def calculate(self, file_name):
+                # Here define your function to calculate the chroma features
+
+                # Load the audio signal
+    >>>         audio = self.load_audio(file_name)
+
+                # Pad audio signal
+    >>>         audio = librosa.util.fix_length(
+                    audio,
+                    audio.shape[0] + self.sequence_samples,
+                    axis=0, mode='constant'
+                )
+                # Get the chroma features
+    >>>         chroma = librosa.feature.chroma_stft(
+                    y=audio, sr=self.sr, n_fft=self.n_fft,
+                    hop_length=audio_hop, win_length=audio_win
+                )
+
+                # Convert to sequences
+    >>>         chroma = np.ascontiguousarray(chroma)
+    >>>         chroma = librosa.util.frame(
+                    chroma, self.sequence_frames, self.sequence_hop, axis=0
+                )
+
+    >>>         return chroma
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
@@ -71,21 +104,6 @@ class FeatureExtractor():
         """
         Initialize the FeatureExtractor
 
-        Parameters
-        ----------
-        sequence_time : float
-            Duration of the sequence analysis window (in seconds)
-        sequence_hop_time : float
-            Hop time of the sequence analysis windows (in seconds)
-        audio_win : int
-            Number of samples of the audio frames.
-        audio_hop : int
-            Number of samples for the frame hop between adjacent
-            audio frames
-        sr : int
-            Sampling rate of the audio signals
-            If the original audio is not sampled at this rate,
-            it is re-sampled before feature extraction
 
         """
         self.sequence_time = sequence_time
@@ -95,9 +113,9 @@ class FeatureExtractor():
         self.sr = sr
 
         self.sequence_frames = librosa.core.time_to_frames(
-            sequence_time, sr=sr)
+            sequence_time, sr=sr, hop_length=audio_hop)
         self.sequence_hop = librosa.core.time_to_frames(
-            sequence_hop_time, sr=sr)
+            sequence_hop_time, sr=sr, hop_length=audio_hop)
 
         self.features_folder = kwargs.get('features_folder', 'features')
 

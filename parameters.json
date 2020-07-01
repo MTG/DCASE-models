@@ -1,8 +1,8 @@
 {
     "features" : {
-        "sequence_time": 2.0, 
-        "sequence_hop_time":1.0,
-        "audio_hop":690,
+        "sequence_time": 1.0, 
+        "sequence_hop_time":0.5,
+        "audio_hop":680,
         "audio_win":1024,
         "sr": 22050,
         "Spectrogram" : {

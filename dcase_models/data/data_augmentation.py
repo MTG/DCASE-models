@@ -15,20 +15,14 @@ class WhiteNoise():
     The structure is similar than sox.Transformer to keep
     compatibility with sox.
 
-    Methods
-    -------
-    build(file_origin, file_destination)
-        Add noise to the file_origin and save the result in file_destination.
+    Parameters
+    ----------
+    snr : float
+        Signal to noise ratio.
 
     """
     def __init__(self, snr):
         """ Initialize the WhiteNoise.
-
-        Parameters
-        ----------
-        snr : float
-            Signal to noise ratio.
-
         """
         self.snr = snr
 
@@ -70,20 +64,43 @@ class WhiteNoise():
 
 
 class AugmentedDataset(Dataset):
-    """
-    Class that manage data augmentation. Includes functions to generate
-    data augmented instances of the audio files.
+    """ Class that manage data augmentation.
 
     Basically, its converts an instance of Dataset into an augmented one.
 
-    Methods
-    -------
-    generate_file_lists()
-        Create self.file_lists, a dict that stores a list of files per fold.
-    process():
-        Do the data augmentation for each file in dataset.
-    get_audio_paths(sr=None)
-        Return paths to the folders that include the data augmented files.
+    Includes functions to generate data augmented versions of the audio files.
+
+    Parameters
+    ----------
+    dataset : Dataset
+        Instance of Dataset to be augmented.
+    augmentations_list : list
+        List of types and parameters of augmentations.
+        Dict of form: [{'type' : aug_type, 'param1': param1 ...} ...].
+        e.g. [
+            {'type': 'pitch_shift', 'n_semitones': -1},
+            {'type': 'time_stretching', 'factor': 1.05}
+        ]
+    sr : int
+        Sampling rate
+
+    Examples
+    --------
+    Define an instance of UrbanSound8k and convert it into an augmented
+    instance of the dataset. Note that the actual augmentation is performed
+    when process() method is called.
+
+    >>> from dcase_models.data.datasets import UrbanSound8k
+    >>> from dcase_models.data.data_augmentation import AugmentedDataset
+    >>> dataset = UrbanSound8k('../datasets/UrbanSound8K')
+    >>> augmentations = [
+            {"type": "pitch_shift", "n_semitones": -1},
+            {"type": "time_stretching", "factor": 1.05},
+            {"type": "white_noise", "snr": 60}
+        ]
+    >>> aug_dataset = AugmentedDataset(dataset, augmentations)
+    >>> aug_dataset.process()
+
     """
 
     def __init__(self, dataset, sr,
@@ -91,21 +108,6 @@ class AugmentedDataset(Dataset):
         """ Initialize the AugmentedDataset.
 
         Initialize sox Transformers for each type of augmentation.
-
-        Parameters
-        ----------
-        dataset : Dataset
-            Instance of Dataset to be augmented.
-        augmentations_list : list
-            List of types and parameters of augmentations.
-            Dict of form: [{'type' : aug_type, 'param1': param1 ...} ...].
-            e.g. [
-                {'type': 'pitch_shift', 'n_semitones': -1},
-                {'type': 'time_stretching', 'factor': 1.05}
-            ]
-        sr : int
-            Sampling rate
-
         """
 
         self.dataset = dataset

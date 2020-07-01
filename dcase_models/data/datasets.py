@@ -33,6 +33,27 @@ class UrbanSound8k(Dataset):
     22st  ACM  International  Conference  on  Multimedia (ACM-MM’14)
     Orlando, FL, USA, November 2014
 
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/UrbanSound8k).
+
+    Examples
+    --------
+    To work with UrbanSound8k dataset, just initialize this class with the
+    path to the dataset.
+
+    >>> from dcase_models.data.datasets import UrbanSound8k
+    >>> dataset = UrbanSound8k('../datasets/UrbanSound8K')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
+
     """
 
     def __init__(self, dataset_path):
@@ -53,9 +74,9 @@ class UrbanSound8k(Dataset):
             audio_folder = os.path.join(self.audio_path, fold)
             self.file_lists[fold] = list_wav_files(audio_folder)
 
-    def get_annotations(self, file_path, features):
+    def get_annotations(self, file_name, features, time_resolution):
         y = np.zeros((len(features), len(self.label_list)))
-        class_ix = int(os.path.basename(file_path).split('-')[1])
+        class_ix = int(os.path.basename(file_name).split('-')[1])
         y[:, class_ix] = 1
         return y
 
@@ -82,6 +103,27 @@ class ESC50(Dataset):
     “Esc:  Dataset for environmental sound classification,”
     Proceedings of the 23rd ACM international conference on Multimedia
     Brisbane, Australia, October, 2015.
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/ESC50).
+
+    Examples
+    --------
+    To work with ESC50 dataset, just initialize this class with the
+    path to the dataset.
+
+    >>> from dcase_models.data.datasets import ESC50
+    >>> dataset = ESC50('../datasets/ESC50')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
 
     """
 
@@ -130,7 +172,7 @@ class ESC50(Dataset):
                     if self.metadata[basename]['fold'] == fold:
                         self.file_lists[fold].append(fil)
 
-    def get_annotations(self, file_name, features):
+    def get_annotations(self, file_name, features, time_resolution):
         y = np.zeros((len(self.label_list)))
         basename = self.get_basename_wav(file_name)
         class_ix = self.metadata[basename]['class_ix']
@@ -168,6 +210,27 @@ class ESC10(ESC50):
     “Esc:  Dataset for environmental sound classification,”
     Proceedings of the 23rd ACM international conference on Multimedia
     Brisbane, Australia, October, 2015.
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/ESC50).
+
+    Examples
+    --------
+    To work with ESC10 dataset, just initialize this class with the
+    path to the dataset.
+
+    >>> from dcase_models.data.datasets import ESC10
+    >>> dataset = ESC10('../datasets/ESC50')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
 
     """
 
@@ -214,15 +277,30 @@ class URBAN_SED(Dataset):
     IEEE Workshop on Applications of Signal Processing to Audio and Acoustics
     New York, USA, October 2017.
 
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/URBAN_SED).
+
+    Examples
+    --------
+    To work with URBAN_SED dataset, just initialize this class with the
+    path to the dataset.
+
+    >>> from dcase_models.data.datasets import URBAN_SED
+    >>> dataset = URBAN_SED('../datasets/URBAN_SED')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
+
     """
 
-    def __init__(self, dataset_path,
-                 sequence_time=1.0, sequence_hop_time=0.5,
-                 metric_resolution_sec=1.0):
-        self.sequence_time = sequence_time
-        self.sequence_hop_time = sequence_hop_time
-        self.metric_resolution_sec = metric_resolution_sec
-
+    def __init__(self, dataset_path):
         super().__init__(dataset_path)
 
     def build(self):
@@ -247,14 +325,14 @@ class URBAN_SED(Dataset):
                 self.wav_to_labels[fil] = os.path.join(
                     self.annotations_folder, fold, label_file)
 
-    def get_annotations(self, file_name, features, time_resolution=1.0):
+    def get_annotations(self, file_name, features, time_resolution):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['event_onset', 'event_offset', 'event_label']
         event_roll = event_list_to_event_roll(
             labels.to_dict('records'),
             self.label_list,
-            self.sequence_hop_time
+            time_resolution
         )
         if event_roll.shape[0] > features.shape[0]:
             event_roll = event_roll[:len(features)]
@@ -290,6 +368,27 @@ class SONYC_UST(Dataset):
     from an Urban Acoustic Sensor Network".
     Proceedings of the Workshop on Detection and Classification
     of Acoustic Scenes and Events (DCASE), 2019.
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/SONYC_UST).
+
+    Examples
+    --------
+    To work with SONYC_UST dataset, just initialize this class with the
+    path to the dataset.
+
+    >>> from dcase_models.data.datasets import SONYC_UST
+    >>> dataset = SONYC_UST('../datasets/SONYC_UST')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
 
     """
 
@@ -330,7 +429,7 @@ class SONYC_UST(Dataset):
                     if splits[j] == fold:
                         self.file_lists[fold].append(fil)
 
-    def get_annotations(self, file_name, features):
+    def get_annotations(self, file_name, features, time_resolution):
         # only coarse level
         # TODO add fine level
         n_classes_coarse_level = len(self.label_list['coarse'])
@@ -401,7 +500,7 @@ class _TAUUrbanAcousticScenes(Dataset):
                         os.path.join(self.audio_path, file_name)
                     )
 
-    def get_annotations(self, file_name, features):
+    def get_annotations(self, file_name, features, time_resolution):
         y = np.zeros((len(features), len(self.label_list)))
         basename = os.path.basename(file_name)
         # delete file extension
@@ -431,6 +530,28 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
     Proceedings of  the  Detection  and  Classification  of  Acoustic
     Scenes and Events 2018 Workshop (DCASE 2018).
     November 2018.
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/TAUUrbanAcousticScenes2019).
+
+    Examples
+    --------
+    To work with TAUUrbanAcousticScenes2019 dataset, just initialize this
+    class with the path to the dataset.
+
+    >>> from dcase_models.data.datasets import TAUUrbanAcousticScenes2019
+    >>> dataset = TAUUrbanAcousticScenes2019(
+        '../datasets/TAUUrbanAcousticScenes2019')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
 
     """
 
@@ -473,6 +594,28 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
     Scenes and Events  2020  Workshop  (DCASE  2020).
     2020
 
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/TAUUrbanAcousticScenes2020Mobile).
+
+    Examples
+    --------
+    To work with TAUUrbanAcousticScenes2020Mobile dataset, just initialize this
+    class with the path to the dataset.
+
+    >>> from dcase_models.data.datasets import TAUUrbanAcousticScenes2020Mobile
+    >>> dataset = TAUUrbanAcousticScenes2020Mobile(
+        '../datasets/TAUUrbanAcousticScenes2020Mobile')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
+
     """
 
     def __init__(self, dataset_path):
@@ -499,15 +642,45 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
 
 
 class TUTSoundEvents2017(Dataset):
-    ''' TUTSoundEvents2017 dataset class '''
+    """ TUT Sound Events 2017 dataset.
 
-    def __init__(self, dataset_path,
-                 sequence_time=1.0, sequence_hop_time=0.5,
-                 metric_resolution_sec=1.0):
-        self.sequence_time = sequence_time
-        self.sequence_hop_time = sequence_hop_time
-        self.metric_resolution_sec = metric_resolution_sec
+    This class inherits all functionality from Dataset and
+    defines specific attributs and methods for TUT Sound
+    Events 2017.
 
+    Url: https://zenodo.org/record/814831
+
+    A. Mesaros et al.
+    DCASE 2017 challenge setup: tasks, datasets and baseline system.
+    Detection and Classification of Acoustic Scenes and Events 2017
+    Workshop (DCASE2017), 85–92.
+    November 2017.
+
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/TUTSoundEvents2017).
+
+    Examples
+    --------
+    To work with TUTSoundEvents2017 dataset, just initialize this
+    class with the path to the dataset.
+
+    >>> from dcase_models.data.datasets import TUTSoundEvents2017
+    >>> dataset = TUTSoundEvents2017('../datasets/TUTSoundEvents2017')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
+
+    """
+
+    def __init__(self, dataset_path):
         super().__init__(dataset_path)
 
     def build(self):
@@ -561,14 +734,14 @@ class TUTSoundEvents2017(Dataset):
                 file_ann = file_ann.replace('.wav', '.ann')
                 self.wav_to_labels[file_path] = file_ann
 
-    def get_annotations(self, file_name, features):
+    def get_annotations(self, file_name, features, time_resolution):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
         labels.columns = ['file_path', 'scene', 'event_onset',
                           'event_offset', 'event_label',
                           'mixture', 'file_name']
         event_roll = event_list_to_event_roll(
-            labels.to_dict('records'), self.label_list, self.sequence_hop_time
+            labels.to_dict('records'), self.label_list, time_resolution
         )
         if event_roll.shape[0] > features.shape[0]:
             event_roll = event_roll[:len(features)]
@@ -642,6 +815,27 @@ class FSDKaggle2018(Dataset):
     Proceedings of the DCASE 2018 Workshop.
     2018.
 
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/FSDKaggle2018).
+
+    Examples
+    --------
+    To work with FSDKaggle2018 dataset, just initialize this
+    class with the path to the dataset.
+
+    >>> from dcase_models.data.datasets import FSDKaggle2018
+    >>> dataset = FSDKaggle2018('../datasets/FSDKaggle2018')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
+
     """
 
     def __init__(self, dataset_path):
@@ -704,7 +898,7 @@ class FSDKaggle2018(Dataset):
             )
             self.file_lists[fold].append(file_path)
 
-    def get_annotations(self, file_name, features):
+    def get_annotations(self, file_name, features, time_resolution):
         y = np.zeros((len(features), len(self.label_list)))
         label_name = self.metadata[os.path.basename(file_name)]['label']
         label_index = self.label_list.index(label_name)
@@ -760,15 +954,30 @@ class MAVD(Dataset):
     Scenes and Events 2019 Workshop (DCASE 2019).
     October, 2019.
 
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the dataset fold. This is the path to the folder where the
+        complete dataset will be downloaded, decompressed and handled.
+        It is expected to use a folder name that represents the dataset
+        unambiguously (e.g. ../datasets/MAVD).
+
+    Examples
+    --------
+    To work with MAVD dataset, just initialize this
+    class with the path to the dataset.
+
+    >>> from dcase_models.data.datasets import MAVD
+    >>> dataset = MAVD('../datasets/MAVD')
+
+    Then, you can download the dataset and change the sampling rate.
+
+    >>> dataset.download()
+    >>> dataset.change_sampling_rate(22050)
+
     """
 
-    def __init__(self, dataset_path,
-                 sequence_time=1.0, sequence_hop_time=0.5,
-                 metric_resolution_sec=1.0):
-        self.sequence_time = sequence_time
-        self.sequence_hop_time = sequence_hop_time
-        self.metric_resolution_sec = metric_resolution_sec
-
+    def __init__(self, dataset_path):
         super().__init__(dataset_path)
 
     def build(self):
@@ -788,7 +997,7 @@ class MAVD(Dataset):
             audio_folder = os.path.join(self.audio_path, fold)
             self.file_lists[fold] = list_wav_files(audio_folder)
 
-    def get_annotations(self, file_name, features):
+    def get_annotations(self, file_name, features, time_resolution):
         audio_path, _ = self.get_audio_paths()
         label_file = file_name.replace(
             audio_path,
@@ -809,10 +1018,10 @@ class MAVD(Dataset):
                     event_offset = event['event_offset']
 
                     onset = int(np.floor(
-                        event_onset / float(self.sequence_hop_time))
+                        event_onset / float(time_resolution))
                     )
                     offset = int(np.ceil(
-                        event_offset / float(self.sequence_hop_time))
+                        event_offset / float(time_resolution))
                     )
 
                     event_roll[onset:offset, label_ix] = 1

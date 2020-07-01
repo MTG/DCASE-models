@@ -81,12 +81,9 @@ def main():
     params_dataset = params['datasets'][dataset_name]
 
     # Get and init dataset class
-    kwargs = {}
-    if dataset_name in sed_datasets:
-        kwargs = {'sequence_hop_time': params_features['sequence_hop_time']}
     dataset_class = get_available_datasets()[dataset_name]
     dataset_path = os.path.join(args.path, params_dataset['dataset_path'])
-    dataset = dataset_class(dataset_path, **kwargs)
+    dataset = dataset_class(dataset_path)
 
     if args.fold_name not in dataset.fold_list:
         raise AttributeError('Fold not available')
@@ -124,7 +121,7 @@ def main():
     data_gen_test = DataGenerator(
         dataset, features, folds=[args.fold_name],
         batch_size=params['train']['batch_size'],
-        shuffle=False, train=False, scaler=scaler, **kwargs
+        shuffle=False, train=False, scaler=scaler
     )
 
     # Load model and best weights
