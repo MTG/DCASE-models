@@ -59,6 +59,7 @@ class FeatureExtractor():
     that inherits from FeatureExtractor. Then is required to define the
     calculate() method.
 
+    >>> from dcase_models.data.feature_extractor import FeatureExtractor
     >>> class Chroma(FeatureExtractor):
     >>>     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                          audio_win=1024, audio_hop=512, sr=44100,

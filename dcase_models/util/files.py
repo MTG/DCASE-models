@@ -4,7 +4,7 @@ import shutil
 import pickle
 import os
 import json
-
+import inspect
 
 def save_pickle(X, path):
     """ Save a pickle object in the location given by path.
@@ -288,3 +288,24 @@ def move_all_files_to(source, destination):
     for f in files:
         shutil.move(os.path.join(source, f), os.path.join(destination, f))
     shutil.rmtree(source)
+
+
+def example_audio_file(index=0):
+    """ Get path to an example audio file
+
+    Parameters
+    ----------
+    index : int, default=0
+        Index of the audio file
+
+    Returns
+    -------
+    path : str
+        Path to the example audio file
+
+    """
+    data_path = os.path.dirname(__file__)
+    data_path = os.path.abspath(os.path.join(data_path, os.pardir))
+    data_path = os.path.join(data_path, 'example_dataset/audio')
+    wav_files = list_wav_files(data_path)
+    return wav_files[index]

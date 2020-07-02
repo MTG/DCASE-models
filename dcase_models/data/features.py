@@ -14,13 +14,46 @@ __all__ = ['Spectrogram', 'MelSpectrogram',
 class Spectrogram(FeatureExtractor):
     """ Spectrogram feature extractor.
 
-    Based in librosa.core.stft function.
+    Extract the log-scaled spectrogram of the audio signals. The spectrogram
+    is calculated over the whole audio signal and then is separated in
+    overlapped sequences (frames)
 
     Note:
     -----
-    The spectrogram is calculated all over the file and then
-    it is separated in overlapped frames.
+    Based in librosa.core.stft function.
 
+    Parameters
+    ----------
+    n_fft : int, default=1024
+        Number of samples used for FFT calculation. Refer to librosa.core.stft
+        for further information.
+
+    See Also
+    --------
+    FeatureExtractor : FeatureExtractor base class
+
+    MelSpectrogram : MelSpectrogram feature extractor
+
+    Examples
+    --------
+    Extract features of a given file
+
+    >>> from dcase_models.data.features import Spectrogram
+    >>> from dcase_models.util.files import example_audio_file
+    >>> features = Spectrogram()
+    >>> features_shape = features.get_shape()
+    >>> print(features_shape)
+        (21, 32, 513)
+    >>> file_name = example_audio_file()
+    >>> spectrogram = features.calculate(file_name)
+    >>> print(spectrogram.shape)
+        (3, 32, 513)
+
+    Extract features for each file in a given dataset
+
+    >>> from dcase_models.data.datasets import ESC50
+    >>> dataset = ESC50('../datasets/ESC50')
+    >>> features.extract(dataset)
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
@@ -72,18 +105,59 @@ class Spectrogram(FeatureExtractor):
 class MelSpectrogram(FeatureExtractor):
     """ MelSpectrogram feature extractor.
 
-    Based in librosa.core.stft and librosa.filters.mel.
+    Extract the log-scaled mel-spectrogram of the audio signals.
+    The mel-spectrogram is calculated over the whole audio signal and then is
+    separated in overlapped sequences (frames)
 
     Note:
     -----
-    The mel-spectogram is calculated all over the file and then
-    it is separated in overlapped frames.
+    Based in `librosa.core.stft` and `librosa.filters.mel` functions.
+
+    Parameters
+    ----------
+    n_fft : int, default=1024
+        Number of samples used for FFT calculation.
+        Refer to `librosa.core.stft` for further information.
+
+    mel_bands : int, default=64
+        Number of mel bands.
+
+    kwargs
+        Additional keyword arguments to `librosa.filters.mel`.
+
+
+    See Also
+    --------
+    FeatureExtractor : FeatureExtractor base class
+
+    Spectrogram : Spectrogram features
+
+
+    Examples
+    --------
+    Extract features of a given file
+
+    >>> from dcase_models.data.features import MelSpectrogram
+    >>> from dcase_models.util.files import example_audio_file
+    >>> features = MelSpectrogram()
+    >>> features_shape = features.get_shape()
+    >>> print(features_shape)
+        (21, 32, 64)
+    >>> file_name = example_audio_file()
+    >>> mel_spectrogram = features.calculate(file_name)
+    >>> print(mel_spectrogram.shape)
+        (3, 32, 64)
+
+    Extract features for each file in a given dataset
+
+    >>> from dcase_models.data.datasets import ESC50
+    >>> dataset = ESC50('../datasets/ESC50')
+    >>> features.extract(dataset)
 
     """
-
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=680, sr=22050,
-                 n_fft=1024, mel_bands=64, fmax=None):
+                 n_fft=1024, mel_bands=64, **kwargs):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -92,12 +166,16 @@ class MelSpectrogram(FeatureExtractor):
 
         self.params['name'] = 'MelSpectrogram'
         self.params['mel_bands'] = mel_bands
-        self.params['fmax'] = fmax
+        self.params['kwargs'] = kwargs
         self.params['n_fft'] = 'n_fft'
 
         self.n_fft = n_fft
+
+        kwargs.setdefault('htk', True)
+        kwargs.setdefault('fmax', None)
+
         self.mel_basis = librosa.filters.mel(
-            sr, n_fft, mel_bands, htk=True, fmax=fmax)
+            sr, n_fft, mel_bands, **kwargs)
 
     def calculate(self, file_name):
         # Load audio
@@ -151,6 +229,49 @@ class Openl3(FeatureExtractor):
     """ Openl3 feature extractor.
 
     Based in openl3 library.
+
+    Parameters
+    ----------
+    content_type : {'music' or 'env'}, default='env'
+        Type of content used to train the embedding model.
+        Refer to openl3.core.get_audio_embedding.
+
+    input_repr : {'linear', 'mel128', or 'mel256'}
+        Spectrogram representation used for model.
+        Refer to openl3.core.get_audio_embedding.
+
+    embedding_size : {6144 or 512}, default=512
+        Embedding dimensionality.
+        Refer to openl3.core.get_audio_embedding.
+
+
+    See Also
+    --------
+    FeatureExtractor : FeatureExtractor base class
+
+    Spectrogram : Spectrogram features
+
+
+    Examples
+    --------
+    Extract features of a given file
+
+    >>> from dcase_models.data.features import Openl3
+    >>> from dcase_models.util.files import example_audio_file
+    >>> features = Openl3()
+    >>> features_shape = features.get_shape()
+    >>> print(features_shape)
+        (20, 512)
+    >>> file_name = example_audio_file()
+    >>> mel_spectrogram = features.calculate(file_name)
+    >>> print(mel_spectrogram.shape)
+        (3, 512)
+
+    Extract features for each file in a given dataset
+
+    >>> from dcase_models.data.datasets import ESC50
+    >>> dataset = ESC50('../datasets/ESC50')
+    >>> features.extract(dataset)
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
