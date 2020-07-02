@@ -24,7 +24,7 @@ class Spectrogram(FeatureExtractor):
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=690, sr=22050, n_fft=1024):
+                 audio_win=1024, audio_hop=680, sr=22050, n_fft=1024):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -82,7 +82,7 @@ class MelSpectrogram(FeatureExtractor):
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=690, sr=22050,
+                 audio_win=1024, audio_hop=680, sr=22050,
                  n_fft=1024, mel_bands=64, fmax=None):
 
         super().__init__(sequence_time=sequence_time,
@@ -154,7 +154,7 @@ class Openl3(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=690, sr=22050,
+                 audio_win=1024, audio_hop=680, sr=22050,
                  content_type="env", input_repr="mel256", embedding_size=512):
 
         super().__init__(sequence_time=sequence_time,
@@ -188,7 +188,7 @@ class RawAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=690, sr=22050):
+                 audio_win=1024, audio_hop=680, sr=22050):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -224,7 +224,7 @@ class FramesAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=690, sr=22050, n_fft=1024):
+                 audio_win=1024, audio_hop=680, sr=22050, n_fft=1024):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,

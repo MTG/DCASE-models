@@ -21,29 +21,37 @@ class FeatureExtractor():
 
     Parameters
     ----------
-    sequence_time : float
-        Duration of the sequence analysis window (in seconds)
-    sequence_hop_time : float
-        Hop time of the sequence analysis windows (in seconds)
-    audio_win : int
-        Number of samples of the audio frames.
-    audio_hop : int
-        Number of samples for the frame hop between adjacent
-        audio frames
-    sr : int
-        Sampling rate of the audio signals
-        If the original audio is not sampled at this rate,
-        it is re-sampled before feature extraction
+    sequence_time : float, default=1.0
+        Length (in seconds) of the feature representation analysis
+        windows (model's input).
+
+    sequence_hop_time : float, default=0.5
+        Hop time (in seconds) of the feature representation analysis windows.
+
+    audio_win : int, default=1024
+        Window length (in samples) for the short-time audio processing
+        (e.g short-time Fourier Transform (STFT))
+
+    audio_hop : int, default=680
+        Hop length (in samples) for the short-time audio processing
+        (e.g short-time Fourier Transform (STFT))
+
+    sr : int, default=22050
+        Sampling rate of the audio signals.
+        If the original audio is not sampled at this rate, it is re-sampled
+        before feature extraction.
 
     Attributes
     ----------
     sequence_frames : int
         Number of frames equivalent to the sequence_time.
+
     sequence_hop : int
         Number of frames equivalent to the sequence_hop_time.
+
     params : dict
-        Dictionary that stores important parameters.
-        This is used to check if the features were extracted before.
+        Dictionary that stores the main parameters. This is used to check if
+        the features were extracted before.
 
     Examples
     --------
@@ -100,10 +108,9 @@ class FeatureExtractor():
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=690, sr=22050, **kwargs):
+                 audio_win=1024, audio_hop=680, sr=22050, **kwargs):
         """
         Initialize the FeatureExtractor
-
 
         """
         self.sequence_time = sequence_time
