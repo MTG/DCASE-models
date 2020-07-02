@@ -38,6 +38,13 @@ class Spectrogram(FeatureExtractor):
     def calculate(self, file_name):
         audio = self.load_audio(file_name)
 
+        audio = librosa.util.fix_length(
+            audio,
+            audio.shape[0] + librosa.core.frames_to_samples(
+                self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
+            axis=0, mode='constant'
+        )
+
         # Spectrogram, shape (N_frames, N_freqs)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
                                  hop_length=self.audio_hop,
@@ -51,13 +58,6 @@ class Spectrogram(FeatureExtractor):
 
         # Transpose time and freq dims, shape
         spectrogram = spectrogram.T
-
-        # Pad the spectrogram, shape (N_frames', N_freqs)
-        spectrogram = librosa.util.fix_length(
-            spectrogram,
-            spectrogram.shape[0]+self.sequence_frames,
-            axis=0, mode='reflect'
-        )
 
         # Convert to sequences (frames),
         # shape (N_sequences, N_sequence_frames, N_freqs)

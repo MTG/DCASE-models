@@ -512,8 +512,8 @@ class _TAUUrbanAcousticScenes(Dataset):
         return y
 
     def download(self, zenodo_url, zenodo_files, force_download=False):
-        super().download(zenodo_url, zenodo_files,
-                         force_download=force_download)
+        return super().download(zenodo_url, zenodo_files,
+                                force_download=force_download)
 
 
 class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
@@ -634,6 +634,7 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
         downloaded = super().download(
             zenodo_url, zenodo_files, force_download
         )
+        print(downloaded)
         if downloaded:
             move_all_files_to_parent(
                 self.dataset_path,
