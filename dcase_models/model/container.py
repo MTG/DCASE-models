@@ -17,7 +17,7 @@ from ..data.data_generator import DataGenerator, KerasDataGenerator
 class ModelContainer():
     """ Abstract base class to store and manage models.
 
-    Attributes
+    Parameters
     ----------
     model : keras model or similar
         Object that defines the model (i.e keras.models.Model)
@@ -28,27 +28,6 @@ class ModelContainer():
     metrics : list of str
         List of metrics used for evaluation
 
-    Methods
-    -------
-    build()
-        Create the model
-    train()
-        Train the model on a train set
-    evaluate()
-        Evaluate the model on a test set
-    save_model_json(folder):
-        Save a json file with the model architecture and all information
-        needed for loading the model
-    load_model_json(folder):
-        Create a model based on the json file
-    save_model_weights(weights_folder)
-        Save model weights
-    load_model_weights(weights_folder)
-        Load model weights
-    get_number_of_parameters()
-        Get the number of paramaters of the model
-    check_if_model_exists(self, folder, **kwargs):
-        Check if the model exists in the folder
     """
 
     def __init__(self, model=None, model_path=None,
@@ -113,48 +92,29 @@ class KerasModelContainer(ModelContainer):
     save and load the model. Descendants of this class can be specialized for
     specific models (i.e see SB_CNN class)
 
-    Attributes
+    Parameters
     ----------
+    model : keras.models.Model or None, default=None
+        If model is None the model is created with `build()`.
 
-    Methods
-    -------
-    train(X_train, Y_train, X_val, Y_val, weights_path= './',  log_path= './',
-          loss_weights = [10,5,5], optimizer = 'adam',
-          learning_rate = 0.001, batch_size = 256, epochs=100, fit_verbose = 1)
-        Train the keras model using the data and paramaters as arguments
+    model_path : str or None, default=None
+        Path to the model. If it is not None, the model loaded from this path.
 
-    evaluate(X_test, Y_test, scaler=None)
-        Evaluate the keras model using X_test and Y_test
+    model_name : str, default=DCASEModelContainer
+        Model name.
 
-    load_model_from_json(folder):
-        Load model from model.json file in the given folder path
+    metrics : list of str, default=['classification']
+        List of metrics used for evaluation.
+        See `dcase_models.utils.metrics`.
 
-    save_model_json(folder)
-        Save a model.json file in the given folder path
-
-    save_model_weights(weights_folder)
-        Save model weights in the given folder path
+    kwargs
+        Additional keyword arguments to `load_model_from_json()`.
 
     """
 
     def __init__(self, model=None, model_path=None,
                  model_name="DCASEModelContainer",
                  metrics=['classification'], **kwargs):
-        """
-        Parameters
-        ----------
-        model : keras.models.Model, optional
-            Keras model.
-        model_path : str or None, optional
-            If a model_path is passed, the model is loaded from
-            this path. See self.load_model_from_json()
-        model_name : str
-            Model name.
-        metrics : list
-            List of metrics to be used in evaluation.
-        kwargs : kwargs
-            kwargs for self.load_model_from_json()
-        """
         super().__init__(model=model, model_path=model_path,
                          model_name=model_name,
                          metrics=metrics)

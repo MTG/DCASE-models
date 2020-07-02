@@ -7,41 +7,45 @@ import inspect
 class Scaler():
     """ Scaler object to normalize or scale the data.
 
+    Parameters
+    ----------
+    normalizer : {'standard' or 'minmax'}, default='standard'
+        Type of normalizer.
+
     Attributes
     ----------
     scaler : sklearn.preprocessing.StandardScaler or list
-        Scaler object for standard normalizer or list for
-        minmax scaler.
+        Scaler object for standard normalizer or list for minmax scaler.
 
-    Methods
-    -------
-    fit(X):
-        Fit the scaler.
-    partial_fit(X)
-        Fit the scaler in one batch.
-    transform(X):
-        Scale X using the scaler.
-    inverse_transform(X):
-        Inverse scale.
+    See also
+    --------
+    DataGenerator : data generator class
+
+
+    Examples
+    --------
+    >>> from dcase_models.data.scaler import Scaler
+    >>> import numpy as np
+    >>> scaler = Scaler('minmax')
+    >>> X = 3 * np.random.rand(10, 150)
+    >>> print(np.amin(X), np.amax(X))
+
+    >>> scaler.fit(X)
+    >>> X = scaler.transform(X)
+    >>> print(np.amin(X), np.amax(X))
 
     """
     def __init__(self, normalizer='standard'):
         """ Initialize the Scaler.
 
         If normalizer is 'standard', initialize the sklearn object.
-
-        Parameters
-        ----------
-        normalizer : str
-            Type of normalizer ('standard' or 'minmax')
-
         """
         self.normalizer = normalizer
         if type(normalizer) is not list:
             self.normalizer = [normalizer]
-        
+
         self.scaler = []
-        for norm in self.normalizer: 
+        for norm in self.normalizer:
             if norm == 'standard':
                 self.scaler.append(StandardScaler())
             if norm == 'minmax':
@@ -138,7 +142,7 @@ class Scaler():
                     X[j][k] = self._apply_transform(X[j][k], j)
             else:
                 X[j] = self._apply_transform(X[j], j)
-        
+
         if not return_list:
             X = X[0]
         return X
