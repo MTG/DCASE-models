@@ -12,7 +12,7 @@ from ..util.files import list_wav_files
 class WhiteNoise():
     """ Implement white noise augmentation.
 
-    The structure is similar than sox.Transformer to keep
+    The structure is similar to sox.Transformer in order to keep
     compatibility with sox.
 
     Parameters
@@ -65,17 +65,17 @@ class WhiteNoise():
 
 class AugmentedDataset(Dataset):
     """ Class that manage data augmentation.
-
-    Basically, its converts an instance of Dataset into an augmented one.
-
-    Includes functions to generate data augmented versions of the audio files.
+    
+    Basically, it takes an instance of Dataset and generates an augmented one.
+    Includes methods to generate data augmented versions of the audio files
+    in an existing Dataset.
 
     Parameters
     ----------
     dataset : Dataset
         Instance of Dataset to be augmented.
     augmentations_list : list
-        List of types and parameters of augmentations.
+        List of augmentation types and their parameters.
         Dict of form: [{'type' : aug_type, 'param1': param1 ...} ...].
         e.g. [
             {'type': 'pitch_shift', 'n_semitones': -1},
@@ -147,7 +147,7 @@ class AugmentedDataset(Dataset):
         self.file_lists = self.dataset.file_lists.copy()
 
     def process(self):
-        """ Do the data augmentation for each file in dataset.
+        """ Generate augmentated data for each file in dataset.
 
         Replicate the folder structure of {DATASET_PATH}/audio/original
         into the folder of each augmentation folder.
@@ -183,10 +183,10 @@ class AugmentedDataset(Dataset):
                 )
 
     def get_audio_paths(self, sr=None):
-        """ Return paths to the folders that include the data augmented files.
+        """ Returns a list of paths to the folders that include the data augmented files.
 
         The folder of each augmentation is defined using its name and
-        some parameters.
+         parameter values.
         e.g. {DATASET_PATH}/audio/pitch_shift_1 where 1 is the
         'n_semitones' parameter.
 
