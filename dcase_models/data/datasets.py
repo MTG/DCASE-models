@@ -738,9 +738,13 @@ class TUTSoundEvents2017(Dataset):
     def get_annotations(self, file_name, features, time_resolution):
         label_file = self.wav_to_labels[file_name]
         labels = read_csv(label_file, delimiter='\t', header=None)
-        labels.columns = ['file_path', 'scene', 'event_onset',
-                          'event_offset', 'event_label',
-                          'mixture', 'file_name']
+
+        if labels.shape[1] == 3:
+            labels.columns = ['event_onset', 'event_offset', 'event_label']
+        else:
+            labels.columns = ['file_path', 'scene', 'event_onset',
+                              'event_offset', 'event_label',
+                              'mixture', 'file_name']
         event_roll = event_list_to_event_roll(
             labels.to_dict('records'), self.label_list, time_resolution
         )
