@@ -25,11 +25,82 @@ __all__ = ['MLP', 'SB_CNN', 'SB_CNN_SED', 'A_CRNN',
 class MLP(KerasModelContainer):
     """ KerasModelContainer for a generic MLP model.
 
+    Parameters
+    ----------
+    n_classes : int, default=10
+        Number of classes (dimmension output).
+
+    n_frames : int or None, default=64
+        Length of the input (number of frames of each sequence).
+        Use None to not use frame-level input and output. In this case the
+        input has shape (None, n_freqs).
+
+    n_freqs : int, default=12
+        Number of frequency bins. The model's input has shape
+        (n_frames, n_freqs).
+
+    hidden_layers_size : list of int, default=[128, 64]
+        Dimmension of each hidden layer. Note that the length of this list
+        defines the number of hidden layers.
+
+    dropout_rates : list of float, default=[0.5, 0.5]
+        List of dropout rate use after each hidden layer. The length of this
+        list must be equal to the length of hidden_layers_size. Use 0.0
+        (or minor) to not use dropout.
+
+    hidden_activation : str, default='relu'
+        Activation the each hidden layers.
+
+    l2_reg : float, default=1e-5
+        Weight of the l2 regularizers. Use 0.0 to not use regularization.
+
+    final_activation : str, default='softmax'
+        Activation of the last layer.
+
+    temporal_integration : {'mean', 'sum', 'autopool'}, default='mean'
+        Temporal integration operation used after last layer.
+
+    kwargs
+        Additional keyword arguments to `Dense layers`.
+
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import MLP
+    >>> model_container = MLP()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input (InputLayer)           (None, 64, 12)            0
+    _________________________________________________________________
+    time_distributed_1 (TimeDist (None, 64, 128)           1664
+    _________________________________________________________________
+    dropout_1 (Dropout)          (None, 64, 128)           0
+    _________________________________________________________________
+    time_distributed_2 (TimeDist (None, 64, 64)            8256
+    _________________________________________________________________
+    dropout_2 (Dropout)          (None, 64, 64)            0
+    _________________________________________________________________
+    time_distributed_3 (TimeDist (None, 64, 10)            650
+    _________________________________________________________________
+    temporal_integration (Lambda (None, 10)                0
+    =================================================================
+    Total params: 10,570
+    Trainable params: 10,570
+    Non-trainable params: 0
+    _________________________________________________________________
+
     """
 
     def __init__(self, model=None, model_path=None,
                  metrics=['classification'], n_classes=10,
-                 n_frames_cnn=64, n_freq_cnn=12,
+                 n_frames=64, n_freqs=12,
                  hidden_layers_size=[128, 64],
                  dropout_rates=[0.5, 0.5], hidden_activation='relu',
                  l2_reg=1e-5, final_activation='softmax',
@@ -37,13 +108,13 @@ class MLP(KerasModelContainer):
 
         # self.input_shape = input_shape
         self.n_classes = n_classes
-        self.n_frames_cnn = n_frames_cnn
-        self.n_freq_cnn = n_freq_cnn
+        self.n_frames = n_frames
+        self.n_freqs = n_freqs
         self.hidden_layers_size = hidden_layers_size
         self.dropout_rates = dropout_rates
         self.l2_reg = l2_reg
         self.temporal_integration = temporal_integration
-        self.use_time_distributed = n_frames_cnn is not None
+        self.use_time_distributed = n_frames is not None
         self.hidden_activation = hidden_activation
         self.final_activation = final_activation
         self.kwargs = kwargs
@@ -54,9 +125,9 @@ class MLP(KerasModelContainer):
     def build(self):
         # input
         if self.use_time_distributed:
-            input_shape = (self.n_frames_cnn, self.n_freq_cnn)
+            input_shape = (self.n_frames, self.n_freqs)
         else:
-            input_shape = (self.n_freq_cnn)
+            input_shape = (self.n_freqs)
 
         inputs = Input(shape=input_shape, dtype='float32', name='input')
 
@@ -109,49 +180,107 @@ class SB_CNN(KerasModelContainer):
 ​    IEEE Signal Processing Letters, 24(3), pages 279 - 283.
     2017.
 
+    Notes
+    -----
+    Code based on Salamon's implementation
+    https://github.com/justinsalamon/scaper_waspaa2017
+
+
+    Parameters
+    ----------
+    n_classes : int, default=10
+        Number of classes (dimmension output).
+
+    n_frames_cnn : int or None, default=64
+        Length of the input (number of frames of each sequence).
+
+    n_freq_cnn : int, default=128
+        Number of frequency bins. The model's input has shape
+        (n_frames, n_freqs).
+
+    filter_size_cnn : tuple, default=(5,5)
+        Kernel dimmension for convolutional layers.
+
+    pool_size_cnn : tuple, default=(2,2)
+        Pooling dimmension for maxpooling layers.
+
+    n_dense_cnn : int, default=64
+        Dimmension of penultimate dense layer.
+
+    n_channels : int, default=0
+        Number of input channels
+
+        0 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn)
+        1 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 1)
+        2 : stereo signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 2)
+        n > 2 : multi-representations.
+            Input shape = (n_frames_cnn, n_freq_cnn, n_channels)
+
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import SB_CNN
+    >>> model_container = SB_CNN()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input (InputLayer)           (None, 64, 128)           0
+    _________________________________________________________________
+    lambda (Lambda)              (None, 64, 128, 1)        0
+    _________________________________________________________________
+    conv1 (Conv2D)               (None, 60, 124, 24)       624
+    _________________________________________________________________
+    maxpool1 (MaxPooling2D)      (None, 30, 62, 24)        0
+    _________________________________________________________________
+    batchnorm1 (BatchNormalizati (None, 30, 62, 24)        96
+    _________________________________________________________________
+    conv2 (Conv2D)               (None, 26, 58, 48)        28848
+    _________________________________________________________________
+    maxpool2 (MaxPooling2D)      (None, 6, 29, 48)         0
+    _________________________________________________________________
+    batchnorm2 (BatchNormalizati (None, 6, 29, 48)         192
+    _________________________________________________________________
+    conv3 (Conv2D)               (None, 2, 25, 48)         57648
+    _________________________________________________________________
+    batchnorm3 (BatchNormalizati (None, 2, 25, 48)         192
+    _________________________________________________________________
+    flatten (Flatten)            (None, 2400)              0
+    _________________________________________________________________
+    dropout1 (Dropout)           (None, 2400)              0
+    _________________________________________________________________
+    dense1 (Dense)               (None, 64)                153664
+    _________________________________________________________________
+    dropout2 (Dropout)           (None, 64)                0
+    _________________________________________________________________
+    out (Dense)                  (None, 10)                650
+    =================================================================
+    Total params: 241,914
+    Trainable params: 241,674
+    Non-trainable params: 240
+    _________________________________________________________________
     """
 
     def __init__(self, model=None, model_path=None, metrics=['classification'],
                  n_classes=10, n_frames_cnn=64,
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
-                 large_cnn=False, n_dense_cnn=64, n_channels=0):
-        """
-        Initialization of the SB-CNN [1] model.
-
-        ----------
-        model : keras Model
-
-        n_freq_cnn : int
-            number of frequency bins of the input
-        n_frames_cnn : int
-            number of time steps (hops) of the input
-        n_filters_cnn : int
-            number of filters in each conv layer
-        filter_size_cnn : tuple of int
-            kernel size of each convolutional filter
-        pool_size_cnn : tuple of int
-            kernel size of the pool operations
-        n_classes : int
-            number of classes for the classification task
-            (size of the last layer)
-        large_cnn : bool
-            if true, the model has one more dense layer
-        n_dense_cnn : int
-            size of middle dense layers
-
-        Notes
-        -----
-        Code based on Salamon's implementation
-        https://github.com/justinsalamon/scaper_waspaa2017
+                 n_dense_cnn=64, n_channels=0):
+        """ Initialization of the SB-CNN model.
 
         """
-
         self.n_classes = n_classes
         self.n_frames_cnn = n_frames_cnn
         self.n_freq_cnn = n_freq_cnn
         self.filter_size_cnn = filter_size_cnn
         self.pool_size_cnn = pool_size_cnn
-        self.large_cnn = large_cnn
         self.n_dense_cnn = n_dense_cnn
         self.n_channels = n_channels
 
@@ -222,6 +351,96 @@ class SB_CNN_SED(KerasModelContainer):
     Audio and Acoustics (WASPAA).
     New Paltz, NY, USA, Oct. 2017
 
+    Notes
+    -----
+    Code based on Salamon's implementation
+    https://github.com/justinsalamon/scaper_waspaa2017
+
+    Parameters
+    ----------
+    n_classes : int, default=10
+        Number of classes (dimmension output).
+
+    n_frames_cnn : int or None, default=64
+        Length of the input (number of frames of each sequence).
+
+    n_freq_cnn : int, default=128
+        Number of frequency bins. The model's input has shape
+        (n_frames, n_freqs).
+
+    filter_size_cnn : tuple, default=(5,5)
+        Kernel dimmension for convolutional layers.
+
+    pool_size_cnn : tuple, default=(2,2)
+        Pooling dimmension for maxpooling layers.
+
+    large_cnn : bool, default=False
+        If large_cnn is true, add other dense layer after penultimate layer.
+
+    n_dense_cnn : int, default=64
+        Dimmension of penultimate dense layer.
+
+    n_channels : int, default=0
+        Number of input channels
+
+        0 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn)
+        1 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 1)
+        2 : stereo signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 2)
+        n > 2 : multi-representations.
+            Input shape = (n_frames_cnn, n_freq_cnn, n_channels)
+
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import SB_CNN_SED
+    >>> model_container = SB_CNN_SED()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input_1 (InputLayer)         (None, 64, 128)           0
+    _________________________________________________________________
+    lambda_1 (Lambda)            (None, 64, 128, 1)        0
+    _________________________________________________________________
+    conv2d_1 (Conv2D)            (None, 60, 124, 64)       1664
+    _________________________________________________________________
+    max_pooling2d_1 (MaxPooling2 (None, 30, 62, 64)        0
+    _________________________________________________________________
+    batch_normalization_1 (Batch (None, 30, 62, 64)        256
+    _________________________________________________________________
+    conv2d_2 (Conv2D)            (None, 26, 58, 64)        102464
+    _________________________________________________________________
+    max_pooling2d_2 (MaxPooling2 (None, 13, 29, 64)        0
+    _________________________________________________________________
+    batch_normalization_2 (Batch (None, 13, 29, 64)        256
+    _________________________________________________________________
+    conv2d_3 (Conv2D)            (None, 9, 25, 64)         102464
+    _________________________________________________________________
+    batch_normalization_3 (Batch (None, 9, 25, 64)         256
+    _________________________________________________________________
+    flatten_1 (Flatten)          (None, 14400)             0
+    _________________________________________________________________
+    dropout_3 (Dropout)          (None, 14400)             0
+    _________________________________________________________________
+    dense_1 (Dense)              (None, 64)                921664
+    _________________________________________________________________
+    dropout_4 (Dropout)          (None, 64)                0
+    _________________________________________________________________
+    dense_2 (Dense)              (None, 10)                650
+    =================================================================
+    Total params: 1,129,674
+    Trainable params: 1,129,290
+    Non-trainable params: 384
+    _________________________________________________________________
+
     """
 
     def __init__(self, model=None, model_path=None, metrics=['sed'],
@@ -229,34 +448,7 @@ class SB_CNN_SED(KerasModelContainer):
                  n_freq_cnn=128, filter_size_cnn=(5, 5), pool_size_cnn=(2, 2),
                  large_cnn=False, n_dense_cnn=64,
                  n_filters_cnn=64, n_chanels=0):
-        """
-        Initialization of the SB-CNN-SED model.
-
-        ----------
-        model : keras Model
-
-        n_freq_cnn : int
-            number of frequency bins of the input
-        n_frames_cnn : int
-            number of time steps (hops) of the input
-        n_filters_cnn : int
-            number of filters in each conv layer
-        filter_size_cnn : tuple of int
-            kernel size of each convolutional filter
-        pool_size_cnn : tuple of int
-            kernel size of the pool operations
-        n_classes : int
-            number of classes for the classification task
-            (size of the last layer)
-        large_cnn : bool
-            if true, the model has one more dense layer
-        n_dense_cnn : int
-            size of middle dense layers
-
-        Notes
-        -----
-        Code based on Salamon's implementation
-        https://github.com/justinsalamon/scaper_waspaa2017
+        """ Initialization of the SB-CNN-SED model.
 
         """
 
@@ -326,7 +518,129 @@ class A_CRNN(KerasModelContainer):
     "Sound event detection using spatial features and
     convolutional recurrent neural network"
     International Conference on Acoustics, Speech, and Signal Processing.
-    2017.
+    2017. https://arxiv.org/pdf/1706.02291.pdf
+
+    Notes
+    -----
+    Code based on Adavanne's implementation
+    https://github.com/sharathadavanne/sed-crnn
+
+    Parameters
+    ----------
+    n_classes : int, default=10
+        Number of classes (dimmension output).
+
+    n_frames_cnn : int or None, default=64
+        Length of the input (number of frames of each sequence).
+
+    n_freq_cnn : int, default=128
+        Number of frequency bins. The model's input has shape
+        (n_frames, n_freqs).
+
+    cnn_nb_filt : int, default=128
+        Number of filters used in convolutional layers.
+
+    cnn_pool_size : tuple, default=(5, 2, 2)
+        Pooling dimmension for maxpooling layers.
+
+    rnn_nb : list, default=[32, 32]
+        Number of units in each recursive layer.
+
+    fc_nb : list, default=[32]
+        Number of units in each dense layer.
+
+    dropout_rate : float, default=0.5
+        Dropout rate.
+
+    n_channels : int, default=0
+        Number of input channels
+
+        0 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn)
+        1 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 1)
+        2 : stereo signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 2)
+        n > 2 : multi-representations.
+            Input shape = (n_frames_cnn, n_freq_cnn, n_channels)
+
+    final_activation : str, default='softmax'
+        Activation of the last layer.
+
+    sed : bool, default=False
+        If sed is True, the output is frame-level. If False the output is
+        time averaged.
+
+    bidirectional : bool, default=False
+        If bidirectional is True, the recursive layers are bidirectional.
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import A_CRNN
+    >>> model_container = A_CRNN()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input (InputLayer)           (None, 64, 128)           0
+    _________________________________________________________________
+    lambda (Lambda)              (None, 64, 128, 1)        0
+    _________________________________________________________________
+    conv2d_7 (Conv2D)            (None, 64, 128, 128)      1280
+    _________________________________________________________________
+    batch_normalization_7 (Batch (None, 64, 128, 128)      512
+    _________________________________________________________________
+    activation_4 (Activation)    (None, 64, 128, 128)      0
+    _________________________________________________________________
+    max_pooling2d_6 (MaxPooling2 (None, 64, 25, 128)       0
+    _________________________________________________________________
+    dropout_9 (Dropout)          (None, 64, 25, 128)       0
+    _________________________________________________________________
+    conv2d_8 (Conv2D)            (None, 64, 25, 128)       147584
+    _________________________________________________________________
+    batch_normalization_8 (Batch (None, 64, 25, 128)       100
+    _________________________________________________________________
+    activation_5 (Activation)    (None, 64, 25, 128)       0
+    _________________________________________________________________
+    max_pooling2d_7 (MaxPooling2 (None, 64, 12, 128)       0
+    _________________________________________________________________
+    dropout_10 (Dropout)         (None, 64, 12, 128)       0
+    _________________________________________________________________
+    conv2d_9 (Conv2D)            (None, 64, 12, 128)       147584
+    _________________________________________________________________
+    batch_normalization_9 (Batch (None, 64, 12, 128)       48
+    _________________________________________________________________
+    activation_6 (Activation)    (None, 64, 12, 128)       0
+    _________________________________________________________________
+    max_pooling2d_8 (MaxPooling2 (None, 64, 6, 128)        0
+    _________________________________________________________________
+    dropout_11 (Dropout)         (None, 64, 6, 128)        0
+    _________________________________________________________________
+    reshape_2 (Reshape)          (None, 64, 768)           0
+    _________________________________________________________________
+    gru_3 (GRU)                  (None, 64, 32)            76896
+    _________________________________________________________________
+    gru_4 (GRU)                  (None, 64, 32)            6240
+    _________________________________________________________________
+    time_distributed_6 (TimeDist (None, 64, 32)            1056
+    _________________________________________________________________
+    dropout_12 (Dropout)         (None, 64, 32)            0
+    _________________________________________________________________
+    time_distributed_7 (TimeDist (None, 64, 10)            330
+    _________________________________________________________________
+    mean (Lambda)                (None, 10)                0
+    _________________________________________________________________
+    strong_out (Activation)      (None, 10)                0
+    =================================================================
+    Total params: 381,630
+    Trainable params: 381,300
+    Non-trainable params: 330
+    _________________________________________________________________
 
     """
 
@@ -338,8 +652,7 @@ class A_CRNN(KerasModelContainer):
                  final_activation='softmax', sed=False,
                  bidirectional=False):
         '''
-        # based on https://github.com/sharathadavanne/sed-crnn
-        # ref https://arxiv.org/pdf/1706.02291.pdf
+
 
         '''
         self.n_classes = n_classes
@@ -377,7 +690,6 @@ class A_CRNN(KerasModelContainer):
         for i, cnt in enumerate(self.cnn_pool_size):
             spec_x = Conv2D(filters=self.cnn_nb_filt, kernel_size=(
                 3, 3), padding='same')(spec_x)
-            print(i, spec_x.shape)
             # spec_x = BatchNormalization(axis=1)(spec_x)
             spec_x = BatchNormalization(axis=2)(spec_x)
             spec_x = Activation('relu')(spec_x)
@@ -423,8 +735,91 @@ class VGGish(KerasModelContainer):
     International Conference on Acoustics, Speech, and Signal Processing.
     New Orleans, LA, 2017.
 
+    Notes
+    -----
     https://research.google.com/audioset/
-    based on vggish-keras https://pypi.org/project/vggish-keras/
+    Based on vggish-keras https://pypi.org/project/vggish-keras/
+
+    Parameters
+    ----------
+    n_frames_cnn : int or None, default=96
+        Length of the input (number of frames of each sequence).
+
+    n_freq_cnn : int, default=64
+        Number of frequency bins. The model's input has shape
+        (n_frames, n_freqs).
+
+    n_classes : int, default=10
+        Number of classes (dimmension output).
+
+    n_channels : int, default=0
+        Number of input channels
+
+        0 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn)
+        1 : mono signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 1)
+        2 : stereo signals.
+            Input shape = (n_frames_cnn, n_freq_cnn, 2)
+        n > 2 : multi-representations.
+            Input shape = (n_frames_cnn, n_freq_cnn, n_channels)
+
+    embedding_size : int, default=128
+        Number of units in the embeddings layer.
+
+    pooling : {'avg', max}, default='avg'
+        Use AveragePooling or Maxpooling.
+
+    include_top : bool, default=False
+        Include fully-connected layers.
+
+    compress : bool, default=False
+        Apply PCA.
+
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import VGGish
+    >>> model_container = VGGish()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input (InputLayer)           (None, 96, 64)            0
+    _________________________________________________________________
+    lambda (Lambda)              (None, 96, 64, 1)         0
+    _________________________________________________________________
+    conv1 (Conv2D)               (None, 96, 64, 64)        640
+    _________________________________________________________________
+    pool1 (MaxPooling2D)         (None, 48, 32, 64)        0
+    _________________________________________________________________
+    conv2 (Conv2D)               (None, 48, 32, 128)       73856
+    _________________________________________________________________
+    pool2 (MaxPooling2D)         (None, 24, 16, 128)       0
+    _________________________________________________________________
+    conv3/conv3_1 (Conv2D)       (None, 24, 16, 256)       295168
+    _________________________________________________________________
+    conv3/conv3_2 (Conv2D)       (None, 24, 16, 256)       590080
+    _________________________________________________________________
+    pool3 (MaxPooling2D)         (None, 12, 8, 256)        0
+    _________________________________________________________________
+    conv4/conv4_1 (Conv2D)       (None, 12, 8, 512)        1180160
+    _________________________________________________________________
+    conv4/conv4_2 (Conv2D)       (None, 12, 8, 512)        2359808
+    _________________________________________________________________
+    pool4 (MaxPooling2D)         (None, 6, 4, 512)         0
+    _________________________________________________________________
+    global_average_pooling2d_1 ( (None, 512)               0
+    =================================================================
+    Total params: 4,499,712
+    Trainable params: 4,499,712
+    Non-trainable params: 0
+    _________________________________________________________________
     """
 
     def __init__(self, model=None, model_path=None, metrics=['classification'],
@@ -509,64 +904,6 @@ class VGGish(KerasModelContainer):
         super().build()
 
 
-class DCASE2020Task5Baseline(KerasModelContainer):
-    """ Baseline of Urban Sound Tagging with Spatiotemporal Context
-    DCASE 2020 Challenge - Task 5
-
-    Mark Cartwright et al.
-    SONYC urban sound tagging (SONYC-UST): a multilabel dataset
-    from an urban acoustic sensor network.
-    In Proceedings of the Workshop on Detection and Classification of
-    Acoustic Scenes and Events (DCASE), 35–39. October 2019
-
-    based on https://github.com/sonyc-project/
-             dcase2020task5-uststc-baseline/blob/master/src/classify.py
-    """
-
-    def __init__(self, model=None, model_path=None,
-                 metrics=['tagging'], n_frames_cnn=96,
-                 n_freq_cnn=64, n_classes=10, hidden_layer_size=128,
-                 num_hidden_layers=1, l2_reg=1e-5):
-
-        self.n_frames_cnn = n_frames_cnn
-        self.n_freq_cnn = n_freq_cnn
-        self.n_classes = n_classes
-        self.hidden_layer_size = hidden_layer_size
-        self.num_hidden_layers = num_hidden_layers
-        self.l2_reg = l2_reg
-
-        super().__init__(model=model, model_path=model_path,
-                         model_name='DCASE2020Task5Baseline', metrics=metrics)
-
-    def build(self):
-        # input
-        inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
-                       dtype='float32', name='input')
-
-        # Hidden layers
-        for idx in range(self.num_hidden_layers):
-            if idx == 0:
-                y = inputs
-            y = TimeDistributed(
-                Dense(self.hidden_layer_size, activation='relu',
-                      kernel_regularizer=l2(self.l2_reg)),
-                name='dense_{}'.format(idx+1)
-                )(y)
-
-        # Output layer
-        y = TimeDistributed(Dense(self.n_classes, activation='sigmoid',
-                                  kernel_regularizer=l2(self.l2_reg)),
-                            name='output_t')(y)
-
-        # Apply autopool over time dimension
-        y = AutoPool1D(axis=1, name='output')(y)
-
-        # Create model
-        self.model = Model(inputs=inputs, outputs=y, name='model')
-
-        super().build()
-
-
 class SMel(KerasModelContainer):
     """ KerasModelContainer for SMel model.
 
@@ -578,11 +915,64 @@ class SMel(KerasModelContainer):
     and the Internet of Things.
     Moscow, Russia, April 2019.
 
+    Parameters
+    ----------
+    mel_bands : int, default=128
+        Number of mel bands.
+
+    n_seqs : int, default=64
+        Time dimmension of the input.
+
+    audio_win : int, default=1024
+        Length of the audio window (number of samples of each frame).
+
+    audio_hop : int, default=512
+        Length of the hop size (in samples).
+
+    alpha : int, default=1
+        Multiply factor before apply log (compression factor).
+
+    scaler : tuple, list or None
+        If scaler is not None, this is used before output.
+
+    amin : float, default=1e-10 (-100 dB)
+        Minimum value for db calculation.
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import SMel
+    >>> model_container = SMel()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input_1 (InputLayer)         (None, 64, 1024)          0
+    _________________________________________________________________
+    lambda (Lambda)              (None, 64, 1024, 1)       0
+    _________________________________________________________________
+    time_distributed_1 (TimeDist (None, 64, 64, 128)       131200
+    _________________________________________________________________
+    lambda_1 (Lambda)            (None, 64, 64, 128)       0
+    _________________________________________________________________
+    lambda_2 (Lambda)            (None, 64, 128)           0
+    _________________________________________________________________
+    lambda_3 (Lambda)            (None, 64, 128)           0
+    =================================================================
+    Total params: 131,200
+    Trainable params: 131,200
+    Non-trainable params: 0
+    _________________________________________________________________
+
     """
 
     def __init__(self, model=None, model_path=None,
                  metrics=['mean_squared_error'],
-                 mel_bands=64, n_seqs=64,
+                 mel_bands=128, n_seqs=64,
                  audio_win=1024, audio_hop=512,
                  alpha=1, scaler=None, amin=1e-10):
         self.mel_bands = mel_bands
@@ -633,6 +1023,60 @@ class MST(KerasModelContainer):
     31st Conference on Neural Information Processing Systems (NIPS).
     Long Beach, CA, USA, 2017.
 
+    Parameters
+    ----------
+    mel_bands : int, default=128
+        Number of mel bands.
+
+    sequence_samples : int, default=22050
+        Number of samples of each input.
+
+    audio_win : int, default=1024
+        Length of the audio window (number of samples of each frame).
+
+    audio_hop : int, default=512
+        Length of the hop size (in samples).
+
+
+    Attributes
+    ----------
+    model : keras.models.Model
+        Keras model.
+
+    Examples
+    --------
+    >>> from dcase_models.model.models import SMel
+    >>> model_container = SMel()
+    >>> model_container.model.summary()
+    _________________________________________________________________
+    Layer (type)                 Output Shape              Param #
+    =================================================================
+    input_2 (InputLayer)         (None, 22050)             0
+    _________________________________________________________________
+    lambda (Lambda)              (None, 22050, 1)          0
+    _________________________________________________________________
+    conv1d_2 (Conv1D)            (None, 44, 512)           524800
+    _________________________________________________________________
+    batch_normalization_1 (Batch (None, 44, 512)           2048
+    _________________________________________________________________
+    activation_1 (Activation)    (None, 44, 512)           0
+    _________________________________________________________________
+    conv1d_3 (Conv1D)            (None, 44, 256)           393472
+    _________________________________________________________________
+    batch_normalization_2 (Batch (None, 44, 256)           1024
+    _________________________________________________________________
+    activation_2 (Activation)    (None, 44, 256)           0
+    _________________________________________________________________
+    conv1d_4 (Conv1D)            (None, 44, 128)           98432
+    _________________________________________________________________
+    batch_normalization_3 (Batch (None, 44, 128)           512
+    _________________________________________________________________
+    activation_3 (Activation)    (None, 44, 128)           0
+    =================================================================
+    Total params: 1,020,288
+    Trainable params: 1,018,496
+    Non-trainable params: 1,792
+    _________________________________________________________________
     """
 
     def __init__(self, model=None, model_path=None,

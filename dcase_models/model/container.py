@@ -87,7 +87,8 @@ class ModelContainer():
 
 
 class KerasModelContainer(ModelContainer):
-    """
+    """ ModelContainer for keras models.
+
     A class that contains a keras model, the methods to train, evaluate,
     save and load the model. Descendants of this class can be specialized for
     specific models (i.e see SB_CNN class)
