@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""UI functions"""
+
 import sys
 
 

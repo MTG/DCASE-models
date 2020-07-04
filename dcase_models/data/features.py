@@ -18,7 +18,7 @@ class Spectrogram(FeatureExtractor):
     is calculated over the whole audio signal and then is separated in
     overlapped sequences (frames)
 
-    Note:
+    Notes
     -----
     Based in librosa.core.stft function.
 
@@ -109,7 +109,7 @@ class MelSpectrogram(FeatureExtractor):
     The mel-spectrogram is calculated over the whole audio signal and then is
     separated in overlapped sequences (frames)
 
-    Note:
+    Notes
     -----
     Based in `librosa.core.stft` and `librosa.filters.mel` functions.
 

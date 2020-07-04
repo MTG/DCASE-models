@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""Events functions"""
+
 import wget
 import csv
 import shutil

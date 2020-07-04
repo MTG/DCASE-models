@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""Data functions"""
+
 def get_fold_val(fold_test, fold_list):
     """ Get the validation fold given the test fold.
 

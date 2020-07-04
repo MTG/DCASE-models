@@ -76,12 +76,14 @@ class DataGenerator():
         Each element in the list includes information of the original
         audio file (important to get the annotations) and the subfolder where
         is the resampled (and maybe augmented) audio file.
-        e.g: audio_file_list = [
-            {'file_original': 'audio/1.wav', 'sub_folder': 'original'},
-            {'file_original': 'audio/1.wav', 'sub_folder': 'pitch_shift_1'},
-            {'file_original': 'audio/2.wav', 'sub_folder': 'original'},
-            ...
-        ]
+        e.g.::
+
+            audio_file_list = [
+                {'file_original': 'audio/1.wav', 'sub_folder': 'original'},
+                {'file_original': 'audio/1.wav', 'sub_folder': 'pitch_shift_1'},
+                {'file_original': 'audio/2.wav', 'sub_folder': 'original'},
+                ...
+            ]
 
 
     See Also
@@ -470,8 +472,8 @@ class DataGenerator():
     def shuffle_list(self):
         """ Shuffle features_file_list.
 
-        Note
-        ----
+        Notes
+        -----
         Only shuffle the list if shuffle is True.
 
         """

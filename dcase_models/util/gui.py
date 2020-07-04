@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""GUI functions"""
+
 from io import BytesIO
 import wave
 import struct

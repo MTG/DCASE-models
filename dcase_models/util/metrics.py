@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""Metric functions"""
+
 # from scipy import interpolate
 import numpy as np
 from scipy.stats import mode
@@ -48,6 +51,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
     data : tuple or KerasDataGenerator
         Validation data for model evaluation
         (X_val, Y_val) or KerasDataGenerator
+
         X_val : list of ndarray
             Each element in list is a 3D array with the mel-spectrograms
             of one file. Shape of each element:
@@ -57,6 +61,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
             Each element in the list is a 1D array with
             the annotations (one hot encoding).
             Shape of each element (N_classes,)
+
     metrics : list
         List of metrics to apply.
         Each element can be a metric name or a function.
@@ -65,6 +70,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
     -------
     dict
         Dict with the results information.
+
         {'annotations' : [Y0, Y1, ...],
          'predictions' : [Yp0, Yp1, ...],
          metrics[0]: 0.1,

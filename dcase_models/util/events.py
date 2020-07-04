@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""Events functions"""
+
 import numpy as np
 
 # From Salamon's code
@@ -58,7 +61,9 @@ def event_roll_to_event_list(event_roll, event_label_list, time_resolution):
     -------
     list
         List of dicts with events information.
-        e.g. [{'event_onset': 0.1,
+        e.g. 
+
+            [{'event_onset': 0.1,
               'event_offset': 1.5,
               'event_label' : 'dog'}, ...]
 

@@ -123,6 +123,8 @@ class MLP(KerasModelContainer):
                          model_name='MLP', metrics=metrics)
 
     def build(self):
+        """ Missing docstring here
+        """
         # input
         if self.use_time_distributed:
             input_shape = (self.n_frames, self.n_freqs)
@@ -177,7 +179,7 @@ class SB_CNN(KerasModelContainer):
     J. Salamon and J. P. Bello.
     "Deep Convolutional Neural Networks and Data Augmentation
     For Environmental Sound Classification".
-​    IEEE Signal Processing Letters, 24(3), pages 279 - 283.
+    IEEE Signal Processing Letters, 24(3), pages 279 - 283.
     2017.
 
     Notes
@@ -290,6 +292,8 @@ class SB_CNN(KerasModelContainer):
         )
 
     def build(self):
+        """ Missing docstring here
+        """
         # Here define the keras model
         if self.n_channels == 0:
             x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
@@ -334,6 +338,8 @@ class SB_CNN(KerasModelContainer):
         self.model = Model(inputs=x, outputs=y)
 
     def sub_model(self):
+        """ Missing docstring here
+        """
         # example code on how define a new model based on the original
         new_model = Model(inputs=self.model.input,
                           outputs=self.model.get_layer('dense1').output)
@@ -466,6 +472,8 @@ class SB_CNN_SED(KerasModelContainer):
                          model_name='SB_CNN_SED', metrics=metrics)
 
     def build(self):
+        """ Missing docstring here
+        """
         # Here define the keras model
         if self.large_cnn:
             self.n_filters_cnn = 128
@@ -674,6 +682,8 @@ class A_CRNN(KerasModelContainer):
         )
 
     def build(self):
+        """ Missing docstring here
+        """
         if self.n_channels == 0:
             x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
                       dtype='float32', name='input')
@@ -842,6 +852,8 @@ class VGGish(KerasModelContainer):
         )
 
     def build(self):
+        """ Missing docstring here
+        """
         if self.n_channels == 0:
             inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
                            dtype='float32', name='input')
@@ -987,6 +999,8 @@ class SMel(KerasModelContainer):
                          model_name='SMel', metrics=metrics)
 
     def build(self):
+        """ Missing docstring here
+        """
         x = Input(shape=(self.n_seqs, self.audio_win), dtype='float32')
 
         y = Lambda(lambda x: K.expand_dims(x, -1), name='lambda')(x)
@@ -1092,6 +1106,8 @@ class MST(KerasModelContainer):
                          model_name='MST', metrics=metrics)
 
     def build(self):
+        """ Missing docstring here
+        """
         x = Input(shape=(self.sequence_samples, ), dtype='float32')
 
         y = Lambda(lambda x: K.expand_dims(x, -1), name='lambda')(x)
@@ -1132,6 +1148,8 @@ class ConcatenatedModel(KerasModelContainer):
                          model_name=model_name, metrics=metrics)
 
     def build(self):
+        """ Missing docstring here
+        """
         input_shape = self.model_list[0].model.input_shape
         print(input_shape)
         x = Input(shape=input_shape[1:], dtype='float32')
@@ -1149,6 +1167,8 @@ class ConcatenatedModel(KerasModelContainer):
 
 
 def get_available_models():
+    """ Missing docstring here
+    """
     available_models = {m[0]: m[1] for m in inspect.getmembers(
         sys.modules[__name__], inspect.isclass) if m[1].__module__ == __name__}
 

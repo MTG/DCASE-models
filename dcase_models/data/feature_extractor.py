@@ -57,55 +57,51 @@ class FeatureExtractor():
     --------
     To create a new feature representation, it is necessary to define a class
     that inherits from FeatureExtractor. Then is required to define the
-    calculate() method.
+    calculate() method.::
 
-    >>> from dcase_models.data.feature_extractor import FeatureExtractor
-    >>> class Chroma(FeatureExtractor):
-    >>>     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                         audio_win=1024, audio_hop=512, sr=44100,
-                         # Add here your custom parameters
-                        n_fft=1024, n_chroma=12):
-                 
-                # Don't forget this line
-    >>>         super().__init__(sequence_time=sequence_time,
-                                 sequence_hop_time=sequence_hop_time,
-                                 audio_win=audio_win,
+        from dcase_models.data.feature_extractor import FeatureExtractor
+        class Chroma(FeatureExtractor):
+            def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
+                             audio_win=1024, audio_hop=512, sr=44100,
+                             # Add here your custom parameters
+                             n_fft=1024, n_chroma=12):
+                # Don't forget this line
+                super().__init__(sequence_time=sequence_time,
+                                 sequence_hop_time=sequence_hop_time,
+                                 audio_win=audio_win,
                                  audio_hop=audio_hop, sr=sr)
-
-                # Add your custom parameters to self.params
-    >>>         self.params['name'] = 'Chroma'
-    >>>         self.params['n_chroma'] = n_chroma
-    >>>         self.sequence_samples = librosa.core.frames_to_samples(
-                    self.sequence_frames,
-                    self.audio_hop,
-                    n_fft=self.n_fft
-                )
-
-    >>>     def calculate(self, file_name):
-                # Here define your function to calculate the chroma features
-
+                # Add your custom parameters to self.params
+                self.params['name'] = 'Chroma'
+                self.params['n_chroma'] = n_chroma
+                self.sequence_samples = librosa.core.frames_to_samples(self.sequence_frames,
+                                                                       self.audio_hop,
+                                                                       n_fft=self.n_fft
+                                                                       )
+            def calculate(self, file_name):
+                # Here define your function to calculate the chroma features
                 # Load the audio signal
-    >>>         audio = self.load_audio(file_name)
-
+                audio = self.load_audio(file_name)
                 # Pad audio signal
-    >>>         audio = librosa.util.fix_length(
-                    audio,
-                    audio.shape[0] + self.sequence_samples,
-                    axis=0, mode='constant'
-                )
+                audio = librosa.util.fix_length(audio,
+                                                audio.shape[0] + self.sequence_samples,
+                                                axis=0, mode='constant'
+                                                )
                 # Get the chroma features
-    >>>         chroma = librosa.feature.chroma_stft(
-                    y=audio, sr=self.sr, n_fft=self.n_fft,
-                    hop_length=audio_hop, win_length=audio_win
-                )
-
+                chroma = librosa.feature.chroma_stft(y=audio,
+                                                     sr=self.sr,
+                                                     n_fft=self.n_fft,
+                                                     hop_length=audio_hop,
+                                                     win_length=audio_win
+                                                     )
                 # Convert to sequences
-    >>>         chroma = np.ascontiguousarray(chroma)
-    >>>         chroma = librosa.util.frame(
-                    chroma, self.sequence_frames, self.sequence_hop, axis=0
-                )
+                chroma = np.ascontiguousarray(chroma)
+                chroma = librosa.util.frame(chroma,
+                                            self.sequence_frames,
+                                            self.sequence_hop,
+                                            axis=0
+                                            )
+                return chroma
 
-    >>>         return chroma
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,

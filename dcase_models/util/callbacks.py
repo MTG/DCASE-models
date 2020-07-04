@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""Callback functions"""
+
 from .metrics import evaluate_metrics
 from keras.callbacks import Callback
 
@@ -13,6 +16,7 @@ class ClassificationCallback(Callback):
                  early_stopping=0, considered_improvement=0.01,
                  label_list=[]):
         """ Initialize the keras callback
+
         Parameters
         ----------
         data : tuple or KerasDataGenerator
@@ -83,7 +87,6 @@ class SEDCallback(Callback):
     file with the weights if the evaluation improves.
 
     Use sed_eval library.
-
     """
 
     def __init__(self, data, file_weights=None, best_F1=0,
@@ -91,6 +94,7 @@ class SEDCallback(Callback):
                  sequence_time_sec=0.5, metric_resolution_sec=1.0,
                  label_list=[]):
         """ Initialize the keras callback
+
         Parameters
         ----------
         data : tuple or KerasDataGenerator
@@ -122,6 +126,7 @@ class SEDCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
         """ This function is run when each epoch ends.
         The metrics are calculated, printed and saved to the log file.
+
         Parameters
         ----------
         epoch : int
@@ -131,9 +136,9 @@ class SEDCallback(Callback):
             log data (from Callback class)
 
         """
-        results = evaluate_metrics(
-           self.model, self.data, ['sed'],
-           label_list=self.label_list)
+        results = evaluate_metrics(self.model,
+                                   self.data, ['sed'],
+                                   label_list=self.label_list)
 
         results = results['sed'].results()
         F1 = results['overall']['f_measure']['f_measure']
@@ -171,6 +176,7 @@ class TaggingCallback(Callback):
                  early_stopping=0, considered_improvement=0.01,
                  label_list=[]):
         """ Initialize the keras callback
+
         Parameters
         ----------
         data : tuple or KerasDataGenerator
@@ -200,6 +206,7 @@ class TaggingCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
         """ This function is run when each epoch ends.
         The metrics are calculated, printed and saved to the log file.
+
         Parameters
         ----------
         epoch : int
@@ -209,9 +216,9 @@ class TaggingCallback(Callback):
             log data (from Callback class)
 
         """
-        results = evaluate_metrics(
-           self.model, self.data, ['tagging'],
-           label_list=self.label_list)
+        results = evaluate_metrics(self.model,
+                                   self.data, ['tagging'],
+                                   label_list=self.label_list)
 
         results = results['tagging'].results()
 
@@ -246,6 +253,7 @@ class F1ERCallback(Callback):
                  early_stopping=0, considered_improvement=0.01,
                  sequence_time_sec=0.5, metric_resolution_sec=1.0):
         """ Initialize the keras callback
+
         Parameters
         ----------
         X_val : array
@@ -288,11 +296,12 @@ class F1ERCallback(Callback):
             log data (from Callback class)
 
         """
-        results = evaluate_metrics(
-            self.model, self.X_val, self.Y_val, ['F1', 'ER'],
-            sequence_time_sec=self.sequence_time_sec,
-            metric_resolution_sec=self.metric_resolution_sec
-        )
+        results = evaluate_metrics(self.model,
+                                   self.X_val,
+                                   self.Y_val,
+                                   ['F1', 'ER'],
+                                   sequence_time_sec=self.sequence_time_sec,
+                                   metric_resolution_sec=self.metric_resolution_sec)
         F1 = results['F1']
         ER = results['ER']
         logs['F1'] = F1

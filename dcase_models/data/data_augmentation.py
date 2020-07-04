@@ -65,7 +65,7 @@ class WhiteNoise():
 
 class AugmentedDataset(Dataset):
     """ Class that manage data augmentation.
-    
+
     Basically, it takes an instance of Dataset and generates an augmented one.
     Includes methods to generate data augmented versions of the audio files
     in an existing Dataset.
@@ -77,10 +77,13 @@ class AugmentedDataset(Dataset):
     augmentations_list : list
         List of augmentation types and their parameters.
         Dict of form: [{'type' : aug_type, 'param1': param1 ...} ...].
-        e.g. [
-            {'type': 'pitch_shift', 'n_semitones': -1},
-            {'type': 'time_stretching', 'factor': 1.05}
-        ]
+        e.g.::
+
+            [
+                {'type': 'pitch_shift', 'n_semitones': -1},
+                {'type': 'time_stretching', 'factor': 1.05}
+            ]
+
     sr : int
         Sampling rate
 

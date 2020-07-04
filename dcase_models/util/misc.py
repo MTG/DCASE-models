@@ -1,3 +1,6 @@
+# encoding: utf-8
+"""Miscellaneous functions"""
+
 import inspect
 
 
