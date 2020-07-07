@@ -162,7 +162,8 @@ class DataGenerator():
                 'dataset has to be an instance of Dataset or similar'
             )
 
-        if not dataset.check_if_downloaded():
+        if (not dataset.check_if_downloaded() and
+           dataset.__class__ is not Dataset):
             raise AttributeError(
                 ('The dataset was not downloaded. Please download it '
                  'before using DataGenerator')
@@ -177,7 +178,8 @@ class DataGenerator():
             # TODO: Check if all inputs share sr
             # TODO: Check if str is available in dataset
 
-            if not inp.check_if_extracted(dataset):
+            if (not inp.check_if_extracted(dataset) and
+               inp.__class__ is not FeatureExtractor):
                 raise AttributeError(
                     ('Features were not extracted '
                      'for input: %d - %s' % (j, inp.__class__.__name__))
@@ -374,8 +376,13 @@ class DataGenerator():
         X, Y = self._data_generation([self.audio_file_list[file_index]])
         if self.scaler is not None:
             X = self.scaler.transform(X)
-        if self.scaler_annotations is not None:
-            Y = self.scaler_annotations.transform(Y)
+        if self.scaler_outputs is not None:
+            Y = self.scaler_outputs.transform(Y)
+
+        if len(X) == 1:
+            X = X[0]
+        if len(Y) == 1:
+            Y = Y[0]
 
         return X[0].copy(), Y[0].copy()
 
