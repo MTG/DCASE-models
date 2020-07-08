@@ -7,7 +7,7 @@
                                                                        
 </pre>
 
-`DCASE-models` is an open-source Python library that provides classes useful for rapid prototyping solutions for [DCASE](http://dcase.community/) related problems, with a particular emphasis on deep--learning models. The library has a flat and light design that allows easy extension and integration with other existing tools. 
+`DCASE-models` is an open-source Python library for rapid prototyping of environmental sound analysis systems, with an emphasis on deep–learning models. The library has a flat and light design that allows easy extension and integration with other existing tools. 
 
 ## Installation instructions
 We recommend to install DCASE-models in a dedicated virtual environment. For instance, using [anaconda](https://www.anaconda.com/):

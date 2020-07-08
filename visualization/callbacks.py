@@ -74,7 +74,7 @@ def click_on_plot2d(clickData, x_select, y_select):
             np.power(X_pca[:, [x_select, y_select]] - point, 2), axis=-1)
         min_distance_index = np.argmin(distances_to_data)
         audio_file = file_names[min_distance_index]
-        audio_data, sr = sf.read(audio_file)
+        audio_data, sr = sf.read(audio_file['file_original'])
         figure_mel = generate_figure_mel(X[min_distance_index])
 
         return [
@@ -123,9 +123,9 @@ def update_plot2D(samples_per_class, x_select, y_select,
             shuffle=True, train=False, scaler=scaler
         )
         X_list, Y_list = data_gen_train.get_data()
-        file_names = data_gen_train.features_file_list
-        file_names = data_gen_train.convert_features_path_to_audio_path(
-            file_names, sr=sr)
+        file_names = data_gen_train.audio_file_list
+        # file_names = data_gen_train.convert_features_path_to_audio_path(
+        #     file_names, sr=sr)
         Xt = []
         Yt = []
         for j in range(len(X_list)):
@@ -297,6 +297,7 @@ def select_feature(feature_ix):
     [Input('dataset_name', 'value')]
 )
 def select_dataset(dataset_ix):
+    print(dataset_ix)
     if dataset_ix is not None:
         dataset_name = options_datasets[dataset_ix]['label']
         params_dataset = params['datasets'][dataset_name]
@@ -937,8 +938,18 @@ def generate_demo(n_clicks, list_of_contents, fold_ix,
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print(button_id, n_clicks)
     if (n_clicks is not None) & (button_id == 'btn_run_demo'):
-        n_files = len(data_generator_test.features_file_list)
+        fold_name = dataset.fold_list[fold_ix]
+        exp_folder_fold = conv_path(os.path.join(model_path, fold_name))
+        scaler_path = os.path.join(exp_folder_fold, 'scaler.pickle')
+        scaler = load_pickle(scaler_path)
 
+        data_generator_test = DataGenerator(
+            dataset, feature_extractor, folds=[fold_name],
+            batch_size=params['train']['batch_size'],
+            shuffle=True, train=False, scaler=scaler
+        )
+
+        n_files = len(data_generator_test.audio_file_list)
         ix = np.random.randint(n_files)
 
         fold_name = dataset.fold_list[fold_ix]
@@ -953,10 +964,8 @@ def generate_demo(n_clicks, list_of_contents, fold_ix,
         fig_demo = generate_figure_features(
             X_features, Y_features, dataset.label_list)
 
-        features_file = data_generator_test.features_file_list[ix]
-        audio_file = data_generator_test.convert_features_path_to_audio_path(
-            features_file, sr=sr)
-        audio_data, sr = sf.read(audio_file)
+        audio_file = data_generator_test.audio_file_list[ix]
+        audio_data, sr = sf.read(audio_file['file_original'])
 
         class_ix = np.argmax(Y_file[0])
         file_label = dataset.label_list[class_ix]

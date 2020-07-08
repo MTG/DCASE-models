@@ -24,7 +24,7 @@
         "epochs" : 50,
         "considered_improvement" : 0,
         "learning_rate" : 0.001,
-        "batch_size" : 1,
+        "batch_size" : 128,
         "verbose" : 1,
         "optimizer" : "Adam"
     },
@@ -38,7 +38,6 @@
         "SB_CNN" : {
             "normalizer" : "minmax",  
             "model_arguments" : {
-                "large_cnn" : 0,
                 "n_dense_cnn" : 64,
                 "n_channels" : 0,
                 "filter_size_cnn" : [5, 5], 
