@@ -189,9 +189,9 @@ class AugmentedDataset(Dataset):
         """ Returns a list of paths to the folders that include the data augmented files.
 
         The folder of each augmentation is defined using its name and
-         parameter values.
-        e.g. {DATASET_PATH}/audio/pitch_shift_1 where 1 is the
-        'n_semitones' parameter.
+        parameter values.
+
+        e.g. {DATASET_PATH}/audio/pitch_shift_1 where 1 is the 'n_semitones' parameter.
 
         Parameters
         ----------
@@ -206,11 +206,13 @@ class AugmentedDataset(Dataset):
             e.g. DATASET_PATH/audio
         subfolders : list of str
             List of subfolders include in audio folder.
-            e.g. [
-                '{DATASET_PATH}/audio/original',
-                '{DATASET_PATH}/audio/pitch_shift_1',
-                '{DATASET_PATH}/audio/time_stretching_1.1',
-            ]
+            e.g.::
+
+                [
+                    '{DATASET_PATH}/audio/original',
+                    '{DATASET_PATH}/audio/pitch_shift_1',
+                    '{DATASET_PATH}/audio/time_stretching_1.1',
+                ]
 
         """
         if sr is not None:

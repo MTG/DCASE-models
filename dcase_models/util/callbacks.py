@@ -46,6 +46,7 @@ class ClassificationCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
         """ This function is run when each epoch ends.
         The metrics are calculated, printed and saved to the log file.
+
         Parameters
         ----------
         epoch : int
