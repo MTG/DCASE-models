@@ -28,7 +28,7 @@ setuptools.setup(
         'openl3==0.3.1',
         'scikit-learn==0.22.1',
         'keras==2.2.4',
-        'tensorflow-gpu==1.12.0',
+       # 'tensorflow-gpu==1.12.0',
         'autopool==0.1.0',
         'wget==3.2',
         'sox==1.3.7',
