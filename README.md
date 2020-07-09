@@ -27,6 +27,12 @@ DCASE-models uses [SoX](http://sox.sourceforge.net/) for functions related to th
 ```
 conda install -c conda-forge sox
 ```
+Before installing the library, you must install only one of the Tensorflow variants: CPU-only or GPU.
+``` 
+pip install "tensorflow<1.14" # for CPU-only version
+pip install "tensorflow-gpu<1.14" # for GPU version
+```
+
 Then to install the package:
 ```
 git clone https://github.com/pzinemanas/DCASE-models.git
