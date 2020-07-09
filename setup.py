@@ -35,6 +35,7 @@ setuptools.setup(
         'sed_eval==0.2.1',
     ],
     extras_require={
+        'docs': ['numpydoc', 'sphinx_rtd_theme'],
         'tests': ['pytest >= 5.4.3'],
         'visualization': [
             'plotly==4.5.0',
