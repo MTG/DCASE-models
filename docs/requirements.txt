@@ -1,4 +1,6 @@
 # fake requirements for readthedocs
+scipy
 numpy
 sox
+keras
 numpydoc
