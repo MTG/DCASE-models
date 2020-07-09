@@ -11,7 +11,7 @@
 
 Documentation
 -------------
-See [https://dcase_models.readthedocs.io](https://dcase_models.readthedocs.io/en/latest/) for a complete reference manual and introductory tutorials.
+See [https://dcase-models.readthedocs.io](https://dcase-models.readthedocs.io/en/latest/) for a complete reference manual and introductory tutorials.
 
 ## Installation instructions
 We recommend to install DCASE-models in a dedicated virtual environment. For instance, using [anaconda](https://www.anaconda.com/):
@@ -35,13 +35,11 @@ pip install "tensorflow-gpu<1.14" # for GPU version
 
 Then to install the package:
 ```
-git clone https://github.com/pzinemanas/DCASE-models.git
-cd DCASE-models
-pip install .
+pip install DCASE-models
 ```
 To include visualization related dependencies, run the following instead:
 ```
-pip install .[visualization]
+pip install DCASE-models[visualization]
 ```
 
 ## Usage
