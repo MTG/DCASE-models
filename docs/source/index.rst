@@ -32,9 +32,9 @@ Welcome to DCASE-models' documentation!
    :maxdepth: 2
    :caption: API Documentation:
 
-   modules/data
-   modules/model
-   modules/util
+   data
+   model
+   util
 
 
 Indices and tables
