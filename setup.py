@@ -8,11 +8,11 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="dcase-models",
+    name="DCASE-models",
     version=version.version,
     author="Pablo Zinemanas",
     author_email="pablo.zinemanas@upf.edu",
-    description="General structure to define, train and evaluate models for DCASE related problems",
+    description="Python library for rapid prototyping of environmental sound analysis systems",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pzinemanas/DCASE-models",
