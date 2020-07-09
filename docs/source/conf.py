@@ -29,15 +29,15 @@ author = 'Pablo Zinemanas, Ignacio Hounie, Pablo Cancela, Martín Rocamora'
 # ones.
 extensions = ['sphinx.ext.autodoc', # function indexing
               'sphinx.ext.viewcode', # source linkage
-              # 'numpydoc',
-              'sphinx.ext.napoleon',
+              'numpydoc',
+              #'sphinx.ext.napoleon',
               'sphinx.ext.autosummary']
 
 autosummary_generate = True 
 
 autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance', 'inherited-members']
 
-# numpydoc_show_class_members = False
+numpydoc_show_class_members = False
 
 # Generate plots for example sections
 numpydoc_use_plots = True
