@@ -7,6 +7,10 @@
                                                                        
 </pre>
 
+![PyPI](https://img.shields.io/pypi/v/DCASE-models?label=PyPI)
+[![GitHub license](https://img.shields.io/github/license/pzinemanas/DCASE-models)](https://github.com/pzinemanas/DCASE-models/blob/master/LICENSE)
+
+
 `DCASE-models` is an open-source Python library for rapid prototyping of environmental sound analysis systems, with an emphasis on deep–learning models. The library has a flat and light design that allows easy extension and integration with other existing tools. 
 
 Documentation
