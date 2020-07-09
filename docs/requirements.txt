@@ -1,2 +1,4 @@
 # fake requirements for readthedocs
+numpy
+sox
 numpydoc
