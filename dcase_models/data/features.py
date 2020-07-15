@@ -277,8 +277,7 @@ class Openl3(FeatureExtractor):
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=680, sr=22050,
-                 content_type="env", input_repr="mel256", embedding_size=512,
-                 pad_mode='reflect'):
+                 content_type="env", input_repr="mel256", embedding_size=512):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -288,22 +287,9 @@ class Openl3(FeatureExtractor):
         self.content_type = content_type
         self.input_repr = input_repr
         self.embedding_size = embedding_size
-        self.pad_mode = pad_mode
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
-
-        # Pad audio signal
-        if self.pad_mode is not None:
-            audio = librosa.util.fix_length(
-                audio,
-                audio.shape[0] + librosa.core.frames_to_samples(
-                    self.sequence_frames,
-                    self.audio_hop,
-                    n_fft=self.audio_win),
-                axis=0, mode=self.pad_mode
-            )
-
         emb, ts = openl3.get_audio_embedding(
             audio, self.sr,
             content_type=self.content_type,
