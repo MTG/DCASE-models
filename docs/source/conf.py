@@ -21,6 +21,23 @@ project = 'DCASE-models'
 copyright = '2020, Pablo Zinemanas, Ignacio Hounie, Pablo Cancela, Martín Rocamora'
 author = 'Pablo Zinemanas, Ignacio Hounie, Pablo Cancela, Martín Rocamora'
 
+# -- Mock dependencies -------------------------------------------------------
+
+# # Mock the dependencies
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+
+MOCK_MODULES = [
+    'librosa'
+]
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 # -- General configuration ---------------------------------------------------
 
