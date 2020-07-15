@@ -2,7 +2,7 @@
 numpy
 pandas
 PyYAML
-numba
+numba==0.48.0
 librosa
 openl3
 scikit-learn
