@@ -28,6 +28,11 @@ class Spectrogram(FeatureExtractor):
         Number of samples used for FFT calculation. Refer to librosa.core.stft
         for further information.
 
+    pad_mode : str or None, default='reflect'
+        Mode of padding applied to the audio signal. This argument is passed
+        to librosa.util.fix_length for padding the signal. If pad_mode is None,
+        no padding is applied.
+
     See Also
     --------
     FeatureExtractor : FeatureExtractor base class
@@ -123,6 +128,11 @@ class MelSpectrogram(FeatureExtractor):
 
     mel_bands : int, default=64
         Number of mel bands.
+
+    pad_mode : str or None, default='reflect'
+        Mode of padding applied to the audio signal. This argument is passed
+        to librosa.util.fix_length for padding the signal. If pad_mode is None,
+        no padding is applied.
 
     kwargs
         Additional keyword arguments to `librosa.filters.mel`.
@@ -245,6 +255,10 @@ class Openl3(FeatureExtractor):
         Embedding dimensionality.
         Refer to openl3.core.get_audio_embedding.
 
+    pad_mode : str or None, default='reflect'
+        Mode of padding applied to the audio signal. This argument is passed
+        to librosa.util.fix_length for padding the signal. If pad_mode is None,
+        no padding is applied.
 
     See Also
     --------
@@ -305,7 +319,14 @@ class Openl3(FeatureExtractor):
 class RawAudio(FeatureExtractor):
     """ RawAudio feature extractor.
 
-    Only load audio and create sequences (overlapped windows)
+    Load the audio signal and create sequences (overlapped windows)
+
+    Parameters
+    ----------
+    pad_mode : str or None, default='reflect'
+        Mode of padding applied to the audio signal. This argument is passed
+        to librosa.util.fix_length for padding the signal. If pad_mode is None,
+        no padding is applied.
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
@@ -345,7 +366,15 @@ class RawAudio(FeatureExtractor):
 class FramesAudio(FeatureExtractor):
     """ FramesAudio feature extractor.
 
-    Only load audio and create sequences (overlapped windows)
+    Load the audio signal, convert it into time-short frames, and create
+    sequences (overlapped windows).
+
+    Parameters
+    ----------
+    pad_mode : str or None, default='reflect'
+        Mode of padding applied to the audio signal. This argument is passed
+        to librosa.util.fix_length for padding the signal. If pad_mode is None,
+        no padding is applied.
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
