@@ -57,7 +57,8 @@ class Spectrogram(FeatureExtractor):
     """
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=680, sr=22050, n_fft=1024):
+                 audio_win=1024, audio_hop=680, sr=22050,
+                 n_fft=1024, pad_mode='reflect'):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -65,18 +66,22 @@ class Spectrogram(FeatureExtractor):
                          sr=sr)
 
         self.n_fft = n_fft
+        self.pad_mode = pad_mode
         self.params['name'] = 'Spectrogram'
-        self.params['n_fft'] = 'n_fft'
+        self.params['n_fft'] = n_fft
+        self.params['pad_mode'] = pad_mode
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name)
 
-        audio = librosa.util.fix_length(
-            audio,
-            audio.shape[0] + librosa.core.frames_to_samples(
-                self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
-            axis=0, mode='constant'
-        )
+        # Padding
+        if self.pad_mode is not None:
+            audio = librosa.util.fix_length(
+                audio,
+                audio.shape[0] + librosa.core.frames_to_samples(
+                    self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
+                axis=0, mode=self.pad_mode
+            )
 
         # Spectrogram, shape (N_frames, N_freqs)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
@@ -157,7 +162,8 @@ class MelSpectrogram(FeatureExtractor):
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=680, sr=22050,
-                 n_fft=1024, mel_bands=64, **kwargs):
+                 n_fft=1024, mel_bands=64,
+                 pad_mode='reflect', **kwargs):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -167,9 +173,11 @@ class MelSpectrogram(FeatureExtractor):
         self.params['name'] = 'MelSpectrogram'
         self.params['mel_bands'] = mel_bands
         self.params['kwargs'] = kwargs
-        self.params['n_fft'] = 'n_fft'
+        self.params['n_fft'] = n_fft
+        self.params['pad_mode'] = pad_mode
 
         self.n_fft = n_fft
+        self.pad_mode = pad_mode
 
         kwargs.setdefault('htk', True)
         kwargs.setdefault('fmax', None)
@@ -184,12 +192,13 @@ class MelSpectrogram(FeatureExtractor):
         #     return None
 
         # Pad audio signal
-        audio = librosa.util.fix_length(
-            audio,
-            audio.shape[0] + librosa.core.frames_to_samples(
-                self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
-            axis=0, mode='constant'
-        )
+        if self.pad_mode is not None:
+            audio = librosa.util.fix_length(
+                audio,
+                audio.shape[0] + librosa.core.frames_to_samples(
+                    self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
+                axis=0, mode=self.pad_mode
+            )
 
         # Get the spectrogram, shape (N_freqs, N_frames)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
@@ -276,20 +285,36 @@ class Openl3(FeatureExtractor):
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=680, sr=22050,
-                 content_type="env", input_repr="mel256", embedding_size=512):
+                 content_type="env", input_repr="mel256", embedding_size=512,
+                 pad_mode='reflect'):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
+        self.pad_mode = pad_mode
+
         self.params['name'] = 'Openl3'
         self.params['content_type'] = content_type
         self.params['input_repr'] = input_repr
         self.params['embedding_size'] = embedding_size
+        self.params['pad_mode'] = pad_mode
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
+
+        # Pad audio signal
+        if self.pad_mode is not None:
+            audio = librosa.util.fix_length(
+                audio,
+                audio.shape[0] + librosa.core.frames_to_samples(
+                    self.sequence_frames,
+                    self.audio_hop,
+                    n_fft=self.audio_win),
+                axis=0, mode=self.pad_mode
+            )
+
         emb, ts = openl3.get_audio_embedding(
             audio, self.sr,
             content_type=self.params['content_type'],
@@ -309,12 +334,16 @@ class RawAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=680, sr=22050):
+                 audio_win=1024, audio_hop=680, sr=22050,
+                 pad_mode='reflect'):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
+
+        self.pad_mode = pad_mode
+        self.params['pad_mode'] = pad_mode
 
         self.sequence_samples = librosa.core.frames_to_samples(
             self.sequence_frames, audio_hop)
@@ -324,11 +353,12 @@ class RawAudio(FeatureExtractor):
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
 
-        audio = librosa.util.fix_length(
-            audio,
-            audio.shape[0] + self.sequence_samples,
-            axis=0, mode='constant'
-        )
+        if self.pad_mode is not None:
+            audio = librosa.util.fix_length(
+                audio,
+                audio.shape[0] + self.sequence_samples,
+                axis=0, mode=self.pad_mode
+            )
 
         audio = np.ascontiguousarray(audio)
         audio_seqs = librosa.util.frame(
@@ -345,7 +375,8 @@ class FramesAudio(FeatureExtractor):
 
     """
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
-                 audio_win=1024, audio_hop=680, sr=22050, n_fft=1024):
+                 audio_win=1024, audio_hop=680, sr=22050, n_fft=1024,
+                 pad_mode='reflect'):
 
         super().__init__(sequence_time=sequence_time,
                          sequence_hop_time=sequence_hop_time,
@@ -353,6 +384,11 @@ class FramesAudio(FeatureExtractor):
                          sr=sr)
 
         self.n_fft = n_fft
+        self.pad_mode = pad_mode
+
+        self.params['n_fft'] = n_fft
+        self.params['pad_mode'] = pad_mode
+
         self.sequence_samples = librosa.core.frames_to_samples(
             self.sequence_frames, audio_hop, n_fft)
         self.sequence_hop_samples = librosa.core.frames_to_samples(
@@ -361,11 +397,12 @@ class FramesAudio(FeatureExtractor):
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
 
-        audio = librosa.util.fix_length(
-            audio,
-            audio.shape[0] + self.sequence_samples,
-            axis=0, mode='constant'
-        )
+        if self.pad_mode is not None:
+            audio = librosa.util.fix_length(
+                audio,
+                audio.shape[0] + self.sequence_samples,
+                axis=0, mode=self.pad_mode
+            )
 
         audio = np.ascontiguousarray(audio)
         audio_frames = librosa.util.frame(

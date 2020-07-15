@@ -16,7 +16,9 @@
             "content_type" : "env",
             "input_repr" : "mel256", 
             "embedding_size" : 512
-        }
+        },
+        "RawAudio" : {},
+        "FramesAudio" : {}
     },
 
     "train" : {
