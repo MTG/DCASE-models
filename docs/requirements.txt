@@ -1,8 +1,14 @@
 # fake requirements for readthedocs
-scipy
 numpy
-sox
+pandas
+PyYAML
+numba
+librosa
+openl3
+scikit-learn
 keras
-numpydoc
 tensorflow
+autopool
+wget
 sed_eval
+numpydoc

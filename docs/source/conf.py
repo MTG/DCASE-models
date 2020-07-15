@@ -35,7 +35,7 @@ class Mock(MagicMock):
 
 
 MOCK_MODULES = [
-    'librosa', 'soundfile'
+    'soundfile', 'sox'
 ]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
