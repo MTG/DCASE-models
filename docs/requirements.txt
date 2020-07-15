@@ -5,3 +5,4 @@ sox
 keras
 numpydoc
 tensorflow
+sed_eval
