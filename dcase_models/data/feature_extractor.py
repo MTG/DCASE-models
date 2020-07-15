@@ -49,10 +49,6 @@ class FeatureExtractor():
     sequence_hop : int
         Number of frames equivalent to the sequence_hop_time.
 
-    params : dict
-        Dictionary that stores the main parameters. This is used to check if
-        the features were extracted before.
-
     Examples
     --------
     To create a new feature representation, it is necessary to define a class
@@ -70,22 +66,22 @@ class FeatureExtractor():
                                  sequence_hop_time=sequence_hop_time,
                                  audio_win=audio_win,
                                  audio_hop=audio_hop, sr=sr)
-                # Add your custom parameters to self.params
-                self.params['name'] = 'Chroma'
-                self.params['n_chroma'] = n_chroma
-                self.sequence_samples = librosa.core.frames_to_samples(self.sequence_frames,
-                                                                       self.audio_hop,
-                                                                       n_fft=self.n_fft
-                                                                       )
+
+                self.sequence_samples = int(librosa.core.frames_to_samples(
+                    self.sequence_frames,
+                    self.audio_hop,
+                    n_fft=self.n_fft
+                ))
             def calculate(self, file_name):
                 # Here define your function to calculate the chroma features
                 # Load the audio signal
                 audio = self.load_audio(file_name)
                 # Pad audio signal
-                audio = librosa.util.fix_length(audio,
-                                                audio.shape[0] + self.sequence_samples,
-                                                axis=0, mode='constant'
-                                                )
+                audio = librosa.util.fix_length(
+                    audio,
+                    audio.shape[0] + self.sequence_samples,
+                    axis=0, mode='constant'
+                )
                 # Get the chroma features
                 chroma = librosa.feature.chroma_stft(y=audio,
                                                      sr=self.sr,
@@ -106,8 +102,7 @@ class FeatureExtractor():
 
     def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
                  audio_win=1024, audio_hop=680, sr=22050, **kwargs):
-        """
-        Initialize the FeatureExtractor
+        """ Initialize the FeatureExtractor
 
         """
         self.sequence_time = sequence_time
@@ -116,19 +111,12 @@ class FeatureExtractor():
         self.audio_win = audio_win
         self.sr = sr
 
-        self.sequence_frames = librosa.core.time_to_frames(
-            sequence_time, sr=sr, hop_length=audio_hop)
-        self.sequence_hop = librosa.core.time_to_frames(
-            sequence_hop_time, sr=sr, hop_length=audio_hop)
+        self.sequence_frames = int(librosa.core.time_to_frames(
+            sequence_time, sr=sr, hop_length=audio_hop))
+        self.sequence_hop = int(librosa.core.time_to_frames(
+            sequence_hop_time, sr=sr, hop_length=audio_hop))
 
         self.features_folder = kwargs.get('features_folder', 'features')
-
-        self.params = {'sr': self.sr,
-                       'sequence_time': self.sequence_time,
-                       'sequence_hop_time': self.sequence_hop_time,
-                       'audio_hop': self.audio_hop,
-                       'audio_win': self.audio_win,
-                       'features': 'FeatureExtractor'}
 
     def load_audio(self, file_name, mono=True, change_sampling_rate=True):
         """ Load an audio signal and convert to mono if needed
@@ -164,8 +152,7 @@ class FeatureExtractor():
         return audio
 
     def calculate(self, file_name):
-        """
-        Load an audio file and calculates features
+        """ Load an audio file and calculates features
 
         Parameters
         ----------
@@ -179,23 +166,6 @@ class FeatureExtractor():
 
         """
         pass
-
-    def set_as_extracted(self, path):
-        """
-        Save a json file with the self.params.
-
-        Useful for checking if the features files were calculated
-        with same parameters.
-
-        Parameters
-        ----------
-        path : str
-            Path to the JSON file
-
-        """
-        json_path = os.path.join(path, "parameters.json")
-        with open(json_path, 'w') as fp:
-            json.dump(self.params, fp)
 
     def extract(self, dataset):
         """ Extract features for each file in dataset.
@@ -245,11 +215,35 @@ class FeatureExtractor():
                 # Save parameters.json for future checking
                 self.set_as_extracted(features_path_sub)
 
+    def set_as_extracted(self, path):
+        """ Save a json file with self.__dict__.
+
+        Useful for checking if the features files were calculated
+        with same parameters.
+
+        Parameters
+        ----------
+        path : str
+            Path to the JSON file
+
+        """
+        params = self.__dict__.copy()
+        remove = [
+            key for key in params.keys() if type(params[key]) not in [
+                int, str, float]
+        ]
+        for key in remove:
+            del params[key]
+
+        json_path = os.path.join(path, "parameters.json")
+        with open(json_path, 'w') as fp:
+            json.dump(params, fp)
+
     def check_if_extracted_path(self, path):
         """ Check if the features saved in path were calculated.
 
         Compare if the features were calculated with the same parameters
-        of self.params.
+        of self.__dict__.
 
         Parameters
         ----------
@@ -267,7 +261,9 @@ class FeatureExtractor():
             return False
         parameters_features_folder = load_json(json_features_folder)
         for key in parameters_features_folder.keys():
-            if parameters_features_folder[key] != self.params[key]:
+            if key not in self.__dict__:
+                return False
+            if parameters_features_folder[key] != self.__dict__[key]:
                 return False
         return True
 

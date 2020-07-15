@@ -67,9 +67,6 @@ class Spectrogram(FeatureExtractor):
 
         self.n_fft = n_fft
         self.pad_mode = pad_mode
-        self.params['name'] = 'Spectrogram'
-        self.params['n_fft'] = n_fft
-        self.params['pad_mode'] = pad_mode
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name)
@@ -170,14 +167,9 @@ class MelSpectrogram(FeatureExtractor):
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
-        self.params['name'] = 'MelSpectrogram'
-        self.params['mel_bands'] = mel_bands
-        self.params['kwargs'] = kwargs
-        self.params['n_fft'] = n_fft
-        self.params['pad_mode'] = pad_mode
-
         self.n_fft = n_fft
         self.pad_mode = pad_mode
+        self.mel_bands = mel_bands
 
         kwargs.setdefault('htk', True)
         kwargs.setdefault('fmax', None)
@@ -209,7 +201,7 @@ class MelSpectrogram(FeatureExtractor):
 
         # Convert to mel_spectrogram, shape (N_bands, N_frames)
         mel_spectrogram = self.mel_basis.dot(spectrogram)
-        assert mel_spectrogram.shape[0] == self.params['mel_bands']
+        assert mel_spectrogram.shape[0] == self.mel_bands
 
         # Convert to db
         mel_spectrogram = librosa.power_to_db(mel_spectrogram)
@@ -293,13 +285,10 @@ class Openl3(FeatureExtractor):
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
 
+        self.content_type = content_type
+        self.input_repr = input_repr
+        self.embedding_size = embedding_size
         self.pad_mode = pad_mode
-
-        self.params['name'] = 'Openl3'
-        self.params['content_type'] = content_type
-        self.params['input_repr'] = input_repr
-        self.params['embedding_size'] = embedding_size
-        self.params['pad_mode'] = pad_mode
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
@@ -317,9 +306,9 @@ class Openl3(FeatureExtractor):
 
         emb, ts = openl3.get_audio_embedding(
             audio, self.sr,
-            content_type=self.params['content_type'],
-            embedding_size=self.params['embedding_size'],
-            input_repr=self.params['input_repr'],
+            content_type=self.content_type,
+            embedding_size=self.embedding_size,
+            input_repr=self.input_repr,
             hop_size=self.sequence_hop_time,
             verbose=False
         )
@@ -343,12 +332,11 @@ class RawAudio(FeatureExtractor):
                          sr=sr)
 
         self.pad_mode = pad_mode
-        self.params['pad_mode'] = pad_mode
 
-        self.sequence_samples = librosa.core.frames_to_samples(
-            self.sequence_frames, audio_hop)
-        self.sequence_hop_samples = librosa.core.frames_to_samples(
-            self.sequence_hop, audio_hop)
+        self.sequence_samples = int(librosa.core.frames_to_samples(
+            self.sequence_frames, audio_hop))
+        self.sequence_hop_samples = int(librosa.core.frames_to_samples(
+            self.sequence_hop, audio_hop))
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
@@ -385,9 +373,6 @@ class FramesAudio(FeatureExtractor):
 
         self.n_fft = n_fft
         self.pad_mode = pad_mode
-
-        self.params['n_fft'] = n_fft
-        self.params['pad_mode'] = pad_mode
 
         self.sequence_samples = librosa.core.frames_to_samples(
             self.sequence_frames, audio_hop, n_fft)
