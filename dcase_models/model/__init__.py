@@ -16,7 +16,9 @@ and to save and load its architecture and weights.
 
     ModelContainer
     KerasModelContainer
-  
+
+.. _implemented_models:
+
 Implemented models
 ------------------
 

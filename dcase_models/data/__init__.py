@@ -3,6 +3,8 @@
 Data
 ====
 
+.. _datasets:
+
 Datasets
 --------
 
@@ -23,6 +25,8 @@ Datasets are implemented as specializations of the base class Dataset.
     FSDKaggle2018
     MAVD
   
+.. _features:
+
 Features
 --------
 
