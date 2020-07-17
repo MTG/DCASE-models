@@ -1,6 +1,25 @@
 Installation instructions
 =========================
 
+We recommend to install `DCASE-models` in a dedicated virtual environment. For instance,
+using `anaconda <https://www.anaconda.com/>`_::
+
+    conda create -n dcase python=3.6
+    conda activate dcase
+
+`DCASE-models` uses `SoX <http://sox.sourceforge.net/>`_ for functions related to the
+datasets. You can install it in your conda environment by::
+
+    conda install -c conda-forge sox
+
+Before installing the library, you must install only one of the Tensorflow variants (CPU-only or GPU)::
+
+    pip install "tensorflow<1.14" # for CPU-only version
+    pip install "tensorflow-gpu<1.14" # for GPU version
+
+Then, you can install the library through the Python Package Index (PyPI) or from the
+source as explained below.
+
 pypi
 ----
 The simplest way to install `DCASE-models` is through the Python Package Index (PyPI).
