@@ -10,7 +10,7 @@ from ..util.files import list_wav_files
 
 
 class WhiteNoise():
-    """ Implement white noise augmentation.
+    """ Implements white noise augmentation.
 
     The structure is similar to sox.Transformer in order to keep
     compatibility with sox.
@@ -22,7 +22,7 @@ class WhiteNoise():
 
     """
     def __init__(self, snr):
-        """ Initialize the WhiteNoise.
+        """ Initialize the white noise.
         """
         self.snr = snr
 
@@ -186,7 +186,7 @@ class AugmentedDataset(Dataset):
                 )
 
     def get_audio_paths(self, sr=None):
-        """ Returns a list of paths to the folders that include the data augmented files.
+        """ Returns a list of paths to the folders that include the dataset augmented files.
 
         The folder of each augmentation is defined using its name and
         parameter values.
@@ -196,7 +196,7 @@ class AugmentedDataset(Dataset):
         Parameters
         ----------
         sr : int or None, optional
-            Sampling rate. Not necessary. We keep this parameter to keep
+            Sampling rate (optional). We keep this parameter to keep
             compatibility with Dataset.get_audio_paths() method.
 
         Returns
