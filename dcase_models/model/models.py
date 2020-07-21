@@ -46,10 +46,10 @@ class MLP(KerasModelContainer):
     dropout_rates : list of float, default=[0.5, 0.5]
         List of dropout rate use after each hidden layer. The length of this
         list must be equal to the length of hidden_layers_size. Use 0.0
-        (or minor) to not use dropout.
+        (or negative) to not use dropout.
 
     hidden_activation : str, default='relu'
-        Activation the each hidden layers.
+        Activation for hidden layers.
 
     l2_reg : float, default=1e-5
         Weight of the l2 regularizers. Use 0.0 to not use regularization.
@@ -292,7 +292,7 @@ class SB_CNN(KerasModelContainer):
         )
 
     def build(self):
-        """ Missing docstring here
+        """ Builds the CNN Keras model according to the initialized parameters.
         """
         # Here define the keras model
         if self.n_channels == 0:
@@ -387,7 +387,7 @@ class SB_CNN_SED(KerasModelContainer):
         Dimmension of penultimate dense layer.
 
     n_channels : int, default=0
-        Number of input channels
+        Number of input channels.
 
         0 : mono signals.
             Input shape = (n_frames_cnn, n_freq_cnn)
@@ -682,7 +682,7 @@ class A_CRNN(KerasModelContainer):
         )
 
     def build(self):
-        """ Missing docstring here
+        """ Builds the CRNN Keras model.
         """
         if self.n_channels == 0:
             x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
@@ -852,7 +852,7 @@ class VGGish(KerasModelContainer):
         )
 
     def build(self):
-        """ Missing docstring here
+        """ Builds the VGGish Keras model.
         """
         if self.n_channels == 0:
             inputs = Input(shape=(self.n_frames_cnn, self.n_freq_cnn),
@@ -999,7 +999,7 @@ class SMel(KerasModelContainer):
                          model_name='SMel', metrics=metrics)
 
     def build(self):
-        """ Missing docstring here
+        """ Builds the SMel Keras model.
         """
         x = Input(shape=(self.n_seqs, self.audio_win), dtype='float32')
 
@@ -1106,7 +1106,7 @@ class MST(KerasModelContainer):
                          model_name='MST', metrics=metrics)
 
     def build(self):
-        """ Missing docstring here
+        """ Builds the MST Keras model.
         """
         x = Input(shape=(self.sequence_samples, ), dtype='float32')
 
