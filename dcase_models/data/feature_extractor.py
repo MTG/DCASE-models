@@ -13,7 +13,7 @@ from ..util.ui import progressbar
 class FeatureExtractor():
     """ Abstract base class for feature extraction.
 
-    Includes methods to load audio files, calculates features and
+    Includes methods to load audio files, calculate features and
     prepare sequences.
 
     Inherit this class to define custom features
@@ -52,7 +52,7 @@ class FeatureExtractor():
     Examples
     --------
     To create a new feature representation, it is necessary to define a class
-    that inherits from FeatureExtractor. Then is required to define the
+    that inherits from FeatureExtractor. It is required to define the
     calculate() method.::
 
         from dcase_models.data.feature_extractor import FeatureExtractor
@@ -119,7 +119,7 @@ class FeatureExtractor():
         self.features_folder = kwargs.get('features_folder', 'features')
 
     def load_audio(self, file_name, mono=True, change_sampling_rate=True):
-        """ Load an audio signal and convert to mono if needed
+        """ Loads an audio signal and converts it to mono if needed
 
         Parameters
         ----------
@@ -152,7 +152,7 @@ class FeatureExtractor():
         return audio
 
     def calculate(self, file_name):
-        """ Load an audio file and calculates features
+        """ Loads an audio file and calculates features
 
         Parameters
         ----------
@@ -168,7 +168,7 @@ class FeatureExtractor():
         pass
 
     def extract(self, dataset):
-        """ Extract features for each file in dataset.
+        """ Extracts features for each file in dataset.
 
         Call calculate() for each file in dataset and save the
         result into the features path.
@@ -216,7 +216,7 @@ class FeatureExtractor():
                 self.set_as_extracted(features_path_sub)
 
     def set_as_extracted(self, path):
-        """ Save a json file with self.__dict__.
+        """ Saves a json file with self.__dict__.
 
         Useful for checking if the features files were calculated
         with same parameters.
@@ -240,7 +240,7 @@ class FeatureExtractor():
             json.dump(params, fp)
 
     def check_if_extracted_path(self, path):
-        """ Check if the features saved in path were calculated.
+        """ Checks if the features saved in path were calculated.
 
         Compare if the features were calculated with the same parameters
         of self.__dict__.
@@ -253,7 +253,7 @@ class FeatureExtractor():
         Returns
         -------
         bool
-            True if the features were extracted before.
+            True if the features were already extracted.
 
         """
         json_features_folder = os.path.join(path, "parameters.json")
@@ -268,9 +268,9 @@ class FeatureExtractor():
         return True
 
     def check_if_extracted(self, dataset):
-        """ Check if the features of each file in dataset was calculated.
+        """ Checks if the features of each file in dataset was calculated.
 
-        Call check_if_extracted_path for each path in the dataset.
+        Calls check_if_extracted_path for each path in the dataset.
 
         Parameters
         ----------
@@ -280,7 +280,7 @@ class FeatureExtractor():
         Returns
         -------
         bool
-            True if the features were extracted before.
+            True if the features were already extracted.
 
         """
         features_path = self.get_features_path(dataset)
@@ -296,7 +296,7 @@ class FeatureExtractor():
 
     def get_shape(self, length_sec=10.0):
         """
-        Run calculate() with a dummy signal of length length_sec
+        Calls calculate() with a dummy signal of length length_sec
         and returns the shape of the feature representation.
 
         Parameters
@@ -318,7 +318,7 @@ class FeatureExtractor():
         return features_sample.shape
 
     def get_features_path(self, dataset):
-        """ Return the path to the features folder.
+        """ Returns the path to the features folder.
 
         Parameters
         ----------
