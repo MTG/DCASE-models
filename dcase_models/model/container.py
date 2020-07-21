@@ -22,7 +22,7 @@ class ModelContainer():
     model : keras model or similar
         Object that defines the model (i.e keras.models.Model)
     model_path : str
-        Path to the model
+        Path to the model file
     model_name : str
         Model name
     metrics : list of str
@@ -40,7 +40,7 @@ class ModelContainer():
         model : keras model or similar
             Object that defines the model (i.e keras.models.Model)
         model_path : str
-            Path to the model
+            Path to the model file
         model_name : str
             Model name
         metrics : list of str
@@ -161,7 +161,7 @@ class KerasModelContainer(ModelContainer):
               metric_resolution_sec=1.0, label_list=[],
               shuffle=True, **kwargs_keras_fit):
         """
-        Train the keras model using the data and paramaters of arguments.
+        Trains the keras model using the data and paramaters of arguments.
 
         Parameters
         ----------
@@ -269,7 +269,7 @@ class KerasModelContainer(ModelContainer):
 
     def evaluate(self, data_test, **kwargs):
         """
-        Evaluate the keras model using X_test and Y_test
+        Evaluates the keras model using X_test and Y_test.
 
         Parameters
         ----------
@@ -298,8 +298,8 @@ class KerasModelContainer(ModelContainer):
 
     def load_model_from_json(self, folder, **kwargs):
         """
-        Load model from model.json file in the path given by argument.
-        The model is load in self.model attribute
+        Loads a model from a model.json file in the path given by folder.
+        The model is load in self.model attribute.
 
         Parameters
         ----------
@@ -316,7 +316,7 @@ class KerasModelContainer(ModelContainer):
 
     def save_model_json(self, folder):
         """
-        Save model to model.json file in the given folder path.
+        Saves the model to a model.json file in the given folder path.
 
         Parameters
         ----------
@@ -330,7 +330,7 @@ class KerasModelContainer(ModelContainer):
 
     def save_model_weights(self, weights_folder):
         """
-        Save self.model weights in weights_folder/best_weights.hdf5.
+        Saves self.model weights in weights_folder/best_weights.hdf5.
 
         Parameters
         ----------
@@ -343,12 +343,12 @@ class KerasModelContainer(ModelContainer):
 
     def load_model_weights(self, weights_folder):
         """
-        Load self.model weights in weights_folder/best_weights.hdf5.
+        Loads self.model weights in weights_folder/best_weights.hdf5.
 
         Parameters
         ----------
         weights_folder : str
-            Path to save the weights file
+            Path to save the weights file.
 
         """
         weights_file = 'best_weights.hdf5'
@@ -358,7 +358,7 @@ class KerasModelContainer(ModelContainer):
     def load_pretrained_model_weights(self,
                                       weights_folder='./pretrained_weights'):
         """
-        Load pretrained weights to self.model weights
+        Loads pretrained weights to self.model weights.
 
         Parameters
         ----------
@@ -378,10 +378,10 @@ class KerasModelContainer(ModelContainer):
         return trainable_count
 
     def check_if_model_exists(self, folder, **kwargs):
-        """ Check if the model already exits in the path.
+        """ Checks if the model already exits in the path.
 
         Check if the folder/model.json file exists and includes
-        the same model than self.model.
+        the same model as self.model.
 
         Parameters
         ----------
@@ -409,7 +409,7 @@ class KerasModelContainer(ModelContainer):
         return models_are_same
 
     def cut_network(self, layer_where_to_cut):
-        """ Cut the network in the layer passed as argument.
+        """ Cuts the network at the layer passed as argument.
 
         Parameters
         ----------
@@ -450,13 +450,13 @@ class KerasModelContainer(ModelContainer):
 
         new_number_of_classes : int
             Number of units in the new fully-connected layer
-            (number of classes)
+            (number of classes).
 
         new_activation : str
-            Activation of the new fully-connected layer
+            Activation of the new fully-connected layer.
 
         freeze_source_model : bool
-            If True, the source model is set to not be trainable
+            If True, the source model is set to not be trainable.
 
         new_model : Keras Model
             If is not None, this model is added after the cut model.
