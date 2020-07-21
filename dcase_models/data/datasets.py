@@ -95,7 +95,7 @@ class ESC50(Dataset):
     """ ESC-50 dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for ESC-50.
+    defines specific attributes and methods for ESC-50.
 
     Url: https://github.com/karolpiczak/ESC-50
 
@@ -107,7 +107,7 @@ class ESC50(Dataset):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/ESC50).
@@ -200,7 +200,7 @@ class ESC10(ESC50):
     """ ESC-10 dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for ESC-10.
+    defines specific attributes and methods for ESC-10.
 
     ESC-10 is a subsampled version of ESC-50.
 
@@ -214,7 +214,7 @@ class ESC10(ESC50):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/ESC50).
@@ -268,7 +268,7 @@ class URBAN_SED(Dataset):
     """ URBAN-SED dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for URBAN-SED.
+    defines specific attributes and methods for URBAN-SED.
 
     Url: http://urbansed.weebly.com/
 
@@ -280,7 +280,7 @@ class URBAN_SED(Dataset):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/URBAN_SED).
@@ -357,7 +357,7 @@ class SONYC_UST(Dataset):
     """ SONYC-UST dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for SONYC-UST.
+    defines specific attributes and methods for SONYC-UST.
 
     Version: 2.1.0
 
@@ -372,7 +372,7 @@ class SONYC_UST(Dataset):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/SONYC_UST).
@@ -520,7 +520,7 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
     """ TAU Urban Acoustic Scenes 2019 dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for TAU Urban
+    defines specific attributes and methods for TAU Urban
     Acoustic Scenes 2019.
 
     Url: https://zenodo.org/record/2589280
@@ -534,7 +534,7 @@ class TAUUrbanAcousticScenes2019(_TAUUrbanAcousticScenes):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/TAUUrbanAcousticScenes2019).
@@ -582,7 +582,7 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
     """ TAU Urban Acoustic Scenes 2019 dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for TAU Urban
+    defines specific attributes and methods for TAU Urban
     Acoustic Scenes 2020 Mobile.
 
     Url: https://zenodo.org/record/3819968
@@ -597,7 +597,7 @@ class TAUUrbanAcousticScenes2020Mobile(_TAUUrbanAcousticScenes):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/TAUUrbanAcousticScenes2020Mobile).
@@ -646,7 +646,7 @@ class TUTSoundEvents2017(Dataset):
     """ TUT Sound Events 2017 dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for TUT Sound
+    defines specific attributes and methods for TUT Sound
     Events 2017.
 
     Url: https://zenodo.org/record/814831
@@ -661,7 +661,7 @@ class TUTSoundEvents2017(Dataset):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/TUTSoundEvents2017).
@@ -810,7 +810,7 @@ class FSDKaggle2018(Dataset):
     """ FSDKaggle2018 dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for FSDKaggle2018.
+    defines specific attributes and methods for FSDKaggle2018.
 
     Url: https://zenodo.org/record/2552860
 
@@ -823,7 +823,7 @@ class FSDKaggle2018(Dataset):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/FSDKaggle2018).
@@ -949,7 +949,7 @@ class MAVD(Dataset):
     """ MAVD-traffic dataset.
 
     This class inherits all functionality from Dataset and
-    defines specific attributs and methods for MAVD-traffic.
+    defines specific attributes and methods for MAVD-traffic.
 
     Url: https://zenodo.org/record/3338727
 
@@ -962,7 +962,7 @@ class MAVD(Dataset):
     Parameters
     ----------
     dataset_path : str
-        Path to the dataset fold. This is the path to the folder where the
+        Path to the dataset folder. This is the path to the folder where the
         complete dataset will be downloaded, decompressed and handled.
         It is expected to use a folder name that represents the dataset
         unambiguously (e.g. ../datasets/MAVD).
