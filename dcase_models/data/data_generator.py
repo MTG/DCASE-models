@@ -15,33 +15,33 @@ class DataGenerator():
 
     Parameters
     ----------
-    dataset : Dataset (or childs)
+    dataset : Dataset
         Instance of the Dataset used to load the data. Note that the dataset
         has to be downloaded before initializing the DataGenerator.
         Refer to dcase-models/data/datasets.py for a complete list of available
         datasets.
 
-    inputs : instance or list of FeatureExtractor (or childs)
+    inputs : instance of FeatureExtractor or list of FeatureExtractor instances
         Instance(s) of FeatureExtractor. This are the feature extractor(s) used
         to generate the features.
         For multi-input, pass a list of FeatureExtractor instances.
 
     folds : list of str
         List of folds to be loaded. Each fold has to be in dataset.fold_list.
-        Note that, since the folds used at each stage of the pipeline
+        Note that since the folds used at each stage of the pipeline
         (training, validation, evaluation) are different, an instance of
-        DataGenerator, for each stage has to be created.
+        DataGenerator for each stage has to be created.
         e.g. ['fold1', 'fold2', 'fold3', ...]
 
     outputs : str, FeatureExtractor or list, default='annotations'
-        Instance(s) of FeatureExtractor used to generates the outputs.
-        To use the annotations obtained from Dataset, pass a string.
-        For multi-output, pass a list of FeatureExtractor and/or strings.
+        Instance(s) of FeatureExtractor used to generate the outputs.
+        To use the annotations obtained from Dataset, use a string.
+        For multi-output, use a list of FeatureExtractor and/or strings.
 
     batch_size : int, default=32
         Number of files loaded when call get_data_batch().
-        Note that the meaning of batch_size here is a bit different from what
-        it has in machine learning libraries like keras. In these libraries
+        Note that the meaning of batch_size here is slightly different from 
+        the one in machine learning libraries like keras. In these libraries
         batch_size means the number of instances (sequences in DCASE-models)
         used in each training step. Here batch_size is the number of files,
         and therefore, the number of sequences varies in each batch.
@@ -54,12 +54,12 @@ class DataGenerator():
 
     train : bool, default True
         When training, it is typical to feed the model with a numpy array
-        that contains all the data concatenated. But, for validation and
-        testing, in order to do a file-wise evaluation, it is necessary to
-        have the features of each file separated.
-        Therefore, if train is True, the data loaded is concatenated and
+        that contains all the data concatenated. For validation and
+        testing it is necessary to have the features of each file
+        separate in order to do a file-wise evaluation.
+        Therefore, if train is True, the loaded data is concatenated and
         converted to a numpy array. If train is False get_data() and
-        get_data_batch() returns a list, whose elements are the features
+        get_data_batch() return a list, whose elements are the features
         of each file in the audio_file_list.
 
     scaler : Scaler or None, default=None
@@ -76,7 +76,7 @@ class DataGenerator():
         Each element in the list includes information of the original
         audio file (important to get the annotations) and the subfolder where
         is the resampled (and maybe augmented) audio file.
-        e.g.::
+        e.g.:
 
             audio_file_list = [
                 {'file_original': 'audio/1.wav', 'sub_folder': 'original'},
@@ -104,8 +104,8 @@ class DataGenerator():
     >>> features = MelSpectrogram()
 
     Assuming that the dataset was downloaded and features were extracted
-    already, we can initialize the data generators. Let's use fold1 and fold2
-    for training and fold3 for validation.
+    already, we can initialize the data generators. This example uses fold1 
+    and fold2 for training and fold3 for validation.
 
     >>> data_gen_train = DataGenerator(
         dataset, features, ['fold1', 'fold2'], train=True)
@@ -139,8 +139,8 @@ class DataGenerator():
                  train=True, scaler=None, scaler_outputs=None):
         """ Initialize the DataGenerator.
 
-        Generate the audio_file_list by concatenating all the files
-        from the folds pass as an argument.
+        Generates the audio_file_list by concatenating all the files
+        from the folds passed as an argument.
         """
         # General attributes
         self.dataset = dataset
@@ -227,7 +227,7 @@ class DataGenerator():
         self.data = {}
 
     def _data_generation(self, list_files):
-        """ Return features and annotations for all files in list_files.
+        """ Returns features and annotations for all files in list_files.
 
         Parameters
         ----------
@@ -281,8 +281,8 @@ class DataGenerator():
         """ Return all data from the selected folds.
 
         If train were set as True, the output is concatenated and
-        converted to a numpy array. Otherwise the outputs are list where
-        each element are the features of each file.
+        converted to a numpy array. Otherwise the outputs are lists whose
+        elements are the features of each file.
 
         Returns
         -------
@@ -321,8 +321,8 @@ class DataGenerator():
         """ Return the data from the batch given by argument.
 
         If train were set as True, the output is concatenated and
-        converted to a numpy array. Otherwise the outputs are list where
-        each element are the features of each file.
+        converted to a numpy array. Otherwise the outputs are lists whose
+        elements are the features of each file.
 
         Returns
         -------
@@ -362,7 +362,7 @@ class DataGenerator():
         return X, Y
 
     def get_data_from_file(self, file_index):
-        """ Return the data from the file index given by argument.
+        """ Returns the data from the file index given by argument.
 
         Returns
         -------
@@ -388,7 +388,7 @@ class DataGenerator():
 
     def convert_features_path_to_audio_path(self, features_file,
                                             features_path, sr=None):
-        """ Convert features path(s) to audio path(s).
+        """ Converts features path(s) to audio path(s).
 
         Parameters
         ----------
@@ -420,7 +420,7 @@ class DataGenerator():
 
     def convert_audio_path_to_features_path(self, audio_file,
                                             features_path, subfolder=''):
-        """ Convert audio path(s) to features path(s).
+        """ Converts audio path(s) to features path(s).
 
         Parameters
         ----------
@@ -451,9 +451,9 @@ class DataGenerator():
         return features_file
 
     def paths_remove_aug_subfolder(self, path):
-        """ Remove subfolder related to augmentation from path.
+        """ Removes the subfolder string related to augmentation from a path.
 
-        Convert DATASET_PATH/audio/original/... into DATASET_PATH/audio/...
+        Converts DATASET_PATH/audio/original/... into DATASET_PATH/audio/...
 
         Parameters
         ----------
@@ -477,7 +477,7 @@ class DataGenerator():
         return new_path
 
     def shuffle_list(self):
-        """ Shuffle features_file_list.
+        """ Shuffles features_file_list.
 
         Notes
         -----
