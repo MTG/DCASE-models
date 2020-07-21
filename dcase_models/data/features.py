@@ -14,7 +14,7 @@ __all__ = ['Spectrogram', 'MelSpectrogram',
 class Spectrogram(FeatureExtractor):
     """ Spectrogram feature extractor.
 
-    Extract the log-scaled spectrogram of the audio signals. The spectrogram
+    Extracts the log-scaled spectrogram of the audio signals. The spectrogram
     is calculated over the whole audio signal and then is separated in
     overlapped sequences (frames)
 
@@ -35,9 +35,9 @@ class Spectrogram(FeatureExtractor):
 
     See Also
     --------
-    FeatureExtractor : FeatureExtractor base class
+    FeatureExtractor : FeatureExtractor base class.
 
-    MelSpectrogram : MelSpectrogram feature extractor
+    MelSpectrogram : MelSpectrogram feature extractor.
 
     Examples
     --------
@@ -54,7 +54,7 @@ class Spectrogram(FeatureExtractor):
     >>> print(spectrogram.shape)
         (3, 32, 513)
 
-    Extract features for each file in a given dataset
+    Extract features for each file in a given dataset.
 
     >>> from dcase_models.data.datasets import ESC50
     >>> dataset = ESC50('../datasets/ESC50')
@@ -112,9 +112,9 @@ class Spectrogram(FeatureExtractor):
 class MelSpectrogram(FeatureExtractor):
     """ MelSpectrogram feature extractor.
 
-    Extract the log-scaled mel-spectrogram of the audio signals.
+    Extracts the log-scaled mel-spectrogram of the audio signals.
     The mel-spectrogram is calculated over the whole audio signal and then is
-    separated in overlapped sequences (frames)
+    separated in overlapped sequences (frames).
 
     Notes
     -----
@@ -147,7 +147,7 @@ class MelSpectrogram(FeatureExtractor):
 
     Examples
     --------
-    Extract features of a given file
+    Extract features of a given file.
 
     >>> from dcase_models.data.features import MelSpectrogram
     >>> from dcase_models.util.files import example_audio_file
@@ -160,7 +160,7 @@ class MelSpectrogram(FeatureExtractor):
     >>> print(mel_spectrogram.shape)
         (3, 32, 64)
 
-    Extract features for each file in a given dataset
+    Extract features for each file in a given dataset.
 
     >>> from dcase_models.data.datasets import ESC50
     >>> dataset = ESC50('../datasets/ESC50')
@@ -269,7 +269,7 @@ class Openl3(FeatureExtractor):
 
     Examples
     --------
-    Extract features of a given file
+    Extract features of a given file.
 
     >>> from dcase_models.data.features import Openl3
     >>> from dcase_models.util.files import example_audio_file
@@ -282,7 +282,7 @@ class Openl3(FeatureExtractor):
     >>> print(mel_spectrogram.shape)
         (3, 512)
 
-    Extract features for each file in a given dataset
+    Extract features for each file in a given dataset.
 
     >>> from dcase_models.data.datasets import ESC50
     >>> dataset = ESC50('../datasets/ESC50')
