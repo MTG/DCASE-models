@@ -10,6 +10,9 @@ The package of the library includes a set of examples, organized into three diff
  - Jupyter Notebooks that replicate some of the experiments reported in the literature 
  - a web interface for sound classification as an example of a high--level application
 
+The :ref:`following section <example_scripts>` gives a walk-through of the example scripts provided. Then, the :ref:`next section <library_organization>` describes the library organization and exemplifies the use of the most important classes and functionalities. 
+
+.. _example_scripts:
 
 Example scripts
 ---------------
@@ -99,11 +102,19 @@ Once you have a model trained in some dataset, you can fine-tune the model on an
     Note that the information of the original dataset is set by the ``-od`` and ``-ofold`` arguments. Besides, the ``-d`` and ``-fold`` arguments set the new dataset and the test fold, respectively.
 
 
+.. _library_organization:
 
 Library organization
 --------------------
 
 A description of the main classes and functionalities of the library is presented in this section, following the order of the typical pipeline: dataset preparation, data augmentation, feature extraction, data loading, data scaling, and model handling. Example code is provided for each step, but please check the documentation of the classes for further information. 
+
+The following is a class diagram of `DCASE-models` showing all the base classes and some of the implemented specializations.
+
+.. figure:: _static/DCASE-class-diagram.png
+    :target: _static/DCASE-class-diagram.png
+    :align: center
+    :width: 100%
 
 Dataset
 ~~~~~~~
@@ -237,6 +248,45 @@ ModelContainer
 
 This class defines an interface to standardize the behavior of machine learning models. It stores the architecture and the parameters of the model. It provides methods to train and evaluate the model, and to save and load its architecture and weights. It also allows the inspection of the output of its intermediate stages (i.e. layers).
 
+The library also provides a container class to define `Keras`_ models, namely :class:`~:dcase_models.model.KerasModelContainer`, that inherits from :class:`~:dcase_models.model.ModelContainer`, and implements its functionality using this specific machine learning backend. Even though the library currently supports only `Keras`_, it is easy to specialize the :class:`~:dcase_models.model.ModelContainer` class to integrate other machine learning tools, such as `PyTorch`_.
+
+Each model has its own class that inherits from a specific :class:`~:dcase_models.model.ModelContainer`, such as :class:`~:dcase_models.model.KerasModelContainer`. Please check the list of currently available features in the :ref:`Implemented models <implemented_models>` section. 
+
+A model's container has to be initialized with some parameters. These parameters vary across models, among which the most important are: input shape, number of classes, and evaluation metrics. Specific parameters may include the number of hidden layers or the number of convolutional layers, among others. 
+
+.. code-block:: python
+
+    model_cont = SB_CNN(**model_params)
+
+The :class:`~:dcase_models.model.ModelContainer` class has a method to train the model. Training parameters can include, for example, number of epochs, learning rate and batch size.
+
+.. code-block:: python
+
+    model_cont.train((X_train, Y_train), **train_params)
+
+To train the model in batches, the :class:`~dcase_models.data.DataGenerator` object can be passed to the ``train`` method instead of the pre-loaded data.
+
+.. code-block:: python
+
+    model_cont.train(data_gen_train, **train_params)
+
+Performing model evaluation is also simple. For instance, the following code uses the test set for evaluating the model.
+
+.. code-block:: python
+
+    data_gen_test = DataGenerator(dataset,
+                                  features,
+                                  train=False,
+                                  folds=[’test’])
+    X_test, Y_test = data_gen_test.get_data()
+    results = model_cont.evaluate((X_test, Y_test))
+
+
+The results' format depends on which metrics are used. By default, the evaluation is performed using the metrics available from the `sed_eval`_ library. Therefore, the results are presented accordingly. Nevertheless, `DCASE-models` enables the use of others evaluating frameworks such as `psds_eval`_, or the use of user-defined metrics in a straightforward way.
+
+When building deep-learning models it is common practice to use fine-tuning and transfer learning techniques. In this way, one can reuse a network that was previously trained on another dataset
+or for another task, and adapt it to the problem at hand. This type of approach can also be carried out with the :class:`~:dcase_models.model.ModelContainer`.
+
 
 .. _ESC-50: https://github.com/karolpiczak/ESC-50
 .. _sed_eval: https://tut-arg.github.io/sed_eval/
@@ -244,3 +294,6 @@ This class defines an interface to standardize the behavior of machine learning 
 .. _UrbanSound8k: https://urbansounddataset.weebly.com/urbansound8k.html
 .. _pysox: https://github.com/rabitt/pysox
 .. _scikit-learn: https://scikit-learn.org/
+.. _Keras: https://keras.io/
+.. _PyTorch: https://pytorch.org/
+.. _psds_eval: https://github.com/audioanalytic/psds_eval 
