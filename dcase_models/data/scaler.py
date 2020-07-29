@@ -189,9 +189,11 @@ class Scaler():
             of the input.
 
         """
-        if self.normalizer == 'minmax':
-            X = (self.scaler[1]-self.scaler[0]) * \
-                (X/2. + 0.5) + self.scaler[0]
-        if self.normalizer == 'standard':
+        # TODO: How the list self.normalizer should work here.
+        scaler_ix = 0
+        if self.normalizer[scaler_ix] == 'minmax':
+            X = (self.scaler[scaler_ix][1]-self.scaler[scaler_ix][0]) * \
+                (X/2. + 0.5) + self.scaler[scaler_ix][0]
+        if self.normalizer[scaler_ix][0] == 'standard':
             X = self.scaler.inverse_transform(X)
         return X
