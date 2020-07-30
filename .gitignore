@@ -1,3 +1,7 @@
+# pretrained weights
+dcase_models/model/pretrained_weights/*
+!dcase_models/model/pretrained_weights/README.md
+
 # datasets subfolders
 datasets/*
 !datasets/README.md

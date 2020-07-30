@@ -1,6 +1,7 @@
 from functools import partial
 import inspect
 import sys
+import os
 
 from keras.layers import GRU, Bidirectional
 from keras.layers import TimeDistributed, Activation, Reshape
@@ -914,6 +915,86 @@ class VGGish(KerasModelContainer):
         self.model = Model(inputs, x, name='vggish_model')
 
         super().build()
+
+    def load_pretrained_model_weights(self,
+                                      weights_folder='./pretrained_weights'):
+        """
+        Loads pretrained weights to self.model weights.
+
+        Parameters
+        ----------
+        weights_folder : str
+            Path to load the weights file
+
+        """
+        basepath = os.path.dirname(__file__)
+        weights_file = self.model_name + '.hdf5'
+        weights_path = os.path.join(basepath, weights_folder, weights_file)
+        if not os.path.isfile(weights_path):
+            self.download_pretrained_weights()
+        self.model.load_weights(weights_path, by_name=True)
+
+    def download_pretrained_weights(self,
+                                    weights_folder='./pretrained_weights'):
+        """
+        Download pretrained weights from:
+        https://github.com/DTaoo/VGGish
+        https://drive.google.com/file/d/1mhqXZ8CANgHyepum7N4yrjiyIg6qaMe6/view
+
+        Code based on:
+        https://github.com/beasteers/VGGish/blob/master/vggish_keras/download_helpers/download_weights.py
+
+        Parameters
+        ----------
+        weights_folder : str
+            Path to save the weights file
+
+        """
+        import requests
+        import tqdm
+
+        DRIVE_URL = 'https://drive.google.com/uc?id={id}&export=download'
+        DRIVE_CONFIRM_URL = ('https://drive.google.com/uc?id={id}&export'
+                             '=download&confirm={confirm}')
+
+        basepath = os.path.dirname(__file__)
+        weights_file = self.model_name + '.hdf5'
+        weights_path = os.path.join(basepath, weights_folder, weights_file)
+        gdrive_id = '1mhqXZ8CANgHyepum7N4yrjiyIg6qaMe6'
+      
+        if not os.path.isfile(weights_path):
+            print('Downloading weights...')
+
+            sess = requests.Session()
+            r = sess.get(DRIVE_URL.format(id=gdrive_id), stream=True)
+
+            # check for google virus message
+            confirm = next(
+                (v for k, v in r.cookies.get_dict().items()
+                 if 'download_warning_' in k), None)
+
+            if confirm:
+                # print('Using confirmation code {}...'.format(confirm))
+                r = sess.get(
+                    DRIVE_CONFIRM_URL.format(id=gdrive_id, confirm=confirm),
+                    stream=True)
+
+            # download w/ progress bar
+
+            chunk_size = 1024
+            unit = 1024 ** 2
+            with open(weights_path, 'wb') as f:
+                pbar = tqdm.tqdm(
+                    unit='mb', leave=False,
+                    total=int(
+                        r.headers.get('Content-Length', 0)) / unit or None)
+
+                for chunk in r.iter_content(chunk_size=chunk_size):
+                    if chunk:  # filter out keep-alive new chunks
+                        pbar.update(len(chunk) / unit)
+                        f.write(chunk)
+
+            print('Done!')
 
 
 class SMel(KerasModelContainer):
