@@ -237,6 +237,142 @@ class MelSpectrogram(FeatureExtractor):
         return mel_spectrogram
 
 
+class MFCC(FeatureExtractor):
+    """ MFCC feature extractor.
+
+    Extracts Mel-frequency cepstral coefficients (MFCCs).
+    The MFCCS are calculated over the whole audio signal and then are
+    separated in overlapped sequences (frames).
+
+    Notes
+    -----
+    Based in `librosa.core.stft` and `librosa.filters.mel` functions.
+
+    Parameters
+    ----------
+    n_fft : int, default=1024
+        Number of samples used for FFT calculation.
+        Refer to `librosa.core.stft` for further information.
+
+    mel_bands : int, default=64
+        Number of mel bands.
+
+    pad_mode : str or None, default='reflect'
+        Mode of padding applied to the audio signal. This argument is passed
+        to librosa.util.fix_length for padding the signal. If pad_mode is None,
+        no padding is applied.
+
+    kwargs
+        Additional keyword arguments to `librosa.filters.mel`.
+
+
+    See Also
+    --------
+    FeatureExtractor : FeatureExtractor base class
+
+    Spectrogram : Spectrogram features
+
+
+    Examples
+    --------
+    Extract features of a given file.
+
+    >>> from dcase_models.data.features import MFCC
+    >>> from dcase_models.util.files import example_audio_file
+    >>> features = MFCC()
+    >>> features_shape = features.get_shape()
+    >>> print(features_shape)
+        (21, 32, 20)
+    >>> file_name = example_audio_file()
+    >>> mfcc = features.calculate(file_name)
+    >>> print(mfcc.shape)
+        (3, 32, 20)
+
+    Extract features for each file in a given dataset.
+
+    >>> from dcase_models.data.datasets import ESC50
+    >>> dataset = ESC50('../datasets/ESC50')
+    >>> features.extract(dataset)
+
+    """
+    def __init__(self, sequence_time=1.0, sequence_hop_time=0.5,
+                 audio_win=1024, audio_hop=680, sr=22050,
+                 n_fft=1024, n_mfcc=20, dct_type=2,
+                 norm='ortho', lifter=0,
+                 pad_mode='reflect', **kwargs):
+
+        super().__init__(sequence_time=sequence_time,
+                         sequence_hop_time=sequence_hop_time,
+                         audio_win=audio_win, audio_hop=audio_hop,
+                         sr=sr)
+
+        self.n_fft = n_fft
+        self.pad_mode = pad_mode
+        self.n_mfcc = n_mfcc
+        self.dct_type = dct_type
+        self.norm = norm
+        self.lifter = lifter
+
+        kwargs.setdefault('htk', True)
+        kwargs.setdefault('fmax', None)
+        kwargs.setdefault('norm', 1)
+        kwargs.setdefault('fmin', 0.0)
+        kwargs.setdefault('fmax', 0.0)
+        kwargs.setdefault('n_mels', 128)
+
+        self.mel_basis = librosa.filters.mel(
+            sr, n_fft, **kwargs)
+
+    def calculate(self, file_name):
+        # Load audio
+        audio = self.load_audio(file_name)
+        # if len(audio) < self.audio_win:
+        #     return None
+
+        # Pad audio signal
+        if self.pad_mode is not None:
+            audio = librosa.util.fix_length(
+                audio,
+                audio.shape[0] + librosa.core.frames_to_samples(
+                    self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
+                axis=0, mode=self.pad_mode
+            )
+
+        # Get the spectrogram, shape (N_freqs, N_frames)
+        stft = librosa.core.stft(audio, n_fft=self.n_fft,
+                                 hop_length=self.audio_hop,
+                                 win_length=self.audio_win, center=False)
+        # Convert to power
+        spectrogram = np.abs(stft)**2
+
+        # Convert to mel_spectrogram, shape (N_bands, N_frames)
+        mel_spectrogram = self.mel_basis.dot(spectrogram)
+
+        # Convert to db
+        mel_spectrogram = librosa.power_to_db(mel_spectrogram)
+
+        # Calculate MFCCs
+        mfcc = librosa.feature.mfcc(S=mel_spectrogram,
+                                    n_mfcc=self.n_mfcc,
+                                    dct_type=self.dct_type,
+                                    norm=self.norm,
+                                    lifter=self.lifter)
+
+        assert mfcc.shape[0] == self.n_mfcc
+
+        # Transpose time and freq dims, shape (N_frames, N_MFCC)
+        mfcc = mfcc.T
+
+        # Convert to sequences (frames),
+        # shape (N_sequences, N_sequence_frames, N_MFCC)
+        mfcc = np.ascontiguousarray(mfcc)
+        mfcc = librosa.util.frame(
+            mfcc, self.sequence_frames, self.sequence_hop, axis=0
+        )
+
+        return mfcc
+
+
 class Openl3(FeatureExtractor):
     """ Openl3 feature extractor.
 
