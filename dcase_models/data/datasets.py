@@ -412,22 +412,24 @@ class SONYC_UST(Dataset):
                 self.label_list = yaml.load(f, Loader=yaml.Loader)
 
     def generate_file_lists(self):
-        filename_to_split = self.metadata[[
-            'audio_filename', 'split']].drop_duplicates()
-        all_files_in_metadata = filename_to_split['audio_filename'].to_list()
-        splits = filename_to_split['split'].to_list()
-
         self.file_lists = {}
+        all_files = list_wav_files(self.audio_path)
+        assert len(all_files) != 0
         for fold in self.fold_list:
+            if fold == 'train':
+                metadata_fold = self.metadata[self.metadata['split'] == fold]
+            else:
+                metadata_fold = self.metadata[
+                    ((self.metadata['split'] == fold) &
+                     (self.metadata['annotator_id'] == 0))
+                ]
+            filename_list_fold = metadata_fold[
+                'audio_filename'].drop_duplicates().to_list()
             self.file_lists[fold] = []
-            all_files = list_wav_files(self.audio_path)
-            assert len(all_files) != 0
             for fil in all_files:
                 basename = os.path.basename(fil)
-                if basename in all_files_in_metadata:
-                    j = all_files_in_metadata.index(basename)
-                    if splits[j] == fold:
-                        self.file_lists[fold].append(fil)
+                if basename in filename_list_fold:
+                    self.file_lists[fold].append(fil)
 
     def get_annotations(self, file_name, features, time_resolution):
         # only coarse level
@@ -441,8 +443,18 @@ class SONYC_UST(Dataset):
         for class_ix in self.label_list['coarse']:
             class_column = str(class_ix) + '_' + \
                 self.label_list['coarse'][class_ix] + '_presence'
-            # class present if any annotator check presence
-            y[class_ix-1] = np.sum(metadata_of_file[class_column].values) >= 1
+
+            if metadata_of_file['split'].values[0] == 'train':
+                # class present if any annotator check presence
+                y[class_ix-1] = np.sum(
+                    metadata_of_file[class_column].values) >= 1
+            else:
+                # class present if annotator 0 check presence
+                if 0 in metadata_of_file['annotator_id'].values:
+                    ix = np.argwhere(
+                        metadata_of_file['annotator_id'].values == 0)
+                    y[class_ix-1] = metadata_of_file[
+                        class_column].values[ix] >= 1
 
         y = np.expand_dims(y, 0)
         y = np.repeat(y, len(features), 0)

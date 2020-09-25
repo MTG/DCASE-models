@@ -11,10 +11,12 @@ from keras.layers import Input, Lambda, Conv2D, MaxPooling2D
 from keras.layers import Conv1D
 from keras.layers import Dropout, Dense, Flatten
 from keras.layers import BatchNormalization
+from keras.layers import Layer
 from keras.models import Model
 from keras.regularizers import l2
 import keras.backend as K
 from autopool import AutoPool1D
+from tensorflow import clip_by_value
 
 from .container import KerasModelContainer
 
@@ -852,6 +854,48 @@ class VGGish(KerasModelContainer):
             model_name='VGGish', metrics=metrics
         )
 
+    class Postprocess(Layer):
+        """ Keras layer that applies PCA and quantizes the ouput.
+
+        Based on vggish-keras https://pypi.org/project/vggish-keras/
+        """
+        def __init__(self, output_shape=None, **kw):
+            self.emb_shape = output_shape
+            super().__init__(**kw)
+
+        def build(self, input_shape):
+            input_shape = tuple(int(x) for x in tuple(input_shape)[1:])
+            emb_shape = (self.emb_shape,) if self.emb_shape else input_shape
+
+            self.pca_matrix = self.add_weight(
+                name='pca_matrix', shape=emb_shape + input_shape,
+                initializer='uniform')
+            self.pca_means = self.add_weight(
+                name='pca_means', shape=input_shape + (1,),
+                initializer='uniform')
+
+        def call(self, x):
+            # Apply PCA.
+            # - Embeddings come in as [batch_size, embedding_size].
+            # - Transpose to [embedding_size, batch_size].
+            # - Subtract pca_means column vector from each column.
+            # - Premultiply by PCA matrix of shape [output_dims, input_dims]
+            #   where both are are equal to embedding_size in our case.
+            # - Transpose result back to [batch_size, embedding_size].
+            x = K.dot(self.pca_matrix, (K.transpose(x) - self.pca_means))
+            x = K.transpose(x)
+
+            # Quantize by:
+            # - clipping to [min, max] range
+            # - convert to 8-bit in range [0.0, 255.0]
+            # - cast 8-bit float to uint8
+            QUANTIZE_MIN_VAL = -2.0
+            QUANTIZE_MAX_VAL = +2.0
+            x = clip_by_value(x, QUANTIZE_MIN_VAL, QUANTIZE_MAX_VAL)
+            x = ((x - QUANTIZE_MIN_VAL) *
+                 (255.0 / (QUANTIZE_MAX_VAL - QUANTIZE_MIN_VAL)))
+            return K.cast(x, 'uint8')
+
     def build(self):
         """ Builds the VGGish Keras model.
         """
@@ -901,8 +945,8 @@ class VGGish(KerasModelContainer):
             x = dense(4096, name='fc1/fc1_2')(x)
             x = dense(self.embedding_size, name='fc2')(x)
 
-            # if compress:
-            #    x = Postprocess()(x)
+            if self.compress:
+                x = self.Postprocess()(x)
         else:
             globalpool = (
                 GlobalAveragePooling2D() if self.pooling == 'avg' else
@@ -960,8 +1004,10 @@ class VGGish(KerasModelContainer):
         basepath = os.path.dirname(__file__)
         weights_file = self.model_name + '.hdf5'
         weights_path = os.path.join(basepath, weights_folder, weights_file)
-        gdrive_id = '1mhqXZ8CANgHyepum7N4yrjiyIg6qaMe6'
-      
+        # gdrive_id = '1mhqXZ8CANgHyepum7N4yrjiyIg6qaMe6'
+        # This file includes PCA weights
+        gdrive_id = '1QbMNrhu4RBUO6hIcpLqgeuVye51XyMKM'
+
         if not os.path.isfile(weights_path):
             print('Downloading weights...')
 
