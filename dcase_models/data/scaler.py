@@ -48,8 +48,10 @@ class Scaler():
         for norm in self.normalizer:
             if norm == 'standard':
                 self.scaler.append(StandardScaler())
-            if norm == 'minmax':
+            elif norm == 'minmax':
                 self.scaler.append([])
+            else:
+                self.scaler.append(None)
 
     def fit(self, X, inputs=True):
         """ Fit the Scaler.
@@ -71,18 +73,6 @@ class Scaler():
         else:
             self.partial_fit(X)
 
-        # if type(X) == list:
-        #     X = np.concatenate(X, axis=0)
-
-        # if self.normalizer == 'standard':
-        #     X_bands = X.shape[-1]
-        #     self.scaler.fit(np.reshape(X, (-1, X_bands)))
-        #     assert len(self.scaler.mean_) == X_bands
-        # if self.normalizer == 'minmax':
-        #     min_v = np.amin(X)  # ,axis=(0,2))
-        #     max_v = np.amax(X)  # ,axis=(0,2))
-        #     self.scaler = [min_v, max_v]
-
     def partial_fit(self, X):
         """ Fit the Scaler in one batch.
 
@@ -95,7 +85,6 @@ class Scaler():
 
         if (len(self.normalizer) == 1) and (type(X) != list):
             X = [X]
-
         assert type(X) == list
         assert len(self.normalizer) == len(X)
 

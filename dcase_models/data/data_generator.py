@@ -22,7 +22,7 @@ class DataGenerator():
         datasets.
 
     inputs : instance of FeatureExtractor or list of FeatureExtractor instances
-        Instance(s) of FeatureExtractor. This are the feature extractor(s) used
+        Instance(s) of FeatureExtractor. These are the feature extractor(s) used
         to generate the features.
         For multi-input, pass a list of FeatureExtractor instances.
 
@@ -262,10 +262,12 @@ class DataGenerator():
 
             for j, output in enumerate(self.outputs):
                 if type(output) is not str:
+                  #  print(output)
                     features_path = output.get_features_path(self.dataset)
                     file_features = self.convert_audio_path_to_features_path(
                         file_original, features_path, subfolder=sub_folder)
                     features = np.load(file_features)
+                   # print(features.shape)
                     outputs_lists[j].append(features)
                 else:
                     # TODO: Add option to other outputs
@@ -305,9 +307,13 @@ class DataGenerator():
         for j in range(len(self.inputs)):
             if self.train:
                 X[j] = np.concatenate(X_list[j], axis=0)
-                Y[j] = np.concatenate(Y_list[j], axis=0)
             else:
                 X[j] = X_list[j].copy()
+
+        for j in range(len(self.outputs)):
+            if self.train:
+                Y[j] = np.concatenate(Y_list[j], axis=0)
+            else:
                 Y[j] = Y_list[j].copy()
 
         if len(X) == 1:
@@ -349,9 +355,13 @@ class DataGenerator():
         for j in range(len(self.inputs)):
             if self.train:
                 X[j] = np.concatenate(X_list[j], axis=0)
-                Y[j] = np.concatenate(Y_list[j], axis=0)
             else:
                 X[j] = X_list[j].copy()
+
+        for j in range(len(self.outputs)):
+            if self.train:
+                Y[j] = np.concatenate(Y_list[j], axis=0)
+            else:
                 Y[j] = Y_list[j].copy()
 
         if len(X) == 1:
