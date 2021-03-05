@@ -4,6 +4,7 @@ import sox
 from ..util.files import download_files_and_unzip
 from ..util.files import duplicate_folder_structure
 from ..util.files import list_wav_files, list_all_files
+from ..util.ui import progressbar
 
 
 class Dataset():
@@ -224,7 +225,7 @@ class Dataset():
         tfm = sox.Transformer()
         tfm.convert(samplerate=new_sr)
 
-        for path_to_file in list_wav_files(self.audio_path):
+        for path_to_file in progressbar(list_wav_files(self.audio_path)):
             path_to_destination = path_to_file.replace(
                 self.audio_path, new_audio_folder
             )

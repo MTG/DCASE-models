@@ -7,6 +7,7 @@ from librosa.core import db_to_power, power_to_db
 from .dataset_base import Dataset
 from ..util.files import duplicate_folder_structure
 from ..util.files import list_wav_files
+from ..util.ui import progressbar
 
 
 class WhiteNoise():
@@ -137,8 +138,8 @@ class AugmentedDataset(Dataset):
         # Copy attributes of dataset
         self.__dict__.update(dataset.__dict__)
 
-    def get_annotations(self, file_path, features):
-        return self.dataset.get_annotations(file_path, features)
+    def get_annotations(self, file_path, features, time_resolution):
+        return self.dataset.get_annotations(file_path, features, time_resolution)
 
     def generate_file_lists(self):
         """ Create self.file_lists, a dict that includes a list of files per fold.
@@ -175,7 +176,7 @@ class AugmentedDataset(Dataset):
             # the augmented folder.
             duplicate_folder_structure(path_original, path_augmented)
             # Process each file in path_original
-            for path_to_file in list_wav_files(path_original):
+            for path_to_file in progressbar(list_wav_files(path_original)):
                 path_to_destination = path_to_file.replace(
                     path_original, path_augmented
                 )
@@ -186,12 +187,14 @@ class AugmentedDataset(Dataset):
                 )
 
     def get_audio_paths(self, sr=None):
-        """ Returns a list of paths to the folders that include the dataset augmented files.
+        """ Returns a list of paths to the folders that include the dataset
+        augmented files.
 
         The folder of each augmentation is defined using its name and
         parameter values.
 
-        e.g. {DATASET_PATH}/audio/pitch_shift_1 where 1 is the 'n_semitones' parameter.
+        e.g. {DATASET_PATH}/audio/pitch_shift_1 where 1 is the 'n_semitones'
+        parameter.
 
         Parameters
         ----------
