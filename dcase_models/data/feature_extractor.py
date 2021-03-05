@@ -3,6 +3,7 @@ import numpy as np
 import librosa
 import soundfile as sf
 import json
+from scipy.stats import kurtosis, skew
 
 from ..util.files import load_json, mkdir_if_not_exists
 from ..util.files import duplicate_folder_structure
@@ -336,3 +337,36 @@ class FeatureExtractor():
             dataset.dataset_path, self.features_folder, feature_name
         )
         return features_path
+
+    def pad_audio(self, audio):
+        if (self.sequence_time > 0) & (self.pad_mode is not None):
+            if self.sequence_hop_time > 0:
+                audio = librosa.util.fix_length(
+                    audio,
+                    audio.shape[0] + librosa.core.frames_to_samples(
+                        self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
+                    axis=0, mode=self.pad_mode
+                )
+            else:
+                sequence_samples = librosa.core.frames_to_samples(
+                        self.sequence_frames, self.audio_hop, n_fft=self.n_fft)
+                if len(audio) < sequence_samples:
+                    audio = librosa.util.fix_length(
+                        audio, sequence_samples, axis=0, mode=self.pad_mode)
+                else:
+                    audio = audio[:sequence_samples]
+        return audio
+
+    def convert_to_sequences(self, audio_representation):
+        if (self.sequence_time > 0) & (self.sequence_hop_time > 0):
+            audio_representation = np.ascontiguousarray(audio_representation)
+            audio_representation = librosa.util.frame(
+                audio_representation,
+                self.sequence_frames,
+                self.sequence_hop,
+                axis=0
+            )
+        else:
+            audio_representation = np.expand_dims(audio_representation, axis=0)
+
+        return audio_representation

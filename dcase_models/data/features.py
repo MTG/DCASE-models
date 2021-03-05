@@ -8,8 +8,9 @@ from .feature_extractor import FeatureExtractor
 from ..model.models import VGGish
 
 
-__all__ = ['Spectrogram', 'MelSpectrogram',
-           'Openl3', 'RawAudio', 'FramesAudio']
+__all__ = ['Spectrogram', 'MelSpectrogram', 'MFCC',
+           'Openl3', 'RawAudio', 'FramesAudio',
+           'VGGishEmbeddings']
 
 
 class Spectrogram(FeatureExtractor):
@@ -78,13 +79,7 @@ class Spectrogram(FeatureExtractor):
         audio = self.load_audio(file_name)
 
         # Padding
-        if self.pad_mode is not None:
-            audio = librosa.util.fix_length(
-                audio,
-                audio.shape[0] + librosa.core.frames_to_samples(
-                    self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
-                axis=0, mode=self.pad_mode
-            )
+        audio = self.pad_audio(audio)
 
         # Spectrogram, shape (N_frames, N_freqs)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
@@ -102,10 +97,11 @@ class Spectrogram(FeatureExtractor):
 
         # Convert to sequences (frames),
         # shape (N_sequences, N_sequence_frames, N_freqs)
-        spectrogram = np.ascontiguousarray(spectrogram)
-        spectrogram = librosa.util.frame(
-            spectrogram, self.sequence_frames, self.sequence_hop, axis=0
-        )
+        # spectrogram = np.ascontiguousarray(spectrogram)
+        # spectrogram = librosa.util.frame(
+        #     spectrogram, self.sequence_frames, self.sequence_hop, axis=0
+        # )
+        spectrogram = self.convert_to_sequences(spectrogram)
 
         return spectrogram
 
@@ -195,14 +191,8 @@ class MelSpectrogram(FeatureExtractor):
         #     return None
 
         # Pad audio signal
-        if self.pad_mode is not None:
-            audio = librosa.util.fix_length(
-                audio,
-                audio.shape[0] + librosa.core.frames_to_samples(
-                    self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
-                axis=0, mode=self.pad_mode
-            )
-
+        audio = self.pad_audio(audio)
+                        
         # Get the spectrogram, shape (N_freqs, N_frames)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
                                  hop_length=self.audio_hop,
@@ -229,10 +219,7 @@ class MelSpectrogram(FeatureExtractor):
 
         # Convert to sequences (frames),
         # shape (N_sequences, N_sequence_frames, N_bands)
-        mel_spectrogram = np.ascontiguousarray(mel_spectrogram)
-        mel_spectrogram = librosa.util.frame(
-            mel_spectrogram, self.sequence_frames, self.sequence_hop, axis=0
-        )
+        mel_spectrogram = self.convert_to_sequences(mel_spectrogram)
 
         return mel_spectrogram
 
@@ -330,13 +317,7 @@ class MFCC(FeatureExtractor):
         #     return None
 
         # Pad audio signal
-        if self.pad_mode is not None:
-            audio = librosa.util.fix_length(
-                audio,
-                audio.shape[0] + librosa.core.frames_to_samples(
-                    self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
-                axis=0, mode=self.pad_mode
-            )
+        audio = self.pad_audio(audio)
 
         # Get the spectrogram, shape (N_freqs, N_frames)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
@@ -365,10 +346,11 @@ class MFCC(FeatureExtractor):
 
         # Convert to sequences (frames),
         # shape (N_sequences, N_sequence_frames, N_MFCC)
-        mfcc = np.ascontiguousarray(mfcc)
-        mfcc = librosa.util.frame(
-            mfcc, self.sequence_frames, self.sequence_hop, axis=0
-        )
+        # mfcc = np.ascontiguousarray(mfcc)
+        # mfcc = librosa.util.frame(
+        #     mfcc, self.sequence_frames, self.sequence_hop, axis=0
+        # )
+        mfcc = self.convert_to_sequences(mfcc)
 
         return mfcc
 
@@ -438,14 +420,14 @@ class Openl3(FeatureExtractor):
         self.content_type = content_type
         self.input_repr = input_repr
         self.embedding_size = embedding_size
+        self.openl3 = openl3.models.load_audio_embedding_model(
+            input_repr, content_type, embedding_size)
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
         emb, ts = openl3.get_audio_embedding(
             audio, self.sr,
-            content_type=self.content_type,
-            embedding_size=self.embedding_size,
-            input_repr=self.input_repr,
+            model=self.openl3,
             hop_size=self.sequence_hop_time,
             verbose=False
         )
@@ -494,7 +476,7 @@ class RawAudio(FeatureExtractor):
 
         audio = np.ascontiguousarray(audio)
         audio_seqs = librosa.util.frame(
-            audio, self.sequence_samples, self.sequence_hop_samples, axis=0
+             audio, self.sequence_samples, self.sequence_hop_samples, axis=0
         )
 
         return audio_seqs
@@ -534,12 +516,7 @@ class FramesAudio(FeatureExtractor):
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
 
-        if self.pad_mode is not None:
-            audio = librosa.util.fix_length(
-                audio,
-                audio.shape[0] + self.sequence_samples,
-                axis=0, mode=self.pad_mode
-            )
+        audio = self.pad_audio(audio)
 
         audio = np.ascontiguousarray(audio)
         audio_frames = librosa.util.frame(
@@ -547,10 +524,12 @@ class FramesAudio(FeatureExtractor):
         )
         # TODO: ADD WINDOWING
 
-        audio_frames = np.ascontiguousarray(audio_frames)
-        audio_seqs = librosa.util.frame(
-            audio_frames, self.sequence_frames, self.sequence_hop, axis=0
-        )
+        # audio_frames = np.ascontiguousarray(audio_frames)
+        # audio_seqs = librosa.util.frame(
+        #     audio_frames, self.sequence_frames, self.sequence_hop, axis=0
+        # )
+
+        audio_seqs = self.convert_to_sequences(audio_frames)
 
         return audio_seqs
 
@@ -569,7 +548,7 @@ class VGGishEmbeddings(FeatureExtractor):
 
     """
     def __init__(self, sequence_hop_time=0.96,
-                 pad_mode='reflect'):
+                 pad_mode='reflect', include_top=True, compress=True):
 
         sequence_time = 0.96
         audio_win = 400
@@ -596,7 +575,7 @@ class VGGishEmbeddings(FeatureExtractor):
         self.vggish = VGGish(
             model=None, model_path=None, metrics=[],
             n_frames_cnn=96, n_freq_cnn=64, n_classes=0,
-            embedding_size=128, pooling='avg', include_top=True, compress=True)
+            embedding_size=128, pooling='avg', include_top=include_top, compress=compress)
         
         self.vggish.load_pretrained_model_weights()
 
