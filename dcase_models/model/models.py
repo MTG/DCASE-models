@@ -132,14 +132,12 @@ class MLP(KerasModelContainer):
         if self.use_time_distributed:
             input_shape = (self.n_frames, self.n_freqs)
         else:
-            input_shape = (self.n_freqs)
+            input_shape = (self.n_freqs,)
 
         inputs = Input(shape=input_shape, dtype='float32', name='input')
-
+        y = inputs
         # Hidden layers
         for idx in range(len(self.hidden_layers_size)):
-            if idx == 0:
-                y = inputs
             dense_layer = Dense(self.hidden_layers_size[idx],
                                 activation=self.hidden_activation,
                                 kernel_regularizer=l2(self.l2_reg),
