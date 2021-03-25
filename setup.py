@@ -22,7 +22,7 @@ setuptools.setup(
         'numpy==1.17.4',
         'pandas==0.25.3',
         'SoundFile==0.10.3.post1',
-        'PyYAML==5.2',
+        'PyYAML==5.4',
         'numba==0.48.0',
         'librosa==0.7.1',
         'openl3==0.3.1',
