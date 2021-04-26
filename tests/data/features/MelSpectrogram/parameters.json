@@ -1,1 +1,0 @@
-{"sr": 22050, "sequence_time": 2.0, "sequence_hop_time": 0.5, "audio_hop": 670, "audio_win": 1024, "features": "FeatureExtractor", "name": "MelSpectrogram", "mel_bands": 40, "fmax": null, "n_fft": "n_fft"}

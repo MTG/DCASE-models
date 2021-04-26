@@ -38,5 +38,5 @@ ModelContainer, such as KerasModelContainer.
  
 """
 
-from .container import *  # pylint: disable=wildcard-import
-from .models import *  # pylint: disable=wildcard-import
+from dcase_models.model.container import *  # pylint: disable=wildcard-import
+from dcase_models.model.models import *  # pylint: disable=wildcard-import

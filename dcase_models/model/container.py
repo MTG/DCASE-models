@@ -7,11 +7,11 @@ from keras.callbacks import CSVLogger, ModelCheckpoint
 from keras.models import model_from_json, Model
 from keras.layers import Dense, Input
 
-from ..util.files import save_json
-from ..util.metrics import evaluate_metrics
-from ..util.callbacks import ClassificationCallback, SEDCallback
-from ..util.callbacks import TaggingCallback
-from ..data.data_generator import DataGenerator, KerasDataGenerator
+from dcase_models.util.files import save_json
+from dcase_models.util.metrics import evaluate_metrics
+from dcase_models.util.callbacks import ClassificationCallback, SEDCallback
+from dcase_models.util.callbacks import TaggingCallback
+from dcase_models.data.data_generator import DataGenerator, KerasDataGenerator
 
 
 class ModelContainer():

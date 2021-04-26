@@ -18,8 +18,9 @@ import keras.backend as K
 from autopool import AutoPool1D
 from tensorflow import clip_by_value
 
-from .container import KerasModelContainer
-
+from dcase_models.model.container import KerasModelContainer
+#from dcase_models.model import container
+#print(container)
 
 __all__ = ['MLP', 'SB_CNN', 'SB_CNN_SED', 'A_CRNN',
            'VGGish', 'SMel', 'MST']
@@ -161,12 +162,13 @@ class MLP(KerasModelContainer):
             y = dense_layer(y)
 
         # Temporal integration
-        if self.temporal_integration == 'mean':
-            y = Lambda(lambda x: K.mean(x, 1), name='temporal_integration')(y)
-        elif self.temporal_integration == 'sum':
-            y = Lambda(lambda x: K.sum(x, 1), name='temporal_integration')(y)
-        elif self.temporal_integration == 'autopool':
-            y = AutoPool1D(axis=1, name='output')(y)
+        if self.use_time_distributed:
+            if self.temporal_integration == 'mean':
+                y = Lambda(lambda x: K.mean(x, 1), name='temporal_integration')(y)
+            elif self.temporal_integration == 'sum':
+                y = Lambda(lambda x: K.sum(x, 1), name='temporal_integration')(y)
+            elif self.temporal_integration == 'autopool':
+                y = AutoPool1D(axis=1, name='output')(y)
 
         # Create model
         self.model = Model(inputs=inputs, outputs=y, name='model')

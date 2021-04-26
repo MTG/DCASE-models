@@ -1,7 +1,7 @@
 # encoding: utf-8
 """Callback functions"""
 
-from .metrics import evaluate_metrics
+from dcase_models.util.metrics import evaluate_metrics
 from keras.callbacks import Callback
 
 eps = 1e-6
