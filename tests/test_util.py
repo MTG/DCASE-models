@@ -9,6 +9,7 @@ from dcase_models.util.files import example_audio_file
 from dcase_models.util.misc import get_class_by_name, get_default_args_of_function
 from dcase_models.util.metrics import predictions_temporal_integration
 from dcase_models.util.metrics import sed, classification, tagging, evaluate_metrics
+from dcase_models.util.callbacks import ClassificationCallback, SEDCallback, TaggingCallback
 
 import os
 import numpy as np
@@ -507,3 +508,42 @@ def test_evaluate_metrics():
     assert len(results['predictions']) == 3
     assert np.allclose(results['annotations'][0], Y_val)
     assert np.allclose(results['predictions'][0], Y_val)
+
+callbacks = [ClassificationCallback, SEDCallback, TaggingCallback]
+@pytest.mark.parametrize("callback_class", callbacks)
+def test_callbacks(callback_class):
+    class ToyModel():
+        def __init__(self, Y_val):
+            self.Y_val = Y_val
+            self.weights_saved = False
+            self.stop_training = False
+
+        def predict(self, X_val):
+            return self.Y_val
+
+        def save_weights(self, file_weights):
+            self.weights_saved = True
+    
+    Y_val = np.zeros((10, 3))
+    Y_val[:,0] = 1
+    Y_val[1:2,1] = 1
+    Y_val[4:7,1] = 1
+    X_val = np.zeros((10, 10))
+    toy_model = ToyModel(Y_val)
+
+    label_list = ['class1', 'class2', 'class3']
+    
+    callback = callback_class(
+        ([X_val], [Y_val]), file_weights='', 
+        early_stopping=3, considered_improvement=0.01,
+        label_list=label_list)
+    
+    callback.model = toy_model
+    callback.on_epoch_end(0)
+    assert toy_model.weights_saved
+    toy_model.weights_saved = False
+    callback.on_epoch_end(1)    
+    assert not toy_model.weights_saved
+
+    callback.on_epoch_end(2)  
+    assert toy_model.stop_training

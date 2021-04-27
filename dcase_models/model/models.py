@@ -19,8 +19,7 @@ from autopool import AutoPool1D
 from tensorflow import clip_by_value
 
 from dcase_models.model.container import KerasModelContainer
-#from dcase_models.model import container
-#print(container)
+
 
 __all__ = ['MLP', 'SB_CNN', 'SB_CNN_SED', 'A_CRNN',
            'VGGish', 'SMel', 'MST']
