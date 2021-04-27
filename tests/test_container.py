@@ -1,6 +1,6 @@
-from dcase_models.model.container import KerasModelContainer
+from dcase_models.model.container import ModelContainer, KerasModelContainer
 from dcase_models.data.features import MelSpectrogram, Spectrogram
-from dcase_models.data.data_generator import DataGenerator
+from dcase_models.data.data_generator import DataGenerator, KerasDataGenerator
 
 from keras.layers import Input, Dense
 from keras.models import Model
@@ -20,6 +20,32 @@ y = Dense(2)(x)
 model = Model(x, y)
 
 
+### ModelContainer
+def test_model_container():
+    model_container = ModelContainer()
+    with pytest.raises(NotImplementedError):
+        model_container.build()
+    with pytest.raises(NotImplementedError):
+        model_container.train()
+    with pytest.raises(NotImplementedError):
+        model_container.evaluate(None, None)
+    with pytest.raises(NotImplementedError):
+        model_container.save_model_json(None)
+    with pytest.raises(NotImplementedError):
+        model_container.load_model_from_json(None)
+    with pytest.raises(NotImplementedError):
+        model_container.save_model_weights(None)
+    with pytest.raises(NotImplementedError):
+        model_container.load_model_weights(None)
+    with pytest.raises(NotImplementedError):
+        model_container.check_if_model_exists(None)
+    with pytest.raises(NotImplementedError):
+        model_container.get_available_intermediate_outputs()
+    with pytest.raises(NotImplementedError):
+        model_container.get_intermediate_output(None)
+
+
+### KerasModelContainer
 def test_init():
     _clean('./model.json')
     model_container = KerasModelContainer(model)
@@ -85,3 +111,90 @@ def test_check_if_model_exists():
 
     _clean(model_file)
     assert not model_container.check_if_model_exists('./')
+
+def test_train():
+    x = Input(shape=(4,), dtype='float32', name='input')
+    y = Dense(2)(x)
+    new_model = Model(x, y)  
+    model_container = KerasModelContainer(new_model)
+
+    X_train = np.concatenate((np.zeros((100, 4)), np.ones((100, 4))), axis=0)
+    Y_train = np.zeros((200, 2))
+    Y_train[:100, 0] = 1
+    Y_train[100:, 1] = 1
+    X_val = np.zeros((1, 4))
+    Y_val = np.zeros((1, 2))
+    Y_val[0, 0] = 1
+
+    X_val2 = np.ones((1, 4))
+    Y_val2 = np.zeros((1, 2))
+    Y_val2[0, 1] = 1
+
+    file_weights = './best_weights.hdf5'
+    file_log = './training.log'
+    _clean(file_weights)
+    _clean(file_log)
+    model_container.train((X_train, Y_train), ([X_val, X_val2], [Y_val, Y_val2]), epochs=3, label_list=['1', '2'])
+    assert os.path.exists(file_weights)
+    assert os.path.exists(file_log)
+    _clean(file_weights)
+    _clean(file_log)
+    
+    results = model_container.evaluate(([X_val, X_val2], [Y_val, Y_val2]), label_list=['1', '2'])
+    assert results['classification'].results()['overall']['accuracy'] > 0.25
+
+    # DataGenerator
+    class ToyDataGenerator():
+        def __init__(self, X_val, Y_val):
+            self.X_val = X_val
+            self.Y_val = Y_val
+
+        def __len__(self):
+            return 3
+
+        def get_data_batch(self, index):
+            return X_val, Y_val
+        
+        def shuffle_list(self):
+            pass
+
+    data_generator = ToyDataGenerator(X_train, Y_train)
+
+    data_generator_val = ToyDataGenerator([X_val, X_val2], [Y_val, Y_val2])
+
+    data_generator = KerasDataGenerator(data_generator)
+
+    x = Input(shape=(4,), dtype='float32', name='input')
+    y = Dense(2)(x)
+    new_model = Model(x, y)  
+    model_container = KerasModelContainer(new_model)
+
+    model_container.train(
+        data_generator,
+        ([X_val, X_val2], [Y_val, Y_val2]),
+        epochs=3,
+        batch_size=None,
+        label_list=['1', '2'])
+    assert os.path.exists(file_weights)
+    assert os.path.exists(file_log)
+    _clean(file_weights)
+    _clean(file_log)
+    
+    results = model_container.evaluate(([X_val, X_val2], [Y_val, Y_val2]), label_list=['1', '2'])
+    assert results['classification'].results()['overall']['accuracy'] > 0.25
+
+    # Other callbacks
+    for metric in ["tagging", "sed"]:
+        model_container = KerasModelContainer(new_model, metrics=[metric])
+        file_weights = './best_weights.hdf5'
+        file_log = './training.log'
+        _clean(file_weights)
+        _clean(file_log)
+        model_container.train((X_train, Y_train), ([X_val, X_val2], [Y_val, Y_val2]), epochs=3, label_list=['1', '2'])
+        #assert os.path.exists(file_weights)
+        assert os.path.exists(file_log)
+        _clean(file_weights)
+        _clean(file_log)
+        
+        #results = model_container.evaluate(([X_val, X_val2], [Y_val, Y_val2]), label_list=['1', '2'])
+        #assert results['classification'].results()['overall']['accuracy'] > 0.25

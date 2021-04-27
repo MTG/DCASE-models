@@ -55,57 +55,57 @@ class ModelContainer():
     def build(self):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def train(self):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def evaluate(self, X_test, Y_test, scaler=None):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def save_model_json(self, folder):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def load_model_from_json(self, folder, **kwargs):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def save_model_weights(self, weights_folder):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def load_model_weights(self, weights_folder):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def get_number_of_parameters(self):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def check_if_model_exists(self, folder, **kwargs):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def get_available_intermediate_outputs(self):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
     def get_intermediate_output(self, output_ix_name):
         """ Missing docstring here
         """
-        pass
+        raise NotImplementedError
 
 
 class KerasModelContainer(ModelContainer):
