@@ -1,6 +1,4 @@
 from dcase_models.model.container import ModelContainer, KerasModelContainer
-from dcase_models.data.features import MelSpectrogram, Spectrogram
-from dcase_models.data.data_generator import DataGenerator, KerasDataGenerator
 
 from keras.layers import Input, Dense
 from keras.models import Model
@@ -8,6 +6,7 @@ from keras.models import Model
 import os
 import numpy as np
 import pytest
+import shutil
 
 
 def _clean(path):
@@ -22,7 +21,7 @@ y = Dense(2)(x)
 model = Model(x, y)
 
 
-### ModelContainer
+# ModelContainer
 def test_model_container():
     model_container = ModelContainer()
     with pytest.raises(NotImplementedError):
@@ -47,7 +46,7 @@ def test_model_container():
         model_container.get_intermediate_output(None)
 
 
-### KerasModelContainer
+# KerasModelContainer
 def test_init():
     _clean("./model.json")
     model_container = KerasModelContainer(model)
@@ -88,7 +87,7 @@ def test_save_model_weights():
     _clean(weights_file)
 
 
-def test_save_model_weights():
+def test_load_model_weights():
     weights_file = "./best_weights.hdf5"
     _clean(weights_file)
     model_container = KerasModelContainer(model)
