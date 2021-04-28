@@ -36,7 +36,7 @@ setuptools.setup(
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme'],
-        'tests': ['pytest >= 5.4.3'],
+        'tests': ['pytest >= 5.4.3', 'pytest-cov >= 2.11.1'],
         'visualization': [
             'plotly==4.5.0',
             'dash==1.8.0',
