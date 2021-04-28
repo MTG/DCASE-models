@@ -42,7 +42,7 @@ class TestDataset(Dataset):
         y[:, class_ix] = 1
         return y
 
-dataset_path = './data'
+dataset_path = './tests/data'
 dataset = TestDataset(dataset_path)
 
 

@@ -45,7 +45,7 @@ class TestDataset(Dataset):
         y[:, class_ix] = 1
         return y
 
-dataset_path = './data'
+dataset_path = './tests/data'
 dataset = TestDataset(dataset_path)
 feature_extractor = MelSpectrogram()
 audio_files = ['147764-4-7-0.wav', '176787-5-0-0.wav', '40722-8-0-7.wav']

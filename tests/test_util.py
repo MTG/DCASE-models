@@ -222,7 +222,7 @@ def test_duplicate_folder_structure():
 
 def test_list_wav_files():
     audio_files = ['147764-4-7-0.wav', '176787-5-0-0.wav', '40722-8-0-7.wav']
-    audio_path = './data/audio'
+    audio_path = './tests/data/audio'
     wav_files = list_wav_files(audio_path)
     assert type(wav_files) is list
     assert len(wav_files) == 3
@@ -230,13 +230,13 @@ def test_list_wav_files():
         wp = os.path.join(audio_path, wf)
         assert wp in wav_files
     
-    audio_path = './data_aiff/audio'
+    audio_path = './tests/data_aiff/audio'
     wav_files = list_wav_files(audio_path) 
     assert len(wav_files) == 0
 
 def test_list_all_files():
     aiff_files = ['147764-4-7-0.aiff', '176787-5-0-0.aiff', '40722-8-0-7.aiff']
-    audio_path = './data_aiff/audio'
+    audio_path = './tests/data_aiff/audio'
     all_files = list_all_files(audio_path)
     assert type(all_files) is list
     assert len(all_files) == 3
@@ -245,7 +245,7 @@ def test_list_all_files():
         assert wp in all_files
 
 def test_load_training_log():
-    path = './resources'
+    path = './tests/resources'
     log = load_training_log(path)
     assert type(log) is dict
     assert len(log) == 3
@@ -258,12 +258,12 @@ def test_load_training_log():
     assert epoch == log['epoch']
     assert loss == log['loss']
 
-    path = './resources2'
+    path = './tests/resources2'
     log = load_training_log(path)
     assert log is None
 
 def test_download_files_and_unzip():
-    dataset_path = './data'
+    dataset_path = './tests/data'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     url = 'file:////' + os.path.join(dir_path, 'resources')
     files = ['remote.zip']
@@ -354,7 +354,7 @@ def test_predictions_temporal_integration():
     assert np.allclose(pred_int, [1, 0, 0])
 
 def test_sed():
-    with open('./resources/sed_example.csv') as csv_file:
+    with open('./tests/resources/sed_example.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         event_list = []
         for row in csv_reader:

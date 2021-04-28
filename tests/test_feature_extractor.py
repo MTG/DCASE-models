@@ -22,7 +22,7 @@ params_features = params['features']
 
 
 def test_load_audio():
-    audio_file = './data/audio/40722-8-0-7.wav'
+    audio_file = './tests/data/audio/40722-8-0-7.wav'
     sr = 8000
     feature_extractor = FeatureExtractor(sr=8000)
     audio = feature_extractor.load_audio(audio_file, mono=True, change_sampling_rate=False)
@@ -35,7 +35,7 @@ def test_load_audio():
     audio = feature_extractor.load_audio(audio_file, mono=False, change_sampling_rate=False)
     assert len(audio) == 88200 # This file is mono
 
-    audio_file = './data/audio/147764-4-7-0.wav'
+    audio_file = './tests/data/audio/147764-4-7-0.wav'
     audio = feature_extractor.load_audio(audio_file, mono=False, change_sampling_rate=False)
     assert audio.shape[1] == 2
 
@@ -46,7 +46,7 @@ def test_calculate():
 
 
 def test_set_as_extracted():
-    path = './data/features'
+    path = './tests/data/features'
     feature_extractor = FeatureExtractor()
     feature_extractor.set_as_extracted(path)
     json_features = os.path.join(path, "parameters.json")
@@ -68,7 +68,7 @@ def test_set_as_extracted():
         assert default_parameters[key] == parameters_features[key]
 
 def test_check_if_extracted_path():
-    path = './data/features'
+    path = './tests/data/features'
     feature_extractor = FeatureExtractor()
     feature_extractor.set_as_extracted(path)
     json_features = os.path.join(path, "parameters.json")
@@ -77,9 +77,9 @@ def test_check_if_extracted_path():
     assert feature_extractor.check_if_extracted_path(path)
     
 def test_check_if_extracted():
-    dataset_path = './data'
+    dataset_path = './tests/data'
     dataset = Dataset(dataset_path)
-    path = './data/features/FeatureExtractor/original'
+    path = './tests/data/features/FeatureExtractor/original'
     mkdir_if_not_exists(path, parents=True)
     feature_extractor = FeatureExtractor()
     json_features = os.path.join(path, "parameters.json")
@@ -88,10 +88,10 @@ def test_check_if_extracted():
     assert feature_extractor.check_if_extracted(dataset)
 
 def test_get_features_path():
-    dataset_path = './data'
+    dataset_path = './tests/data'
     dataset = Dataset(dataset_path)
     feature_extractor = FeatureExtractor()
-    path = './data/features/FeatureExtractor'
+    path = './tests/data/features/FeatureExtractor'
     assert feature_extractor.get_features_path(dataset) == path
 
 def test_pad_audio():
