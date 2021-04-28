@@ -1,4 +1,5 @@
 from dcase_models.model.container import ModelContainer, KerasModelContainer
+from dcase_models.data.data_generator import KerasDataGenerator
 
 from keras.layers import Input, Dense
 from keras.models import Model
@@ -172,8 +173,6 @@ def test_train():
             pass
 
     data_generator = ToyDataGenerator(X_train, Y_train)
-
-    data_generator_val = ToyDataGenerator([X_val, X_val2], [Y_val, Y_val2])
 
     data_generator = KerasDataGenerator(data_generator)
 
