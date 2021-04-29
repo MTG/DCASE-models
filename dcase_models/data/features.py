@@ -414,6 +414,8 @@ class Openl3(FeatureExtractor):
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
+        import tensorflow as tf
+        tensorflow2 = tf.__version__.split('.')[0] == '2'
         if tensorflow2:
             raise ImportError("Openl3 requires tensorflow1")
         import openl3
