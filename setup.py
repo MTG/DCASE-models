@@ -26,10 +26,14 @@ setuptools.setup(
         'librosa>=0.7',
         'scikit-learn>=0.20',
         'wget>=3.0',
-        'sox>=1.3',
+        'sox<1.4',
         'sed_eval>=0.2',
     ],
     extras_require={
+        'keras_tf': ['tensorflow<1.14', 'keras==2.2.4'],
+        'tf2': ['tensorflow>2.0'],
+        'openl3': ['openl3==0.3.1'],
+        'autopool': ['autopool==0.1.0'],
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme'],
         'tests': ['pytest >= 5.4.3', 'pytest-cov >= 2.11.1'],
         'visualization': [
