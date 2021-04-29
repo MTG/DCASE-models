@@ -4,8 +4,7 @@ import openl3
 import inspect
 import sys
 
-from .feature_extractor import FeatureExtractor
-from ..model.models import VGGish
+from dcase_models.data.feature_extractor import FeatureExtractor
 
 
 __all__ = ['Spectrogram', 'MelSpectrogram', 'MFCC',
@@ -84,7 +83,7 @@ class Spectrogram(FeatureExtractor):
         # Spectrogram, shape (N_frames, N_freqs)
         stft = librosa.core.stft(audio, n_fft=self.n_fft,
                                  hop_length=self.audio_hop,
-                                 win_length=self.audio_win, center=True)
+                                 win_length=self.audio_win, center=False)
 
         # Power
         spectrogram = np.abs(stft)**2
@@ -466,19 +465,12 @@ class RawAudio(FeatureExtractor):
 
     def calculate(self, file_name):
         audio = self.load_audio(file_name, change_sampling_rate=False)
-
-        if self.pad_mode is not None:
-            audio = librosa.util.fix_length(
-                audio,
-                audio.shape[0] + self.sequence_samples,
-                axis=0, mode=self.pad_mode
-            )
+        audio = self.pad_audio(audio)
 
         audio = np.ascontiguousarray(audio)
         audio_seqs = librosa.util.frame(
              audio, self.sequence_samples, self.sequence_hop_samples, axis=0
         )
-
         return audio_seqs
 
 
@@ -550,6 +542,8 @@ class VGGishEmbeddings(FeatureExtractor):
     def __init__(self, sequence_hop_time=0.96,
                  pad_mode='reflect', include_top=True, compress=True):
 
+        from dcase_models.model.models import VGGish
+        
         sequence_time = 0.96
         audio_win = 400
         audio_hop = 160

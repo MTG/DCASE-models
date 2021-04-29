@@ -4,10 +4,10 @@ import soundfile as sf
 import numpy as np
 from librosa.core import db_to_power, power_to_db
 
-from .dataset_base import Dataset
-from ..util.files import duplicate_folder_structure
-from ..util.files import list_wav_files
-from ..util.ui import progressbar
+from dcase_models.data.dataset_base import Dataset
+from dcase_models.util.files import duplicate_folder_structure
+from dcase_models.util.files import list_wav_files
+from dcase_models.util.ui import progressbar
 
 
 class WhiteNoise():

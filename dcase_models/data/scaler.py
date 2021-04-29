@@ -1,4 +1,4 @@
-from .data_generator import DataGenerator
+from dcase_models.data.data_generator import DataGenerator
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import inspect

@@ -5,8 +5,8 @@ import random
 
 from keras.utils import Sequence
 
-from .feature_extractor import FeatureExtractor
-from .dataset_base import Dataset
+from dcase_models.data.feature_extractor import FeatureExtractor
+from dcase_models.data.dataset_base import Dataset
 # from .data_augmentation import AugmentedDataset
 
 
@@ -443,7 +443,8 @@ class DataGenerator():
             Path(s) to the features file(s).
 
         """
-        features_path = os.path.join(features_path, subfolder)
+        if subfolder != '':
+            features_path = os.path.join(features_path, subfolder)
         if type(audio_file) is str:
             features_file = audio_file.replace(
                 self.dataset.audio_path, features_path

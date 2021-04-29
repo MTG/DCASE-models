@@ -1,10 +1,10 @@
 import os
 import sox
 
-from ..util.files import download_files_and_unzip
-from ..util.files import duplicate_folder_structure
-from ..util.files import list_wav_files, list_all_files
-from ..util.ui import progressbar
+from dcase_models.util.files import download_files_and_unzip
+from dcase_models.util.files import duplicate_folder_structure
+from dcase_models.util.files import list_wav_files, list_all_files
+from dcase_models.util.ui import progressbar
 
 
 class Dataset():
@@ -127,7 +127,7 @@ class Dataset():
             Expected output shape: (features.shape[0], len(self.label_list))
 
         """
-        pass
+        raise NotImplementedError
 
     def download(self, zenodo_url, zenodo_files, force_download=False):
         """ Downloads and decompresses the dataset from zenodo.

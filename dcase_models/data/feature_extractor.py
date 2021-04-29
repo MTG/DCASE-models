@@ -5,10 +5,10 @@ import soundfile as sf
 import json
 from scipy.stats import kurtosis, skew
 
-from ..util.files import load_json, mkdir_if_not_exists
-from ..util.files import duplicate_folder_structure
-from ..util.files import list_wav_files
-from ..util.ui import progressbar
+from dcase_models.util.files import load_json, mkdir_if_not_exists
+from dcase_models.util.files import duplicate_folder_structure
+from dcase_models.util.files import list_wav_files
+from dcase_models.util.ui import progressbar
 
 
 class FeatureExtractor():
@@ -118,6 +118,7 @@ class FeatureExtractor():
             sequence_hop_time, sr=sr, hop_length=audio_hop))
 
         self.features_folder = kwargs.get('features_folder', 'features')
+        self.pad_mode = kwargs.get('pad_mode', None)
 
     def load_audio(self, file_name, mono=True, change_sampling_rate=True):
         """ Loads an audio signal and converts it to mono if needed
@@ -166,7 +167,7 @@ class FeatureExtractor():
             feature representation of the audio signal
 
         """
-        pass
+        raise NotImplementedError
 
     def extract(self, dataset):
         """ Extracts features for each file in dataset.
@@ -340,21 +341,25 @@ class FeatureExtractor():
 
     def pad_audio(self, audio):
         if (self.sequence_time > 0) & (self.pad_mode is not None):
-            if self.sequence_hop_time > 0:
+            sequence_samples = self.sequence_frames*self.audio_hop + self.audio_win
+            sequence_hop_samples = self.sequence_hop*self.audio_hop
+            if len(audio) < sequence_samples:
                 audio = librosa.util.fix_length(
-                    audio,
-                    audio.shape[0] + librosa.core.frames_to_samples(
-                        self.sequence_frames, self.audio_hop, n_fft=self.n_fft),
-                    axis=0, mode=self.pad_mode
-                )
+                    audio, sequence_samples, axis=0, mode=self.pad_mode)
             else:
-                sequence_samples = librosa.core.frames_to_samples(
-                        self.sequence_frames, self.audio_hop, n_fft=self.n_fft)
-                if len(audio) < sequence_samples:
+                if self.sequence_hop_time > 0:
+                    audio_frames = int((len(audio) - self.audio_win) / self.audio_hop) + int(((len(audio) - self.audio_win) % self.audio_hop)>0)
+                    n_sequences = int((audio_frames - self.sequence_frames)/self.sequence_hop) + int(((audio_frames - self.sequence_frames) % self.sequence_hop)>0)
+                    new_frames = n_sequences*self.sequence_hop + self.sequence_frames
+                    new_samples = new_frames * self.audio_hop + self.audio_win
                     audio = librosa.util.fix_length(
-                        audio, sequence_samples, axis=0, mode=self.pad_mode)
+                        audio,
+                        new_samples,
+                        axis=0, mode=self.pad_mode
+                    )
                 else:
                     audio = audio[:sequence_samples]
+
         return audio
 
     def convert_to_sequences(self, audio_representation):
@@ -368,5 +373,7 @@ class FeatureExtractor():
             )
         else:
             audio_representation = np.expand_dims(audio_representation, axis=0)
+            if self.sequence_time > 0:
+                audio_representation = audio_representation[:,:self.sequence_frames]
 
         return audio_representation

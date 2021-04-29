@@ -121,6 +121,75 @@ def evaluate_metrics(model, data, metrics, **kwargs):
         results[metric] = metric_function(annotations, predictions, **kwargs)
     return results
 
+def _check_lists_for_evaluation(Y_val, Y_predicted):
+    """ Perform the following checks
+        1) Y_val and Y_predicted are both of type list
+        2) Y_val and Y_predicted are of the same length
+        3) Each element in Y_val and Y_predicted is a 2D array
+
+    Parameters
+    ----------
+    Y_val : list of ndarray
+        2D array with the ground-truth event roll
+        shape: (N_times, N_classes)
+    Y_predicted : list of ndarray
+        2D array with the predicted event roll
+        shape: (N_times, N_classes)
+    sequence_time_sec : float
+        Resolution of Y_val and Y_predicted.
+    metric_resolution_sec : float
+        Resolution of the metrics.
+    label_list:
+        Label list.
+
+    Returns
+    -------
+    bool
+        True if checks passed.
+
+    """
+    
+    if type(Y_val) is not list:
+        raise AttributeError(
+            'Y_val type is invalid. It should be a list of 2D array and received {}'.format(
+                type(Y_val)
+            )
+        )
+
+    if type(Y_predicted) is not list:
+        raise AttributeError(
+            'Y_predicted type is invalid. It should be a list of 2D array and received {}'.format(
+                type(Y_predicted)
+            )
+        )
+
+    if len(Y_val) != len(Y_predicted):
+        raise AttributeError('Y_val and Y_predicted should have the same length (received {:d} and {:d})'.format(
+            len(Y_val), len(Y_predicted) 
+            )
+        )
+
+    for j in range(len(Y_val)):
+        if type(Y_val[j]) is not np.ndarray:
+            raise AttributeError('Each element of Y_val should be a 2D numpy array and received {}'.format(
+                type(Y_val[j])
+            )
+        )
+        if len(Y_val[j].shape) != 2:
+            raise AttributeError('Each element of Y_val should be a 2D array and received an array of shape {}'.format(
+                str(Y_val[j].shape)
+            )
+        )
+        if type(Y_predicted[j]) is not np.ndarray:
+            raise AttributeError('Each element of Y_predicted should be a 2D numpy array and received {}'.format(
+                type(Y_predicted[j])
+            )
+        )
+        if len(Y_predicted[j].shape) != 2:
+            raise AttributeError('Each element of Y_predicted should be a 2D array and received an array of shape {}'.format(
+                str(Y_predicted[j].shape)
+            )
+        )
 
 def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
         metric_resolution_sec=1.0, label_list=[]):
@@ -128,10 +197,10 @@ def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
 
     Parameters
     ----------
-    Y_val : ndarray
+    Y_val : list of ndarray
         2D array with the ground-truth event roll
         shape: (N_times, N_classes)
-    Y_predicted : ndarray
+    Y_predicted : list of ndarray
         2D array with the predicted event roll
         shape: (N_times, N_classes)
     sequence_time_sec : float
@@ -147,6 +216,8 @@ def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
         Object with the SED results
 
     """
+
+    _check_lists_for_evaluation(Y_val, Y_predicted)
 
     seg_metrics = SegmentBasedMetrics(
         label_list, time_resolution=metric_resolution_sec
@@ -174,10 +245,10 @@ def classification(Y_val, Y_predicted, label_list=[]):
 
     Parameters
     ----------
-    Y_val : ndarray
+    Y_val : listy of ndarray
         2D array with the ground-truth event roll
         shape: (N_times, N_classes)
-    Y_predicted : ndarray
+    Y_predicted : list of ndarray
         2D array with the predicted event roll
         shape: (N_times, N_classes)
     label_list:
@@ -189,6 +260,8 @@ def classification(Y_val, Y_predicted, label_list=[]):
         Object with the classification results
 
     """
+    _check_lists_for_evaluation(Y_val, Y_predicted)
+
     acc_metrics = SceneClassificationMetrics(label_list)
 
     n_files = len(Y_val)
@@ -211,10 +284,10 @@ def tagging(Y_val, Y_predicted, label_list=[]):
 
     Parameters
     ----------
-    Y_val : ndarray
+    Y_val : list of ndarray
         2D array with the ground-truth event roll
         shape: (N_times, N_classes)
-    Y_predicted : ndarray
+    Y_predicted : list of ndarray
         2D array with the predicted event roll
         shape: (N_times, N_classes)
     label_list:
@@ -226,6 +299,8 @@ def tagging(Y_val, Y_predicted, label_list=[]):
         Object with the tagging results
 
     """
+    _check_lists_for_evaluation(Y_val, Y_predicted)
+
     tagging_metrics = AudioTaggingMetrics(label_list)
 
     n_files = len(Y_val)
@@ -245,103 +320,3 @@ def tagging(Y_val, Y_predicted, label_list=[]):
             [{'tags': tag_list_pred, 'file': ''}])
 
     return tagging_metrics
-
-
-def accuracy(Y_val, Y_predicted):
-    n_files = len(Y_val)
-
-    predictions = np.zeros(n_files)
-    annotations = np.zeros(n_files)
-
-    for i in range(n_files):
-        Y = Y_val[i]
-        pred = predictions_temporal_integration(Y_predicted[i], 'sum')
-        pred = np.argmax(pred)
-        Y = np.argmax(Y)
-        annotations[i] = Y
-        predictions[i] = pred
-
-    acc = np.mean(annotations == predictions)
-
-    return acc
-
-
-def ER(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
-    n_files = len(Y_val)
-
-    predictions = []
-    annotations = []
-
-    for i in range(n_files):
-        y_true = Y_val[i]
-        pred = Y_predicted[i]
-
-        if pred.shape[0] == y_true.shape[0]:
-            y_pred = pred
-        else:
-            y_pred = np.zeros_like(y_true)
-            ratio = int(np.round(metric_resolution_sec / sequence_time_sec))
-            for j in range(len(y_true)):
-                y_pred[j] = np.mean(pred[j*ratio:(j+1)*ratio], axis=0)
-
-        annotations.append(y_true)
-        predictions.append(y_pred)
-
-    annotations = np.concatenate(annotations, axis=0)
-    predictions = np.concatenate(predictions, axis=0)
-    assert annotations.shape[0] == predictions.shape[0]
-    assert annotations.shape[1] == predictions.shape[1]
-
-    predictions = (predictions > 0.5).astype(int)
-    Ntp = np.sum(predictions + annotations > 1)
-    Nref = np.sum(annotations)
-    Nsys = np.sum(predictions)
-
-    Sus = min(Nref, Nsys) - Ntp
-    Del = max(0.0, Nref - Nsys)
-    Ins = max(0.0, Nsys - Nref)
-
-    ER = (Sus+Del+Ins)/float(Nref + eps)
-
-    return ER
-
-
-def F1(Y_val, Y_predicted, sequence_time_sec=0.5, metric_resolution_sec=1.0):
-    n_files = len(Y_val)
-
-    predictions = []
-    annotations = []
-
-    for i in range(n_files):
-        y_true = Y_val[i]
-        pred = Y_predicted[i]
-
-        if pred.shape[0] == y_true.shape[0]:
-            y_pred = pred
-        else:
-            y_pred = np.zeros_like(y_true)
-            ratio = int(np.round(metric_resolution_sec / sequence_time_sec))
-            for j in range(len(y_true)):
-                y_pred[j] = np.mean(pred[j*ratio:(j+1)*ratio], axis=0)
-
-        annotations.append(y_true)
-        predictions.append(y_pred)
-
-    annotations = np.concatenate(annotations, axis=0)
-    predictions = np.concatenate(predictions, axis=0)
-    assert annotations.shape[0] == predictions.shape[0]
-    assert annotations.shape[1] == predictions.shape[1]
-
-    predictions = (predictions > 0.5).astype(int)
-    Ntp = np.sum(predictions + annotations > 1)
-    # Ntn = np.sum(predictions + annotations > 0)
-    # Nfp = np.sum(predictions - annotations > 0)
-    # Nfn = np.sum(annotations - predictions > 0)
-    Nref = np.sum(annotations)
-    Nsys = np.sum(predictions)
-
-    P = Ntp / float(Nsys + eps)
-    R = Ntp / float(Nref + eps)
-
-    Fmeasure = 2*P*R/(P + R + eps)
-    return Fmeasure

@@ -88,13 +88,13 @@ Miscellaneous functions
 
 """
 
-from .callbacks import *  # pylint: disable=wildcard-import
-from .data import *  # pylint: disable=wildcard-import
-from .events import *  # pylint: disable=wildcard-import
-from .files import *  # pylint: disable=wildcard-import
-from .gui import *  # pylint: disable=wildcard-import
-from .metrics import *  # pylint: disable=wildcard-import
-from .misc import *  # pylint: disable=wildcard-import
-from .ui import *  # pylint: disable=wildcard-import
+from dcase_models.util.callbacks import *  # pylint: disable=wildcard-import
+from dcase_models.util.data import *  # pylint: disable=wildcard-import
+from dcase_models.util.events import *  # pylint: disable=wildcard-import
+from dcase_models.util.files import *  # pylint: disable=wildcard-import
+from dcase_models.util.gui import *  # pylint: disable=wildcard-import
+from dcase_models.util.metrics import *  # pylint: disable=wildcard-import
+from dcase_models.util.misc import *  # pylint: disable=wildcard-import
+from dcase_models.util.ui import *  # pylint: disable=wildcard-import
 
 

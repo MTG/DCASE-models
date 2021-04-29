@@ -67,10 +67,10 @@ Scaler
 
 """
 
-from .dataset_base import *  # pylint: disable=wildcard-import
-from .datasets import *  # pylint: disable=wildcard-import
-from .data_generator import *  # pylint: disable=wildcard-import
-from .data_augmentation import *  # pylint: disable=wildcard-import
-from .feature_extractor import *  # pylint: disable=wildcard-import
-from .features import *  # pylint: disable=wildcard-import
-from .scaler import *  # pylint: disable=wildcard-import
+from dcase_models.data.dataset_base import *  # pylint: disable=wildcard-import
+from dcase_models.data.datasets import *  # pylint: disable=wildcard-import
+from dcase_models.data.data_generator import *  # pylint: disable=wildcard-import
+from dcase_models.data.data_augmentation import *  # pylint: disable=wildcard-import
+from dcase_models.data.feature_extractor import *  # pylint: disable=wildcard-import
+from dcase_models.data.features import *  # pylint: disable=wildcard-import
+from dcase_models.data.scaler import *  # pylint: disable=wildcard-import
