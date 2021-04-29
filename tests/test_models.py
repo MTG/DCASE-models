@@ -16,6 +16,14 @@ from dcase_models.model.models import (
 import os
 import numpy as np
 import pytest
+import tensorflow as tf
+
+tensorflow2 = tf.__version__.split(".")[0] == "2"
+
+try:
+    import autopool
+except:
+    autopool = None
 
 
 def test_mlp():
@@ -37,11 +45,12 @@ def test_mlp():
     outputs = model_container.model.predict(inputs)
     assert outputs.shape == (3, 10)
 
-    model_container = MLP(temporal_integration="autopool")
-    assert len(model_container.model.layers) == 7
-    inputs = np.zeros((3, 64, 12))
-    outputs = model_container.model.predict(inputs)
-    assert outputs.shape == (3, 10)
+    if (not tensorflow2) & (autopool is not None):
+        model_container = MLP(temporal_integration="autopool")
+        assert len(model_container.model.layers) == 7
+        inputs = np.zeros((3, 64, 12))
+        outputs = model_container.model.predict(inputs)
+        assert outputs.shape == (3, 10)
 
 
 def test_sb_cnn():

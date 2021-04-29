@@ -5,11 +5,21 @@ from dcase_models.data.dataset_base import Dataset
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.util.files import load_json, mkdir_if_not_exists
 
+
+try:
+    import openl3
+except:
+    Openl3 = None
+
 import os
 import numpy as np
 import pytest
 import shutil
 import librosa
+
+import tensorflow as tf
+
+tensorflow2 = tf.__version__.split(".")[0] == "2"
 
 
 def test_spectrogram():
@@ -60,6 +70,8 @@ def test_mfcc():
     assert shape == (1, 32, 20)
 
 
+@pytest.mark.skipif(tensorflow2, reason="Openl3 requires tensorflow1")
+@pytest.mark.skipif(Openl3 is None, reason="Openl3 is not installed")
 def test_openl3():
     feature_extractor = Openl3()
     shape = feature_extractor.get_shape(2.0)
