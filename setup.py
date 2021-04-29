@@ -31,6 +31,7 @@ setuptools.setup(
     ],
     extras_require={
         'keras_tf': ['tensorflow<1.14', 'keras==2.2.4'],
+        'keras_tf_gpu': ['tensorflow-gpu<1.14', 'keras==2.2.4'],
         'tf2': ['tensorflow>2.0'],
         'openl3': ['openl3==0.3.1'],
         'autopool': ['autopool==0.1.0'],
