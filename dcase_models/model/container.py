@@ -2,10 +2,19 @@ import numpy as np
 import os
 import json
 
-import keras.backend as K
-from keras.callbacks import CSVLogger, ModelCheckpoint
-from keras.models import model_from_json, Model
-from keras.layers import Dense, Input
+import tensorflow as tf
+tensorflow2 = tf.__version__.split('.')[0] == '2'
+
+if tensorflow2:
+    import tensorflow.keras.backend as K
+    from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
+    from tensorflow.keras.models import model_from_json, Model
+    from tensorflow.keras.layers import Dense, Input
+else:
+    import keras.backend as K
+    from keras.callbacks import CSVLogger, ModelCheckpoint
+    from keras.models import model_from_json, Model
+    from keras.layers import Dense, Input 
 
 from dcase_models.util.files import save_json
 from dcase_models.util.metrics import evaluate_metrics
@@ -197,7 +206,10 @@ class KerasModelContainer(ModelContainer):
             Verbose mode for fit method of Keras model
 
         """
-        import keras.optimizers as optimizers
+        if tensorflow2:
+            import tensorflow.keras.optimizers as optimizers
+        else:
+            import keras.optimizers as optimizers
         optimizer_function = getattr(optimizers, optimizer)
         opt = optimizer_function(lr=learning_rate)
 
