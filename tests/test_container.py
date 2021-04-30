@@ -48,6 +48,8 @@ def test_model_container():
     with pytest.raises(NotImplementedError):
         model_container.load_model_weights(None)
     with pytest.raises(NotImplementedError):
+        model_container.get_number_of_parameters()
+    with pytest.raises(NotImplementedError):
         model_container.check_if_model_exists(None)
     with pytest.raises(NotImplementedError):
         model_container.get_available_intermediate_outputs()

@@ -1,0 +1,3 @@
+0.1	1.1	car
+0.5	2.0	engine_idling
+2.1	3.5	compressor
