@@ -297,12 +297,44 @@ def test_urban_sed():
     assert np.allclose(ann, ann_gt)
 
 
-# def test_sonyc_ust():
-#     dataset_path = './tests/resources/datasets/SONYC-UST'
-#     audio_files = ["0.wav", "1.wav", "2.wav"]
-#     dataset = SONYC_UST(dataset_path)
-#     assert dataset.audio_path == './tests/resources/datasets/SONYC-UST/audio'
+def test_sonyc_ust():
+    dataset_path = './tests/resources/datasets/SONYC-UST'
+    dataset = SONYC_UST(dataset_path)
+    assert dataset.audio_path == './tests/resources/datasets/SONYC-UST/audio'
 
+    # generate_file_lists
+    dataset.generate_file_lists()
+    fold_files = {}
+    fold_files['train'] = ["41_020874.wav", "45_006905.wav"]
+    fold_files['validate'] = ["00_000118.wav"]
+    for fold in dataset.fold_list:
+        for filename in fold_files[fold]:
+            assert os.path.join(dataset_path, 'audio', filename) in dataset.file_lists[fold]
+
+    # get annotations
+    # get annotations
+    feat = np.zeros((11, 2))
+    file_path = os.path.join(dataset_path, 'audio', "41_020874.wav")
+    ann = dataset.get_annotations(file_path, feat, None)
+    assert ann.shape == (11, 8)
+    ann_gt = np.zeros((11, 8))
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((11, 2))
+    file_path = os.path.join(dataset_path, 'audio', "45_006905.wav")
+    ann = dataset.get_annotations(file_path, feat, None)
+    assert ann.shape == (11, 8)
+    ann_gt = np.zeros((11, 8))
+    ann_gt[:, [0, 1]] = 1
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((11, 2))
+    file_path = os.path.join(dataset_path, 'audio', "00_000118.wav")
+    ann = dataset.get_annotations(file_path, feat, None)
+    assert ann.shape == (11, 8)
+    ann_gt = np.zeros((11, 8))
+    ann_gt[:, [0, 6]] = 1
+    assert np.allclose(ann, ann_gt)
 
 
 def test_tau2019():
