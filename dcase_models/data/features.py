@@ -1,6 +1,5 @@
 import numpy as np
 import librosa
-import openl3
 import inspect
 import sys
 
@@ -415,7 +414,11 @@ class Openl3(FeatureExtractor):
                          sequence_hop_time=sequence_hop_time,
                          audio_win=audio_win, audio_hop=audio_hop,
                          sr=sr)
-
+        import tensorflow as tf
+        tensorflow2 = tf.__version__.split('.')[0] == '2'
+        if tensorflow2:
+            raise ImportError("Openl3 requires tensorflow1")
+        import openl3
         self.content_type = content_type
         self.input_repr = input_repr
         self.embedding_size = embedding_size
@@ -423,6 +426,7 @@ class Openl3(FeatureExtractor):
             input_repr, content_type, embedding_size)
 
     def calculate(self, file_name):
+        import openl3
         audio = self.load_audio(file_name, change_sampling_rate=False)
         emb, ts = openl3.get_audio_embedding(
             audio, self.sr,

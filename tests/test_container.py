@@ -1,8 +1,16 @@
 from dcase_models.model.container import ModelContainer, KerasModelContainer
 from dcase_models.data.data_generator import KerasDataGenerator
 
-from keras.layers import Input, Dense
-from keras.models import Model
+import tensorflow as tf
+
+tensorflow2 = tf.__version__.split(".")[0] == "2"
+
+if tensorflow2:
+    from tensorflow.keras.layers import Input, Dense
+    from tensorflow.keras.models import Model
+else:
+    from keras.layers import Input, Dense
+    from keras.models import Model
 
 import os
 import numpy as np

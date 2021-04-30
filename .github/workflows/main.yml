@@ -3,15 +3,15 @@
 
 name: Python package
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
-  build:
+  build_py36:
 
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7]
+        python-version: [3.6]
 
     steps:
     - uses: actions/checkout@v2
@@ -22,11 +22,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get install -y wget libsndfile-dev sox
-        python -m pip install "tensorflow<1.14"
         python -m pip install flake8
         python -m pip install 'h5py==2.10.0' --force-reinstall
     - name: Install library
       run: |
+        python -m pip install .[keras_tf]
+        python -m pip install .[openl3]
+        python -m pip install .[autopool]  
         python -m pip install .[tests]        
     - name: Lint with flake8
       run: |
@@ -49,3 +51,54 @@ jobs:
         fail_ci_if_error: false
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
+
+  build_py37:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y wget libsndfile-dev sox
+        python -m pip install flake8
+        python -m pip install 'h5py==2.10.0' --force-reinstall
+    - name: Install library
+      run: |
+        python -m pip install .[keras_tf]  
+        python -m pip install .[tests]        
+    - name: Test with pytest
+      run: |
+        pytest --cov-report term-missing --cov-report=xml --cov dcase_models ./tests
+        
+
+  build_tf2:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y wget libsndfile-dev sox
+    - name: Install library
+      run: |
+        python -m pip install .[tf2]
+        python -m pip install .[tests]        
+    - name: Test with pytest
+      run: |
+        pytest --cov-report term-missing --cov-report=xml --cov dcase_models ./tests

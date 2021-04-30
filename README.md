@@ -7,6 +7,8 @@
                                                                        
 </pre>
 
+![example workflow](https://github.com/MTG/DCASE-models/actions/workflows/main.yml/badge.svg)
+[![codecov](https://codecov.io/gh/MTG/DCASE-models/branch/master/graph/badge.svg?token=xOOVldiH0J)](https://codecov.io/gh/MTG/DCASE-models)
 [![PyPI](https://img.shields.io/pypi/v/DCASE-models)](https://pypi.org/project/DCASE-models/)
 [![GitHub license](https://img.shields.io/github/license/pzinemanas/DCASE-models)](https://github.com/pzinemanas/DCASE-models/blob/master/LICENSE)
 
@@ -31,16 +33,13 @@ DCASE-models uses [SoX](http://sox.sourceforge.net/) for functions related to th
 ```
 conda install -c conda-forge sox
 ```
-Before installing the library, you must install only one of the Tensorflow variants: CPU-only or GPU.
+When installing the library, you must select the tensorflow variant: version 1 (CPU-only or GPU) or version 2.
 ``` 
-pip install "tensorflow<1.14" # for CPU-only version
-pip install "tensorflow-gpu<1.14" # for GPU version
+pip install DCASE-models[keras_tf] # for tensorflow 1 CPU-only version
+pip install DCASE-models[keras_tf_gpu] # for tensorflow 1 GPU version
+pip install DCASE-models[tf2] # for tensorflow 2
 ```
 
-Then to install the package:
-```
-pip install DCASE-models
-```
 To include visualization related dependencies, run the following instead:
 ```
 pip install DCASE-models[visualization]

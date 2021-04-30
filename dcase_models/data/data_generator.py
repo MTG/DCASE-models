@@ -3,7 +3,13 @@ import numpy as np
 import inspect
 import random
 
-from keras.utils import Sequence
+import tensorflow as tf
+tensorflow2 = tf.__version__.split('.')[0] == '2'
+
+if tensorflow2:
+    from tensorflow.keras.utils import Sequence
+else:
+    from keras.utils import Sequence
 
 from dcase_models.data.feature_extractor import FeatureExtractor
 from dcase_models.data.dataset_base import Dataset
