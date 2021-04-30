@@ -1,0 +1,48 @@
+fine:
+    1:
+        1: small-sounding-engine
+        2: medium-sounding-engine
+        3: large-sounding-engine
+        X: engine-of-uncertain-size
+    2:
+        1: rock-drill
+        2: jackhammer
+        3: hoe-ram
+        4: pile-driver
+        X: other-unknown-impact-machinery
+    3:
+        1: non-machinery-impact
+    4:
+        1: chainsaw
+        2: small-medium-rotating-saw
+        3: large-rotating-saw
+        X: other-unknown-powered-saw
+    5:
+        1: car-horn
+        2: car-alarm
+        3: siren
+        4: reverse-beeper
+        X: other-unknown-alert-signal
+    6:
+        1: stationary-music
+        2: mobile-music
+        3: ice-cream-truck
+        X: music-from-uncertain-source
+    7:
+        1: person-or-small-group-talking
+        2: person-or-small-group-shouting
+        3: large-crowd
+        4: amplified-speech
+        X: other-unknown-human-voice
+    8:
+        1: dog-barking-whining
+
+coarse:
+    1: engine
+    2: machinery-impact
+    3: non-machinery-impact
+    4: powered-saw
+    5: alert-signal
+    6: music
+    7: human-voice
+    8: dog

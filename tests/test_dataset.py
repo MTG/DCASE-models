@@ -1,4 +1,7 @@
 from dcase_models.data.dataset_base import Dataset
+from dcase_models.data.datasets import UrbanSound8k, ESC50, ESC10, URBAN_SED, SONYC_UST
+from dcase_models.data.datasets import TAUUrbanAcousticScenes2019, TAUUrbanAcousticScenes2020Mobile
+from dcase_models.data.datasets import TUTSoundEvents2017, MAVD
 
 import os
 import numpy as np
@@ -141,3 +144,274 @@ def test_convert_to_wav():
         assert np.allclose(data_orig, data, rtol=0.0001, atol=0.0001)
 
         _clean(wavpath)
+
+
+def test_urbansound8k():
+    dataset_path = './tests/resources/datasets/UrbanSound8k'
+    dataset = UrbanSound8k(dataset_path)
+    audio_files = ["40722-8-0-7.wav", "147764-4-7-0.wav", "176787-5-0-0.wav"]
+
+    assert dataset.audio_path == './tests/resources/datasets/UrbanSound8k/audio'
+
+    assert dataset.fold_list == [
+        "fold1", "fold2", "fold3", "fold4", "fold5",
+        "fold6", "fold7", "fold8", "fold9", "fold10"]
+    assert dataset.label_list == [
+        "air_conditioner", "car_horn", "children_playing", "dog_bark", "drilling",
+        "engine_idling", "gun_shot", "jackhammer", "siren", "street_music"]
+
+    # generate_file_lists
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    assert len(dataset.file_lists['fold1']) == 3
+    for filename in audio_files:
+        assert os.path.join(dataset_path, 'audio/fold1', filename) in dataset.file_lists['fold1']
+    for fold in dataset.fold_list[1:]:
+        assert len(dataset.file_lists[fold]) == 0
+
+    # get_annotations
+    feat = np.zeros((11, 2))
+    ann = dataset.get_annotations("40722-8-0-7.wav", feat, None)
+    assert ann.shape == (11, 10)
+    ann_gt = np.zeros((11, 10))
+    ann_gt[:, 8] = 1
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((5, 4))
+    ann = dataset.get_annotations("audio/147764-4-7-0.wav", feat, None)
+    assert ann.shape == (5, 10)
+    ann_gt = np.zeros((5, 10))
+    ann_gt[:, 4] = 1
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((5, 4))
+    ann = dataset.get_annotations("176787-5-0-0", feat, None)
+    assert ann.shape == (5, 10)
+    ann_gt = np.zeros((5, 10))
+    ann_gt[:, 5] = 1
+    assert np.allclose(ann, ann_gt)
+
+
+def test_esc50():
+    dataset_path = './tests/resources/datasets/ESC50'
+    dataset = ESC50(dataset_path)
+    audio_files = ["1-100032-A-0.wav", "1-100038-A-14.wav", "1-100210-A-36.wav"]
+
+    assert dataset.audio_path == './tests/resources/datasets/ESC50/audio'
+    assert len(dataset.label_list) == 50
+    assert dataset.label_list[0] == "dog"
+    assert dataset.label_list[14] == "chirping_birds"
+    assert dataset.label_list[36] == "vacuum_cleaner"
+
+    assert len(dataset.metadata) == 3
+
+    assert dataset.metadata["1-100032-A-0.wav"] == {
+        'fold': 'fold1', 'class_ix': 0, 'class_name': "dog", 'esc10': True}
+    assert dataset.metadata["1-100038-A-14.wav"] == {
+        'fold': 'fold1', 'class_ix': 14, 'class_name': "chirping_birds", 'esc10': False}
+    assert dataset.metadata["1-100210-A-36.wav"] == {
+        'fold': 'fold1', 'class_ix': 36, 'class_name': "vacuum_cleaner", 'esc10': False}
+
+    # generate_file_lists
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    assert len(dataset.file_lists['fold1']) == 3
+    for filename in audio_files:
+        assert os.path.join(dataset_path, 'audio', filename) in dataset.file_lists['fold1']
+    for fold in dataset.fold_list[1:]:
+        assert len(dataset.file_lists[fold]) == 0
+
+    # get_annotations
+    feat = np.zeros((11, 2))
+    ann = dataset.get_annotations("1-100032-A-0.wav", feat, None)
+    assert ann.shape == (11, 50)
+    ann_gt = np.zeros((11, 50))
+    ann_gt[:, 0] = 1
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((5, 4))
+    ann = dataset.get_annotations("audio/1-100038-A-14.wav", feat, None)
+    assert ann.shape == (5, 50)
+    ann_gt = np.zeros((5, 50))
+    ann_gt[:, 14] = 1
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((5, 4))
+    ann = dataset.get_annotations("1-100210-A-36.wav", feat, None)
+    assert ann.shape == (5, 50)
+    ann_gt = np.zeros((5, 50))
+    ann_gt[:, 36] = 1
+    assert np.allclose(ann, ann_gt)
+
+
+def test_esc10():
+    dataset_path = './tests/resources/datasets/ESC50'
+    dataset = ESC10(dataset_path)
+    audio_files = ["1-100032-A-0.wav"]
+    assert len(dataset.label_list) == 1
+    assert dataset.label_list[0] == "dog"
+
+    assert len(dataset.metadata) == 1
+
+    assert dataset.metadata["1-100032-A-0.wav"] == {
+        'fold': 'fold1', 'class_ix': 0, 'class_name': "dog", 'esc10': True}
+
+    # generate_file_lists
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    assert len(dataset.file_lists['fold1']) == 1
+    for filename in audio_files:
+        assert os.path.join(dataset_path, 'audio', filename) in dataset.file_lists['fold1']
+    for fold in dataset.fold_list[1:]:
+        assert len(dataset.file_lists[fold]) == 0
+
+
+def test_urban_sed():
+    dataset_path = './tests/resources/datasets/URBAN-SED'
+    audio_files = ["0.wav", "1.wav", "2.wav"]
+    dataset = URBAN_SED(dataset_path)
+    assert dataset.audio_path == './tests/resources/datasets/URBAN-SED/audio'
+    assert dataset.annotations_folder == './tests/resources/datasets/URBAN-SED/annotations'
+
+    # generate_file_lists
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    assert len(dataset.file_lists['train']) == 3
+    for filename in audio_files:
+        assert os.path.join(dataset_path, 'audio/train', filename) in dataset.file_lists['train']
+    for fold in dataset.fold_list[1:]:
+        assert len(dataset.file_lists[fold]) == 1
+
+    # get annotations
+    feat = np.zeros((11, 2))
+    file_path = os.path.join(dataset_path, 'audio/train', "0.wav")
+    ann = dataset.get_annotations(file_path, feat, 1.0)
+    assert ann.shape == (11, 10)
+    ann_gt = np.zeros((11, 10))
+    ann_gt[0:2, 0] = 1
+    ann_gt[0:2, 8] = 1
+    ann_gt[2:4, 9] = 1
+    assert np.allclose(ann, ann_gt)
+
+
+# def test_sonyc_ust():
+#     dataset_path = './tests/resources/datasets/SONYC-UST'
+#     audio_files = ["0.wav", "1.wav", "2.wav"]
+#     dataset = SONYC_UST(dataset_path)
+#     assert dataset.audio_path == './tests/resources/datasets/SONYC-UST/audio'
+
+
+
+def test_tau2019():
+    dataset_path = './tests/resources/datasets/TAUUrbanAcousticScenes2019'
+    dataset = TAUUrbanAcousticScenes2019(dataset_path)
+    assert dataset.audio_path == './tests/resources/datasets/TAUUrbanAcousticScenes2019/audio'
+    assert dataset.meta_file == './tests/resources/datasets/TAUUrbanAcousticScenes2019/meta.csv'
+
+    # generate_file_lists
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    assert len(dataset.file_lists['train']) == 3
+    assert len(dataset.file_lists['test']) == 3
+
+    train_files = [
+        "audio/airport-lisbon-1000-40000-a.wav",
+        "audio/bus-lyon-1001-40001-a.wav",
+        "audio/shopping_mall-lisbon-1002-40002-a.wav"
+    ]
+
+    test_files = [
+        "audio/street_pedestrian-lyon-1162-44093-a.wav",
+        "audio/metro-prague-1163-44094-a.wav",
+        "audio/park-milan-1164-44095-a.wav"
+    ]
+
+    for filename in train_files:
+        assert os.path.join(dataset_path, filename) in dataset.file_lists['train']
+    for filename in test_files:
+        assert os.path.join(dataset_path, filename) in dataset.file_lists['test']
+
+
+    # get_annotations
+    feat = np.zeros((11, 2))
+    ann = dataset.get_annotations("audio/airport-lisbon-1000-40000-a.wav", feat, None)
+    assert ann.shape == (11, 10)
+    ann_gt = np.zeros((11, 10))
+    ann_gt[:, 0] = 1
+    assert np.allclose(ann, ann_gt)
+
+    ann = dataset.get_annotations("audio/bus-lyon-1001-40001-a.wav", feat, None)
+    assert ann.shape == (11, 10)
+    ann_gt = np.zeros((11, 10))
+    ann_gt[:, 7] = 1
+    assert np.allclose(ann, ann_gt)
+
+
+def test_tut2017():
+    dataset_path = './tests/resources/datasets/TUTSoundEvents2017'
+    dataset = TUTSoundEvents2017(dataset_path)
+
+    assert dataset.audio_path == './tests/resources/datasets/TUTSoundEvents2017/audio'
+
+    fold_files = {}
+    fold_files['fold1'] = ["b099.wav", "b008.wav", "b100.wav", "a013.wav", "a010.wav", "a129.wav"]
+    fold_files['fold2'] = ["b009.wav", "a124.wav", "b091.wav", "b098.wav", "a003.wav", "b093.wav"]
+    fold_files['fold3'] = ["b095.wav", "a008.wav", "a127.wav", "a131.wav", "b003.wav", "b007.wav"]
+    fold_files['fold4'] = ["a128.wav", "b006.wav", "a001.wav", "b005.wav", "b094.wav", "a012.wav"]
+    fold_files['test'] = ["a011.wav", "b004.wav", "a009.wav", "b092.wav", "a005.wav", "a123.wav", "b002.wav", "a002.wav"]
+
+    # generate_file_lists
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list) + 1
+    for fold in dataset.fold_list + ['test']:
+        assert len(dataset.file_lists[fold]) == len(fold_files[fold])
+        for filename in fold_files[fold]:
+            assert os.path.join(dataset_path, 'audio/street', filename) in dataset.file_lists[fold]
+
+    # get annotations
+    feat = np.zeros((15, 2))
+    file_path = os.path.join(dataset_path, 'audio/street', "a001.wav")
+    ann = dataset.get_annotations(file_path, feat, 1.0)
+    assert ann.shape == (15, 6)
+    ann_gt = np.zeros((15, 6))
+    ann_gt[1:3, 5] = 1
+    ann_gt[3:5, 3] = 1
+    ann_gt[4:15, 1] = 1
+    print(ann[:, 5])
+    print(ann[:, 3])
+    print(ann[4:15, 1])
+    assert np.allclose(ann, ann_gt)
+
+
+def test_mavd():
+    dataset_path = './tests/resources/datasets/MAVD'
+    dataset = MAVD(dataset_path)
+    assert dataset.audio_path == './tests/resources/datasets/MAVD/audio'
+    assert dataset.annotations_path == './tests/resources/datasets/MAVD/annotations'
+
+    # generate_file_lists
+    audio_files = ['0.wav', '1.wav', '2.wav']
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    assert len(dataset.file_lists['train']) == 3
+    for filename in audio_files:
+        assert os.path.join(dataset_path, 'audio/train', filename) in dataset.file_lists['train']
+    for fold in dataset.fold_list[1:]:
+        assert len(dataset.file_lists[fold]) == 0
+
+    # get annotations
+    feat = np.zeros((11, 2))
+    file_path = os.path.join(dataset_path, 'audio/train', "0.wav")
+    ann = dataset.get_annotations(file_path, feat, 1.0)
+    assert ann.shape == (11, 9)
+    ann_gt = np.zeros((11, 9))
+    ann_gt[0:2, 0] = 1
+    ann_gt[0:2, 4] = 1
+    ann_gt[2:4, 8] = 1
+    assert np.allclose(ann, ann_gt)
