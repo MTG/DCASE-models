@@ -1,7 +1,7 @@
 from dcase_models.data.dataset_base import Dataset
 from dcase_models.data.datasets import UrbanSound8k, ESC50, ESC10, URBAN_SED, SONYC_UST
 from dcase_models.data.datasets import TAUUrbanAcousticScenes2019, TAUUrbanAcousticScenes2020Mobile
-from dcase_models.data.datasets import TUTSoundEvents2017, MAVD
+from dcase_models.data.datasets import TUTSoundEvents2017, MAVD, FSDKaggle2018
 
 import os
 import numpy as np
@@ -296,6 +296,16 @@ def test_urban_sed():
     ann_gt[2:4, 9] = 1
     assert np.allclose(ann, ann_gt)
 
+    feat = np.zeros((3, 2))
+    file_path = os.path.join(dataset_path, 'audio/train', "0.wav")
+    ann = dataset.get_annotations(file_path, feat, 1.0)
+    assert ann.shape == (3, 10)
+    ann_gt = np.zeros((3, 10))
+    ann_gt[0:2, 0] = 1
+    ann_gt[0:2, 8] = 1
+    ann_gt[2, 9] = 1
+
+    assert np.allclose(ann, ann_gt)
 
 def test_sonyc_ust():
     dataset_path = './tests/resources/datasets/SONYC-UST'
@@ -414,11 +424,61 @@ def test_tut2017():
     ann_gt[1:3, 5] = 1
     ann_gt[3:5, 3] = 1
     ann_gt[4:15, 1] = 1
-    print(ann[:, 5])
-    print(ann[:, 3])
-    print(ann[4:15, 1])
     assert np.allclose(ann, ann_gt)
 
+    feat = np.zeros((15, 2))
+    file_path = os.path.join(dataset_path, 'audio/street', "b099.wav")
+    ann = dataset.get_annotations(file_path, feat, 1.0)
+    assert ann.shape == (15, 6)
+    ann_gt = np.zeros((15, 6))
+    ann_gt[1:3, 5] = 1
+    ann_gt[3:5, 3] = 1
+    ann_gt[4:15, 1] = 1
+    assert np.allclose(ann, ann_gt)
+
+    feat = np.zeros((3, 2))
+    file_path = os.path.join(dataset_path, 'audio/street', "b099.wav")
+    ann = dataset.get_annotations(file_path, feat, 1.0)
+    assert ann.shape == (3, 6)
+    ann_gt = np.zeros((3, 6))
+    ann_gt[1:3, 5] = 1
+    assert np.allclose(ann, ann_gt)
+
+def test_fsdkaggle2018():
+    dataset_path = './tests/resources/datasets/FSDKaggle2018'
+    dataset = FSDKaggle2018(dataset_path)
+    assert dataset.audio_path == './tests/resources/datasets/FSDKaggle2018/audio'
+    assert dataset.meta_path == './tests/resources/datasets/FSDKaggle2018/meta'
+
+    label_list = ["Chime", "Electric_piano", "Hi-hat", "Saxophone", "Trumpet"]
+    for label in label_list:
+        assert label in dataset.label_list
+
+    # generate_file_lists
+    fold_files = {}
+    fold_files['train'] = ["00044347.wav", "001ca53d.wav", "002d256b.wav"]
+    fold_files['test'] = ["008afd93.wav", "00ae03f6.wav"]
+    fold_files['validate'] = ["00eac343.wav"]
+
+    dataset.generate_file_lists()
+    assert type(dataset.file_lists) is dict
+    assert len(dataset.file_lists) == len(dataset.fold_list)
+    for fold in dataset.fold_list:
+        assert len(dataset.file_lists[fold]) == len(fold_files[fold])
+        for filename in fold_files[fold]:
+            if fold == 'validate':
+                fold_folder = 'test'
+            else:
+                fold_folder = fold
+            assert os.path.join(dataset_path, 'audio', fold_folder, filename) in dataset.file_lists[fold]
+
+    # get_annotations
+    feat = np.zeros((11, 2))
+    ann = dataset.get_annotations("audio/00044347.wav", feat, None)
+    assert ann.shape == (11, 5)
+    ann_gt = np.zeros((11, 5))
+    ann_gt[:, 2] = 1
+    assert np.allclose(ann, ann_gt)    
 
 def test_mavd():
     dataset_path = './tests/resources/datasets/MAVD'
