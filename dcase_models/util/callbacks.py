@@ -13,6 +13,9 @@ if ('tensorflow1' in backends) | ('tensorflow2' in backends):
         from tensorflow.keras.callbacks import Callback
     else:
         from keras.callbacks import Callback
+else:
+    class Callback:
+        pass
 
 eps = 1e-6
 

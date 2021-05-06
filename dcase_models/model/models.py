@@ -37,6 +37,9 @@ if ('tensorflow1' in backends) | ('tensorflow2' in backends):
         import keras.backend as K
 
     from tensorflow import clip_by_value
+else:
+    class Layer:
+        pass
 
 from dcase_models.model.container import KerasModelContainer
 

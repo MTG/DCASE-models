@@ -22,7 +22,9 @@ from dcase_models.backend import backends
 if ('tensorflow1' in backends) | ('tensorflow2' in backends):
     import tensorflow as tf
     tensorflow2 = tf.__version__.split(".")[0] == "2"
-
+else:
+    tensorflow2 = False
+    tensorflow = None
 
 def test_spectrogram():
     feature_extractor = Spectrogram(pad_mode="constant")
@@ -102,6 +104,7 @@ def test_frames_audio():
     assert shape == (1, 32, 1024)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_vggish():
     feature_extractor = VGGishEmbeddings()
     shape = feature_extractor.get_shape(2.0)

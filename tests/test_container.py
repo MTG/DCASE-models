@@ -472,6 +472,7 @@ def test_pytorch_train():
         results = model_container.evaluate(data_generator_val, label_list=['1', '2'])
         assert results[metric].results()['overall']['f_measure']['f_measure'] >= 0
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_predict():
     class ToyModel(PyTorchModelContainer):
         class Model(nn.Module):
@@ -538,6 +539,7 @@ def test_pytorch_predict():
     pred = model_container.predict([x1, x2])
     assert np.allclose(pred, x1 + x2)
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_get_number_of_parameters():
     class ToyModel(PyTorchModelContainer):
         class Model(nn.Module):
@@ -560,22 +562,27 @@ def test_pytorch_get_number_of_parameters():
 
     assert model_container.get_number_of_parameters() == 10
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_cut_network():
     with pytest.raises(NotImplementedError):
         torch_container.cut_network(None)
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_fine_tuning():
     with pytest.raises(NotImplementedError):
         torch_container.fine_tuning(None)
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_get_available_intermediate_outputs():
     with pytest.raises(NotImplementedError):
         torch_container.get_available_intermediate_outputs()
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_get_intermediate_output():
     with pytest.raises(NotImplementedError):
         torch_container.get_intermediate_output(None, None)
 
+@pytest.mark.skipif(torch is None, reason="PyTorch is not installed")
 def test_pytorch_load_pretrained_model_weights():
     with pytest.raises(NotImplementedError):
         torch_container.load_pretrained_model_weights()
@@ -818,41 +825,48 @@ def test_sklearn_predict():
     pred = model_container.predict(X_val1)
     assert pred.shape == (1, 2)
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_get_number_of_parameters():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)
     assert model_container.get_number_of_parameters() == len(model.get_params())
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_cut_network():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)
     with pytest.raises(NotImplementedError):
         model_container.cut_network(None)
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_fine_tuning():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)
     with pytest.raises(NotImplementedError):
         model_container.fine_tuning(None)
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_get_available_intermediate_outputs():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)
     with pytest.raises(NotImplementedError):
         model_container.get_available_intermediate_outputs()
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_get_intermediate_output():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)
     with pytest.raises(NotImplementedError):
         model_container.get_intermediate_output(None, None)
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_load_pretrained_model_weights():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)
     with pytest.raises(NotImplementedError):
         model_container.load_pretrained_model_weights()
 
+@pytest.mark.skipif(sklearn is None, reason="sklearn is not installed")
 def test_sklearn_build():
     model = RandomForestClassifier()
     model_container = SklearnModelContainer(model)

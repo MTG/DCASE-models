@@ -573,17 +573,21 @@ class PyTorchModelContainer(ModelContainer):
 
     """
 
-    class Model(nn.Module):
-        # Define your model here
-        def __init__(self, params):
-            super().__init__()
+    if 'torch' in backends:
+        class Model(nn.Module):
+            # Define your model here
+            def __init__(self, params):
+                super().__init__()
 
-        def forward(self, x):
-            pass
+            def forward(self, x):
+                pass
 
     def __init__(self, model=None,
                  model_name="PyTorchModelContainer",
                  metrics=['classification'], use_cuda=True, **kwargs):
+
+        if 'torch' not in backends:
+            raise ImportError('Pytorch is not installed')
 
         self.use_cuda = use_cuda & torch.cuda.is_available()
 
@@ -603,7 +607,7 @@ class PyTorchModelContainer(ModelContainer):
 
     def train(self, data_train, data_val, weights_path='./',
               optimizer='Adam', learning_rate=0.001, early_stopping=100,
-              considered_improvement=0.01, losses=nn.BCELoss(),
+              considered_improvement=0.01, losses='BCELoss',
               loss_weights=[1], batch_size=32, sequence_time_sec=0.5,
               metric_resolution_sec=1.0, label_list=[],
               shuffle=True, epochs=10):
@@ -655,6 +659,23 @@ class PyTorchModelContainer(ModelContainer):
 
         if type(losses) is not list:
             losses = [losses]
+
+        for j, loss in enumerate(losses):
+            if type(loss) is str:
+                try:
+                    loss_fn = getattr(torch.nn.modules.loss, loss)
+                except:
+                    raise AttributeError(
+                        ("Loss {} not availabe. See the list of losses at "
+                         "https://pytorch.org/docs/stable/nn.html#loss-functions").format(loss)
+                    )
+            else:
+                if (torch.nn.modules.loss._Loss in inspect.getmro(loss.__class__)):
+                    loss_fn = loss
+                else:
+                    raise AttributeError('loss should be a string or torch.nn.modules.loss._Loss')
+            losses[j] = loss_fn()
+
         if type(loss_weights) is not list:
             loss_weights = [loss_weights]
 
