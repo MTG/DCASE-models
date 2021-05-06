@@ -20,8 +20,8 @@ import librosa
 from dcase_models.backend import backends
 
 if ('tensorflow1' in backends) | ('tensorflow2' in backends):
-    import tensorflow as tf
-    tensorflow2 = tf.__version__.split(".")[0] == "2"
+    import tensorflow
+    tensorflow2 = tensorflow.__version__.split(".")[0] == "2"
 else:
     tensorflow2 = False
     tensorflow = None
