@@ -3,13 +3,16 @@
 
 from dcase_models.util.metrics import evaluate_metrics
 
-import tensorflow as tf
-tensorflow2 = tf.__version__.split('.')[0] == '2'
+from dcase_models.backend import backends
 
-if tensorflow2:
-    from tensorflow.keras.callbacks import Callback
-else:
-    from keras.callbacks import Callback
+if ('tensorflow1' in backends) | ('tensorflow2' in backends):
+    import tensorflow as tf
+    tensorflow2 = tf.__version__.split('.')[0] == '2'
+
+    if tensorflow2:
+        from tensorflow.keras.callbacks import Callback
+    else:
+        from keras.callbacks import Callback
 
 eps = 1e-6
 

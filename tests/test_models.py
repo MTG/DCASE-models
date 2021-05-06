@@ -1,7 +1,3 @@
-from dcase_models.model.container import KerasModelContainer
-from dcase_models.data.features import MelSpectrogram, Spectrogram
-from dcase_models.data.data_generator import DataGenerator
-
 from dcase_models.model.models import (
     MLP,
     SB_CNN,
@@ -13,12 +9,13 @@ from dcase_models.model.models import (
     ConcatenatedModel,
 )
 
-import os
 import numpy as np
-import pytest
-import tensorflow as tf
 
-tensorflow2 = tf.__version__.split(".")[0] == "2"
+from dcase_models.backend import backends
+
+if ('tensorflow1' in backends) | ('tensorflow2' in backends):
+    import tensorflow as tf
+    tensorflow2 = tf.__version__.split(".")[0] == "2"
 
 try:
     import autopool

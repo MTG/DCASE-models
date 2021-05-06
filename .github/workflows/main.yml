@@ -27,6 +27,7 @@ jobs:
     - name: Install library
       run: |
         python -m pip install .[keras_tf]
+        python -m pip install .[torch]
         python -m pip install .[openl3]
         python -m pip install .[autopool]  
         python -m pip install .[tests]        
@@ -98,6 +99,30 @@ jobs:
     - name: Install library
       run: |
         python -m pip install .[tf2]
+        python -m pip install .[tests]        
+    - name: Test with pytest
+      run: |
+        pytest --cov-report term-missing --cov-report=xml --cov dcase_models ./tests
+
+  build_torch:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y wget libsndfile-dev sox
+    - name: Install library
+      run: |
+        python -m pip install .[torch]
         python -m pip install .[tests]        
     - name: Test with pytest
       run: |

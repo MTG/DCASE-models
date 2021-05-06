@@ -17,9 +17,11 @@ import pytest
 import shutil
 import librosa
 
-import tensorflow as tf
+from dcase_models.backend import backends
 
-tensorflow2 = tf.__version__.split(".")[0] == "2"
+if ('tensorflow1' in backends) | ('tensorflow2' in backends):
+    import tensorflow as tf
+    tensorflow2 = tf.__version__.split(".")[0] == "2"
 
 
 def test_spectrogram():

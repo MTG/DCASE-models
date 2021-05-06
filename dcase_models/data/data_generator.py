@@ -3,13 +3,19 @@ import numpy as np
 import inspect
 import random
 
-import tensorflow as tf
-tensorflow2 = tf.__version__.split('.')[0] == '2'
+from dcase_models.backend import backends
 
-if tensorflow2:
-    from tensorflow.keras.utils import Sequence
-else:
-    from keras.utils import Sequence
+if 'torch' in backends:
+    import torch
+
+if ('tensorflow1' in backends) | ('tensorflow2' in backends):
+    import tensorflow as tf
+    tensorflow2 = tf.__version__.split('.')[0] == '2'
+
+    if tensorflow2:
+        from tensorflow.keras.utils import Sequence
+    else:
+        from keras.utils import Sequence
 
 from dcase_models.data.feature_extractor import FeatureExtractor
 from dcase_models.data.dataset_base import Dataset
@@ -539,5 +545,36 @@ class KerasDataGenerator(Sequence):
         return self.data_gen.get_data_batch(index)
 
     def on_epoch_end(self):
+        'Updates indexes after each epoch'
+        self.data_gen.shuffle_list()
+
+
+class PyTorchDataGenerator(torch.utils.data.Dataset):
+
+    def __init__(self, data_generator):
+        self.data_gen = data_generator
+        self.data_gen.shuffle_list()
+
+    def __len__(self):
+        'Denotes the number of batches per epoch'
+        return len(self.data_gen)
+
+    def __getitem__(self, index):
+        'Generate one batch of data'
+        # Generate indexes of the batch
+        X, Y = self.data_gen.get_data_batch(index)
+        if type(X) is not list:
+            X = [X]
+        if type(Y) is not list:
+            Y = [Y]
+        tensor_X = []
+        tensor_Y = []
+        for j in range(len(X)):
+            tensor_X.append(torch.tensor(X[j], dtype=torch.float))
+        for j in range(len(Y)):
+            tensor_Y.append(torch.tensor(Y[j], dtype=torch.long))
+        return tensor_X, tensor_Y
+
+    def shuffle_list(self):
         'Updates indexes after each epoch'
         self.data_gen.shuffle_list()

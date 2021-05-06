@@ -3,38 +3,40 @@ import inspect
 import sys
 import os
 
-import tensorflow as tf
-tensorflow2 = tf.__version__.split('.')[0] == '2'
+from dcase_models.backend import backends
 
-if tensorflow2:
-    from tensorflow.keras.layers import GRU, Bidirectional
-    from tensorflow.keras.layers import TimeDistributed, Activation, Reshape
-    from tensorflow.keras.layers import GlobalAveragePooling2D
-    from tensorflow.keras.layers import GlobalMaxPooling2D
-    from tensorflow.keras.layers import Input, Lambda, Conv2D, MaxPooling2D
-    from tensorflow.keras.layers import Conv1D
-    from tensorflow.keras.layers import Dropout, Dense, Flatten
-    from tensorflow.keras.layers import BatchNormalization
-    from tensorflow.keras.layers import Layer
-    from tensorflow.keras.models import Model
-    from tensorflow.keras.regularizers import l2
-    import tensorflow.keras.backend as K
-else:
-    from keras.layers import GRU, Bidirectional
-    from keras.layers import TimeDistributed, Activation, Reshape
-    from keras.layers import GlobalAveragePooling2D
-    from keras.layers import GlobalMaxPooling2D
-    from keras.layers import Input, Lambda, Conv2D, MaxPooling2D
-    from keras.layers import Conv1D
-    from keras.layers import Dropout, Dense, Flatten
-    from keras.layers import BatchNormalization
-    from keras.layers import Layer
-    from keras.models import Model
-    from keras.regularizers import l2
-    import keras.backend as K
-    
+if ('tensorflow1' in backends) | ('tensorflow2' in backends):
+    import tensorflow as tf
+    tensorflow2 = tf.__version__.split('.')[0] == '2'
 
-from tensorflow import clip_by_value
+    if tensorflow2:
+        from tensorflow.keras.layers import GRU, Bidirectional
+        from tensorflow.keras.layers import TimeDistributed, Activation, Reshape
+        from tensorflow.keras.layers import GlobalAveragePooling2D
+        from tensorflow.keras.layers import GlobalMaxPooling2D
+        from tensorflow.keras.layers import Input, Lambda, Conv2D, MaxPooling2D
+        from tensorflow.keras.layers import Conv1D
+        from tensorflow.keras.layers import Dropout, Dense, Flatten
+        from tensorflow.keras.layers import BatchNormalization
+        from tensorflow.keras.layers import Layer
+        from tensorflow.keras.models import Model
+        from tensorflow.keras.regularizers import l2
+        import tensorflow.keras.backend as K
+    else:
+        from keras.layers import GRU, Bidirectional
+        from keras.layers import TimeDistributed, Activation, Reshape
+        from keras.layers import GlobalAveragePooling2D
+        from keras.layers import GlobalMaxPooling2D
+        from keras.layers import Input, Lambda, Conv2D, MaxPooling2D
+        from keras.layers import Conv1D
+        from keras.layers import Dropout, Dense, Flatten
+        from keras.layers import BatchNormalization
+        from keras.layers import Layer
+        from keras.models import Model
+        from keras.regularizers import l2
+        import keras.backend as K
+
+    from tensorflow import clip_by_value
 
 from dcase_models.model.container import KerasModelContainer
 
