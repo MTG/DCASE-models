@@ -1,7 +1,7 @@
 from dcase_models.util.files import save_json, save_pickle, load_pickle
 from dcase_models.util.metrics import evaluate_metrics
-from dcase_models.util.callbacks import ClassificationCallback, SEDCallback
-from dcase_models.util.callbacks import TaggingCallback
+from dcase_models.util.callbacks import ClassificationCallback, SEDCallback, TaggingCallback
+from dcase_models.util.callbacks import PyTorchCallback
 from dcase_models.data.data_generator import DataGenerator, KerasDataGenerator, PyTorchDataGenerator
 
 import numpy as np
@@ -732,6 +732,28 @@ class PyTorchModelContainer(ModelContainer):
         epoch_best = 0
         epochs_since_improvement = 0
 
+        if self.metrics[0] == 'sed':
+            callback = SEDCallback(
+                data_val, best_F1=-np.Inf, early_stopping=early_stopping, file_weights=weights_path,
+                considered_improvement=considered_improvement, sequence_time_sec=sequence_time_sec,
+                metric_resolution_sec=metric_resolution_sec, label_list=label_list
+            )
+        elif self.metrics[0] == 'classification':
+            callback = ClassificationCallback(
+                data_val, best_acc=-np.Inf, early_stopping=early_stopping, file_weights=weights_path,
+                considered_improvement=considered_improvement,
+                label_list=label_list
+            )
+        elif self.metrics[0] == 'tagging':
+            callback = TaggingCallback(
+                data_val, best_F1=-np.Inf, early_stopping=early_stopping, file_weights=weights_path,
+                considered_improvement=considered_improvement, label_list=label_list
+            )
+        else:
+            raise AttributeError("{} metric is not allowed".format(self.metrics[0]))
+
+        callback = PyTorchCallback(self, callback)
+
         for epoch in range(epochs):
             # train
             for batch_ix, batch in enumerate(data_loader):
@@ -773,55 +795,8 @@ class PyTorchModelContainer(ModelContainer):
 
             # validation
             with torch.no_grad():
-                kwargs = {}
-                if self.metrics[0] == 'sed':
-                    kwargs['sequence_time_sec'] = sequence_time_sec
-                    kwargs['metric_resolution_sec'] = metric_resolution_sec
-                results = evaluate_metrics(self, data_val, self.metrics, label_list=label_list, **kwargs)
-                results = results[self.metrics[0]].results()
-
-                if self.metrics[0] == 'classification':
-                    acc = results['overall']['accuracy']
-                    current_metrics = [acc]
-                elif self.metrics[0] == 'sed':
-                    F1 = results['overall']['f_measure']['f_measure']
-                    ER = results['overall']['error_rate']['error_rate']
-                    current_metrics = [F1, ER]
-                elif self.metrics[0] == 'tagging':
-                    F1 = results['overall']['f_measure']['f_measure']
-                    current_metrics = [F1]
-                else:
-                    raise AttributeError("{} metric is not allowed".format(self.metrics[0]))
-
-                if current_metrics[0] > best_metrics + considered_improvement:
-                    best_metrics = current_metrics[0]
-                    self.save_model_weights(weights_path)
-                    if self.metrics[0] == 'sed':
-                        msg = """F1 = {:.4f}, ER = {:.4f} - Best val F1: {:.4f}
-                            (IMPROVEMENT, saving)\n"""
-                        print(msg.format(current_metrics[0], current_metrics[1], best_metrics))
-                    if self.metrics[0] == 'tagging':
-                        msg = 'F1 = {:.4f} - Best val F1: {:.4f} (IMPROVEMENT, saving)\n'
-                        print(msg.format(current_metrics[0], best_metrics))
-                    if self.metrics[0] == 'classification':
-                        msg = 'Acc = {:.4f} - Best val Acc: {:.4f} (IMPROVEMENT, saving)\n'
-                        print(msg.format(current_metrics[0], best_metrics))
-                    epochs_since_improvement = 0
-                    epoch_best = epoch
-                else:
-                    if self.metrics[0] == 'sed':
-                        msg = 'F1 = {:.4f}, ER = {:.4f} - Best val F1: {:.4f} ({:d})\n'
-                        print(msg.format(current_metrics[0], current_metrics[1], best_metrics, epoch_best))
-                    if self.metrics[0] == 'tagging':
-                        print('F1 = {:.4f} - Best val F1: {:.4f} ({:d})\n'.format(
-                            current_metrics[0], best_metrics, epoch_best))
-                    if self.metrics[0] == 'classification':
-                        print('Acc = {:.4f} - Best val Acc: {:.4f} ({:d})\n'.format(
-                            current_metrics[0], best_metrics, epoch_best))
-                    epochs_since_improvement += 1
-                if epochs_since_improvement >= early_stopping-1:
-                    print('Not improvement for %d epochs, stopping the training' %
-                          early_stopping)
+                callback.on_epoch_end(epoch)
+                if callback.stop_training:
                     break
 
     def evaluate(self, data_test, **kwargs):

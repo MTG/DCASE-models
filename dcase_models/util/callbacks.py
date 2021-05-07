@@ -27,7 +27,7 @@ class ClassificationCallback(Callback):
 
     def __init__(self, data, file_weights=None, best_acc=0,
                  early_stopping=0, considered_improvement=0.01,
-                 label_list=[]):
+                 label_list=[], model=None):
         """ Initialize the keras callback
 
         Parameters
@@ -152,7 +152,9 @@ class SEDCallback(Callback):
         """
         results = evaluate_metrics(self.model,
                                    self.data, ['sed'],
-                                   label_list=self.label_list)
+                                   label_list=self.label_list,
+                                   sequence_time_sec=self.sequence_time_sec,
+                                   metric_resolution_sec=self.metric_resolution_sec)
 
         results = results['sed'].results()
         F1 = results['overall']['f_measure']['f_measure']
@@ -256,3 +258,24 @@ class TaggingCallback(Callback):
             print('Not improvement for %d epochs, stopping the training' %
                   self.early_stopping)
             self.model.stop_training = True
+
+class PyTorchCallback():
+    class ToyKerasModel():
+        def __init__(self, model_container):
+            self.model_container = model_container
+            self.stop_training = False
+
+        def save_weights(self, file_weights):
+            self.model_container.save_model_weights(file_weights)
+
+        def predict(self, X):
+            return self.model_container.predict(X)
+
+    def __init__(self, model_container, callback):
+        self.model = self.ToyKerasModel(model_container)
+        self.callback = callback
+        self.callback.model = self.model
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.callback.on_epoch_end(epoch, logs=logs)
+        self.stop_training = self.model.stop_training
