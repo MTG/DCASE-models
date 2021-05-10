@@ -872,36 +872,37 @@ class FSDKaggle2018(Dataset):
         )
 
         self.metadata = {}
-        for meta_file in [meta_file_train, meta_file_test]:
-            with open(meta_file) as csv_file:
-                csv_reader = csv.reader(csv_file, delimiter=',')
-                line_count = 0
-                for row in csv_reader:
-                    if line_count == 0:
-                        line_count += 1
-                        continue
-                    filename = row[0]
-                    label = row[1]
-                    usage = row[2]
-                    freesound_id = row[3]
-                    license = row[4]
+        if self.check_if_downloaded():
+            for meta_file in [meta_file_train, meta_file_test]:
+                with open(meta_file) as csv_file:
+                    csv_reader = csv.reader(csv_file, delimiter=',')
+                    line_count = 0
+                    for row in csv_reader:
+                        if line_count == 0:
+                            line_count += 1
+                            continue
+                        filename = row[0]
+                        label = row[1]
+                        usage = row[2]
+                        freesound_id = row[3]
+                        license = row[4]
 
-                    if meta_file == meta_file_train:
-                        fold = 'train'
-                    else:
-                        if usage == 'Public':
-                            fold = 'validate'
+                        if meta_file == meta_file_train:
+                            fold = 'train'
                         else:
-                            fold = 'test'
+                            if usage == 'Public':
+                                fold = 'validate'
+                            else:
+                                fold = 'test'
 
-                    self.metadata[filename] = {
-                        'label': label, 'usage': usage,
-                        'freesound_id': freesound_id, 'license': license,
-                        'fold': fold}
-                    if label not in self.label_list:
-                        self.label_list.append(label)
+                        self.metadata[filename] = {
+                            'label': label, 'usage': usage,
+                            'freesound_id': freesound_id, 'license': license,
+                            'fold': fold}
+                        if label not in self.label_list:
+                            self.label_list.append(label)
 
-        self.label_list.sort()
+            self.label_list.sort()
 
     def generate_file_lists(self):
         self.file_lists = {fold: [] for fold in self.fold_list}
