@@ -471,37 +471,6 @@ tab_visualization = html.Div([
     ),
 ])
 
-# Plot 2D graph
-# plot2D_eval = dcc.Graph(id='plot2D_eval', figure=figure2D,
-#                    style={"height": "100%", "width": "100%"})
-
-# # Plot mel-spectrogram
-# plot_mel_eval = dcc.Graph(
-#     id="plot_mel_eval",
-#     figure=figure_mel,
-#     style={"width": "90%", "display": "inline-block", 'float': 'left'}
-# )
-
-# # Audio controls
-# audio_player_eval = dash_audio_components.DashAudioComponents(
-#     id='audio-player-eval', src="", autoPlay=False, controls=True
-# )
-
-# Define Tab Evaluation (4)
-# tab_evaluation = html.Div([
-#     dbc.Row(
-#         [
-#             dbc.Col(html.Div([plot2D_eval]), width=8),
-#             dbc.Col([
-#                 dbc.Row([plot_mel_eval], align='center'),
-#                 dbc.Row([audio_player_eval], align='center'),
-#                 dbc.Row([html.Div("", id="accuracy")], align='center'),
-#                 dbc.Row([html.Div("", id="predicted")], align='center')
-#             ], width=4),
-#         ]
-#     ),
-# ])
-
 figure_metrics = generate_figure_metrics([], [])
 plot_metrics = dcc.Graph(
     id="figure_metrics",
