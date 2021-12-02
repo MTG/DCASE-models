@@ -17,7 +17,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/pzinemanas/DCASE-models",
     download_url='http://github.com/pzinemanas/DCASE-models/releases',
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["test", "*.test", "*.test.*"]),
     install_requires=[
         'numpy>=1.1',
         'pandas>=0.25',
@@ -33,6 +33,7 @@ setuptools.setup(
         'keras_tf': ['tensorflow<1.14', 'keras==2.2.4'],
         'keras_tf_gpu': ['tensorflow-gpu<1.14', 'keras==2.2.4'],
         'tf2': ['tensorflow>2.0'],
+        'torch': ['torch>1.1'],
         'openl3': ['openl3==0.3.1'],
         'autopool': ['autopool==0.1.0'],
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme'],
@@ -45,9 +46,12 @@ setuptools.setup(
         ]
     },
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8"
     ],
-    python_requires='>=3.6',
+    #python_requires='>=3.6, <3.9',
 )

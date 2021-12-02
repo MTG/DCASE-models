@@ -1,7 +1,3 @@
-from dcase_models.model.container import KerasModelContainer
-from dcase_models.data.features import MelSpectrogram, Spectrogram
-from dcase_models.data.data_generator import DataGenerator
-
 from dcase_models.model.models import (
     MLP,
     SB_CNN,
@@ -13,12 +9,16 @@ from dcase_models.model.models import (
     ConcatenatedModel,
 )
 
-import os
 import numpy as np
 import pytest
-import tensorflow as tf
 
-tensorflow2 = tf.__version__.split(".")[0] == "2"
+from dcase_models.backend import backends
+
+if ('tensorflow1' in backends) | ('tensorflow2' in backends):
+    import tensorflow
+    tensorflow2 = tensorflow.__version__.split(".")[0] == "2"
+else:
+    tensorflow = None
 
 try:
     import autopool
@@ -26,6 +26,7 @@ except:
     autopool = None
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_mlp():
     model_container = MLP()
     assert len(model_container.model.layers) == 7
@@ -53,6 +54,7 @@ def test_mlp():
         assert outputs.shape == (3, 10)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_sb_cnn():
     model_container = SB_CNN()
     assert len(model_container.model.layers) == 15
@@ -67,6 +69,7 @@ def test_sb_cnn():
     assert outputs.shape == (3, 10)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_sb_cnn_sed():
     model_container = SB_CNN_SED()
     assert len(model_container.model.layers) == 15
@@ -81,6 +84,7 @@ def test_sb_cnn_sed():
     assert outputs.shape == (3, 10)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_a_crnn():
     model_container = A_CRNN()
     assert len(model_container.model.layers) == 25
@@ -101,6 +105,7 @@ def test_a_crnn():
     assert outputs.shape == (3, 64, 10)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_vggish():
     model_container = VGGish()
     assert len(model_container.model.layers) == 13
@@ -109,6 +114,7 @@ def test_vggish():
     assert outputs.shape == (3, 512)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_smel():
     model_container = SMel()
     assert len(model_container.model.layers) == 6
@@ -117,6 +123,7 @@ def test_smel():
     assert outputs.shape == (3, 64, 128)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_mst():
     model_container = MST()
     assert len(model_container.model.layers) == 11
@@ -125,6 +132,7 @@ def test_mst():
     assert outputs.shape == (3, 44, 128)
 
 
+@pytest.mark.skipif(tensorflow is None, reason="TensorFlow is not installed")
 def test_concatenated_model():
     model_mst = MST()
     model_cnn = SB_CNN_SED(n_frames_cnn=44, n_freq_cnn=128)

@@ -148,48 +148,41 @@ def _check_lists_for_evaluation(Y_val, Y_predicted):
         True if checks passed.
 
     """
-    
+
     if type(Y_val) is not list:
         raise AttributeError(
             'Y_val type is invalid. It should be a list of 2D array and received {}'.format(
-                type(Y_val)
-            )
+                type(Y_val))
         )
 
     if type(Y_predicted) is not list:
         raise AttributeError(
             'Y_predicted type is invalid. It should be a list of 2D array and received {}'.format(
-                type(Y_predicted)
-            )
+                type(Y_predicted))
         )
 
     if len(Y_val) != len(Y_predicted):
         raise AttributeError('Y_val and Y_predicted should have the same length (received {:d} and {:d})'.format(
-            len(Y_val), len(Y_predicted) 
-            )
+            len(Y_val), len(Y_predicted))
         )
 
     for j in range(len(Y_val)):
         if type(Y_val[j]) is not np.ndarray:
             raise AttributeError('Each element of Y_val should be a 2D numpy array and received {}'.format(
-                type(Y_val[j])
+                type(Y_val[j]))
             )
-        )
         if len(Y_val[j].shape) != 2:
             raise AttributeError('Each element of Y_val should be a 2D array and received an array of shape {}'.format(
-                str(Y_val[j].shape)
+                str(Y_val[j].shape))
             )
-        )
         if type(Y_predicted[j]) is not np.ndarray:
             raise AttributeError('Each element of Y_predicted should be a 2D numpy array and received {}'.format(
-                type(Y_predicted[j])
+                type(Y_predicted[j]))
             )
-        )
         if len(Y_predicted[j].shape) != 2:
             raise AttributeError('Each element of Y_predicted should be a 2D array and received an array of shape {}'.format(
-                str(Y_predicted[j].shape)
+                str(Y_predicted[j].shape))
             )
-        )
 
 def sed(Y_val, Y_predicted, sequence_time_sec=0.5,
         metric_resolution_sec=1.0, label_list=[]):
