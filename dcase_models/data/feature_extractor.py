@@ -345,7 +345,7 @@ class FeatureExtractor():
             sequence_hop_samples = self.sequence_hop*self.audio_hop
             if len(audio) < sequence_samples:
                 audio = librosa.util.fix_length(
-                    audio, sequence_samples, axis=0, mode=self.pad_mode)
+                    audio, size=sequence_samples, axis=0, mode=self.pad_mode)
             else:
                 if self.sequence_hop_time > 0:
                     audio_frames = int((len(audio) - self.audio_win) / self.audio_hop) + int(((len(audio) - self.audio_win) % self.audio_hop)>0)
@@ -354,7 +354,7 @@ class FeatureExtractor():
                     new_samples = new_frames * self.audio_hop + self.audio_win
                     audio = librosa.util.fix_length(
                         audio,
-                        new_samples,
+                        size=new_samples,
                         axis=0, mode=self.pad_mode
                     )
                 else:
@@ -367,8 +367,8 @@ class FeatureExtractor():
             audio_representation = np.ascontiguousarray(audio_representation)
             audio_representation = librosa.util.frame(
                 audio_representation,
-                self.sequence_frames,
-                self.sequence_hop,
+                frame_length=self.sequence_frames,
+                hop_length=self.sequence_hop,
                 axis=0
             )
         else:
