@@ -87,7 +87,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
         n_files = len(X_val)
         for i in range(n_files):
             X = X_val[i]
-            Y_predicted = model.predict(X)
+            Y_predicted = model.predict(X, verbose=False)
             # if multiple outputs, select the first
             if type(Y_predicted) == list:
                 Y_predicted = Y_predicted[0]
@@ -102,7 +102,7 @@ def evaluate_metrics(model, data, metrics, **kwargs):
             n_files = len(X_val)
             for i in range(n_files):
                 X = X_val[i]
-                Y_predicted = model.predict(X)
+                Y_predicted = model.predict(X, verbose=False)
                 if type(Y_predicted) == list:
                     Y_predicted = Y_predicted[0]
                 predictions.append(Y_predicted)
