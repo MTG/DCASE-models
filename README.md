@@ -22,22 +22,25 @@ See [https://dcase-models.readthedocs.io](https://dcase-models.readthedocs.io/en
 ## Installation instructions
 We recommend to install DCASE-models in a dedicated virtual environment. For instance, using [anaconda](https://www.anaconda.com/):
 ```
-conda create -n dcase python=3.6
+conda create -n dcase python=3.10
 conda activate dcase
 ```
 For GPU support:
 ```
-conda install cudatoolkit cudnn
+conda install cudatoolkit=11.3 cudnn
+conda install cupti=11
+conda install -c nvidia cuda-nvcc
+conda env config vars set LD_LIBRARY_PATH=$CONDA_PREFIX/lib
 ```
 DCASE-models uses [SoX](http://sox.sourceforge.net/) for functions related to the datasets. You can install it in your conda environment by:
 ```
 conda install -c conda-forge sox
 ```
-When installing the library, you must select the tensorflow variant: version 1 (CPU-only or GPU) or version 2.
+When installing the library, you must select the tensorflow variant: version 1 (CPU-only or GPU) or version 2. Note that you can indicate a specific release of DCASE-models (it is possible that you need to pin installation to one of the latest releases if pypi version is not updated)
 ``` 
-pip install DCASE-models[keras_tf] # for tensorflow 1 CPU-only version
-pip install DCASE-models[keras_tf_gpu] # for tensorflow 1 GPU version
-pip install DCASE-models[tf2] # for tensorflow 2
+pip install DCASE-models[keras_tf]==v0.2.0-rc2 # for tensorflow 1 CPU-only version
+pip install DCASE-models[keras_tf_gpu]==v0.2.0-rc2 # for tensorflow 1 GPU version
+pip install DCASE-models[tf2]==v0.2.0-rc2 # for tensorflow 2
 ```
 
 To include visualization related dependencies, run the following instead:
