@@ -209,9 +209,7 @@ class FeatureExtractor():
                     path_to_features_file = path_audio.replace(
                         audio_path, features_path
                     )
-                    path_to_features_file = path_to_features_file.replace(
-                        'wav', 'npy'
-                    )
+                    path_to_features_file = os.path.splitext(path_to_features_file)[0] + '.npy'
                     np.save(path_to_features_file, features_array)
 
                 # Save parameters.json for future checking
